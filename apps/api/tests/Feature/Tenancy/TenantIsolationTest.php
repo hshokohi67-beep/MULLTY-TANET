@@ -1,0 +1,455 @@
+<?php
+
+namespace Tests\Feature\Tenancy;
+
+use App\Modules\Catalog\Actions\SaveCategory;
+use App\Modules\Catalog\Actions\SaveModifierGroup;
+use App\Modules\Catalog\Actions\SaveProduct;
+use App\Modules\Catalog\Data\ProductData;
+use App\Modules\Catalog\Data\VariantData;
+use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\ModifierGroup;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductImage;
+use App\Modules\Commerce\Actions\Carts\ManageCart;
+use App\Modules\Commerce\Actions\Orders\PlaceOrder;
+use App\Modules\Commerce\Actions\Tables\ManageTableQr;
+use App\Modules\Commerce\Actions\Tables\TableSessions;
+use App\Modules\Commerce\Data\CheckoutData;
+use App\Modules\Commerce\Enums\OrderSource;
+use App\Modules\Commerce\Enums\OrderType;
+use App\Modules\Commerce\Enums\TableRequestType;
+use App\Modules\Commerce\Models\DeliveryZone;
+use App\Modules\Commerce\Models\Order;
+use App\Modules\Commerce\Models\RestaurantTable;
+use App\Modules\Core\Models\Branch;
+use App\Modules\Core\Models\Tenant;
+use App\Modules\Customers\Models\Customer;
+use App\Modules\Discounts\Models\Discount;
+use App\Modules\Identity\Models\Role;
+use App\Modules\Identity\Models\TenantUser;
+use App\Modules\Identity\Models\User;
+use App\Modules\Insights\Models\ShiftNote;
+use App\Modules\Kitchen\Actions\KitchenDevices;
+use App\Modules\Kitchen\Actions\RouteOrderToKitchen;
+use App\Modules\Kitchen\Models\KitchenItem;
+use App\Modules\Kitchen\Models\KitchenStation;
+use App\Modules\Loyalty\Actions\PostWalletTransaction;
+use App\Modules\Loyalty\Enums\WalletTransactionType;
+use App\Modules\Loyalty\Models\CashbackRule;
+use App\Modules\Loyalty\Models\LoyaltyTier;
+use App\Modules\Loyalty\Models\Wallet;
+use App\Modules\Payments\Enums\PaymentAttemptStatus;
+use App\Modules\Payments\Enums\PaymentMethod;
+use App\Modules\Payments\Models\Payment;
+use App\Modules\Storefront\Models\Story;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\TestCase;
+
+/**
+ * The reusable cross-tenant isolation harness. Every tenant-scoped endpoint added
+ * in later phases must be listed in one of the providers below.
+ *
+ * Rule 1: Tenant A's staff cannot open Tenant B (403, no data).
+ * Rule 2: Inside their own tenant, B's record IDs don't exist (404, not 403), and nothing of B changes.
+ * Rule 3: Lists never contain B's rows.
+ * Rule 4: B's IDs inside request payloads fail validation.
+ */
+final class TenantIsolationTest extends TestCase
+{
+    private Tenant $a;
+
+    private Tenant $b;
+
+    private User $ownerA;
+
+    private User $ownerB;
+
+    private Branch $branchB;
+
+    private TenantUser $memberB;
+
+    /** @var array{product: string, category: string, group: string, image: string} */
+    private array $catalogB;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        ['tenant' => $this->a, 'owner' => $this->ownerA] = $this->createTenantWithOwner('cafe-a');
+        ['tenant' => $this->b, 'owner' => $this->ownerB] = $this->createTenantWithOwner('cafe-b');
+
+        $this->branchB = $this->inTenant($this->b, fn () => Branch::query()->where('slug', 'main')->firstOrFail());
+        $this->memberB = $this->inTenant($this->b, fn () => TenantUser::query()->firstOrFail());
+
+        $this->catalogB = $this->inTenant($this->b, function (): array {
+            $category = app(SaveCategory::class)->handle(['name' => 'دسته ب']);
+            $product = app(SaveProduct::class)->handle(
+                new ProductData(name: 'محصول ب', categoryIds: [$category->id]),
+                null,
+                [new VariantData(null, null, 500_000)],
+            );
+            $group = app(SaveModifierGroup::class)->handle(['name' => 'گروه ب', 'min_select' => 0, 'max_select' => 0], [['name' => 'x', 'price_delta' => 0]]);
+            $image = ProductImage::query()->create(['product_id' => $product->id, 'path' => 'x.png', 'sort' => 0]);
+
+            return ['product' => $product->id, 'category' => $category->id, 'group' => $group->id, 'image' => $image->id];
+        });
+
+        $this->commerceB = $this->inTenant($this->b, function (): array {
+            $table = RestaurantTable::query()->create(['branch_id' => $this->branchB->id, 'label' => 'میز ب']);
+            $qr = app(ManageTableQr::class)->issue($table)['token'];
+            $session = app(TableSessions::class)->join($table);
+            $request = app(TableSessions::class)->request($session, TableRequestType::CallWaiter);
+            $zone = DeliveryZone::query()->create(['branch_id' => $this->branchB->id, 'name' => 'ب', 'radius_m' => 1000]);
+            $discount = Discount::query()->create(['name' => 'ب', 'code' => 'BONLY', 'kind' => 'fixed', 'value' => 1, 'applies_to' => 'order']);
+            ['cart' => $cart, 'token' => $cartToken] = app(ManageCart::class)->create($this->branchB, OrderType::QrTable, $session);
+            app(ManageCart::class)->add($cart, Product::query()->findOrFail($this->catalogB['product'])->variants()->value('id'), 1, [], null);
+            $order = app(PlaceOrder::class)->handle(new CheckoutData(
+                branch: $this->branchB,
+                type: OrderType::QrTable,
+                source: OrderSource::Qr,
+                lines: app(ManageCart::class)->lines($cart->refresh()->load('items')),
+                idempotencyKey: 'b-1',
+                session: $session,
+            ))['order'];
+            $customer = Customer::query()->create(['phone_e164' => '+989127777777', 'name' => 'مشتری ب']);
+            app(PostWalletTransaction::class)->handle($customer, WalletTransactionType::Adjustment, 500_000);
+            $tier = LoyaltyTier::query()->create(['name' => 'ب', 'min_spend' => 0]);
+            $rule = CashbackRule::query()->create(['name' => 'ب', 'kind' => 'fixed', 'value' => 1, 'min_spend' => 0]);
+            $station = KitchenStation::query()->create(['branch_id' => $this->branchB->id, 'name' => 'بار ب', 'is_default' => true]);
+            app(RouteOrderToKitchen::class)->handle($order);
+            $kitchenItem = KitchenItem::query()->where('order_id', $order->id)->value('id');
+            ['device' => $device, 'code' => $pairingCode] = app(KitchenDevices::class)->create(['branch_id' => $this->branchB->id, 'name' => 'تبلت ب']);
+            $deviceToken = app(KitchenDevices::class)->pair($pairingCode)['token'];
+            $note = ShiftNote::query()->create(['body' => 'یادداشت ب', 'author_id' => $this->ownerB->id]);
+            $story = Story::query()->create(['image_path' => 'b/s.webp', 'thumb_path' => 'b/t.webp', 'width' => 900, 'height' => 1600, 'caption' => 'استوری ب', 'starts_at' => now()->subHour(), 'ends_at' => now()->addDay()]);
+            $payment = Payment::query()->create(['order_id' => $order->id, 'method' => PaymentMethod::Online, 'gateway' => 'fake', 'status' => PaymentAttemptStatus::Pending, 'amount' => $order->total, 'authority' => 'FAKEBONLY']);
+
+            return [
+                'table' => $table->id, 'qr' => $qr, 'session' => $session->accessToken(), 'request' => $request->id,
+                'zone' => $zone->id, 'discount' => $discount->id, 'cart' => $cartToken, 'order' => $order->id,
+                'tracking' => $order->trackingToken(), 'payment' => $payment->id,
+                'customer' => $customer->id, 'tier' => $tier->id, 'rule' => $rule->id,
+                'station' => $station->id, 'kitchen_item' => (string) $kitchenItem, 'device' => $device->id, 'device_token' => $deviceToken, 'note' => $note->id, 'story' => $story->id,
+            ];
+        });
+    }
+
+    /** @var array<string, string> */
+    private array $commerceB;
+
+    /** @return array<string, array{string, string}> */
+    public static function tenantEndpoints(): array
+    {
+        return [
+            'tenant profile' => ['GET', '/api/v1/tenant'],
+            'stories' => ['GET', '/api/v1/stories'],
+            'reorder stories' => ['PUT', '/api/v1/stories/order'],
+            'upload cover' => ['POST', '/api/v1/tenant/branding/cover'],
+            'delete cover' => ['DELETE', '/api/v1/tenant/branding/cover'],
+            'update tenant' => ['PATCH', '/api/v1/tenant'],
+            'branding' => ['GET', '/api/v1/tenant/branding'],
+            'update branding' => ['PATCH', '/api/v1/tenant/branding'],
+            'settings' => ['GET', '/api/v1/tenant/settings'],
+            'update settings' => ['PATCH', '/api/v1/tenant/settings'],
+            'branches' => ['GET', '/api/v1/branches'],
+            'create branch' => ['POST', '/api/v1/branches'],
+            'team' => ['GET', '/api/v1/team'],
+            'add member' => ['POST', '/api/v1/team'],
+            'roles' => ['GET', '/api/v1/roles'],
+            'audit logs' => ['GET', '/api/v1/audit-logs'],
+            'categories' => ['GET', '/api/v1/catalog/categories'],
+            'create category' => ['POST', '/api/v1/catalog/categories'],
+            'products' => ['GET', '/api/v1/catalog/products'],
+            'create product' => ['POST', '/api/v1/catalog/products'],
+            'quick add' => ['POST', '/api/v1/catalog/products/quick'],
+            'modifier groups' => ['GET', '/api/v1/catalog/modifier-groups'],
+            'create modifier group' => ['POST', '/api/v1/catalog/modifier-groups'],
+            'bulk prices' => ['POST', '/api/v1/catalog/prices/bulk'],
+            'price history' => ['GET', '/api/v1/catalog/price-history'],
+            'tables' => ['GET', '/api/v1/tables'],
+            'create table' => ['POST', '/api/v1/tables'],
+            'table requests' => ['GET', '/api/v1/table-requests'],
+            'delivery zones' => ['GET', '/api/v1/delivery-zones'],
+            'create delivery zone' => ['POST', '/api/v1/delivery-zones'],
+            'delivery check' => ['POST', '/api/v1/delivery-zones/check'],
+            'orders' => ['GET', '/api/v1/orders'],
+            'orders summary' => ['GET', '/api/v1/orders/summary'],
+            'orders live version' => ['GET', '/api/v1/orders/live-version'],
+            'dashboard overview' => ['GET', '/api/v1/dashboard/overview'],
+            'dashboard layout' => ['GET', '/api/v1/dashboard/layout'],
+            'save dashboard layout' => ['PUT', '/api/v1/dashboard/layout'],
+            'reset dashboard layout' => ['DELETE', '/api/v1/dashboard/layout'],
+            'dashboard widget' => ['GET', '/api/v1/dashboard/widgets/goal'],
+            'post shift note' => ['POST', '/api/v1/dashboard/shift-notes'],
+            'create staff order' => ['POST', '/api/v1/orders'],
+            'discounts' => ['GET', '/api/v1/discounts'],
+            'create discount' => ['POST', '/api/v1/discounts'],
+            'payments' => ['GET', '/api/v1/payments'],
+            'payments summary' => ['GET', '/api/v1/payments/summary'],
+            'customers' => ['GET', '/api/v1/customers'],
+            'customers export' => ['GET', '/api/v1/customers/export'],
+            'loyalty program' => ['GET', '/api/v1/loyalty/program'],
+            'update loyalty program' => ['PUT', '/api/v1/loyalty/program'],
+            'create tier' => ['POST', '/api/v1/loyalty/tiers'],
+            'create cashback rule' => ['POST', '/api/v1/loyalty/cashback-rules'],
+            'kitchen setup' => ['GET', '/api/v1/kitchen/setup'],
+            'create station' => ['POST', '/api/v1/kitchen/stations'],
+            'create kitchen device' => ['POST', '/api/v1/kitchen/devices'],
+        ];
+    }
+
+    #[DataProvider('tenantEndpoints')]
+    public function test_staff_of_tenant_a_cannot_open_tenant_b(string $method, string $uri): void
+    {
+        $this->json($method, $uri, [], $this->staffHeaders($this->ownerA, $this->b))
+            ->assertForbidden()
+            ->assertJsonPath('code', 'not_a_member')
+            ->assertJsonMissingPath('data');
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function recordEndpoints(): array
+    {
+        return [
+            'show branch' => ['GET', '/api/v1/branches/{branch}'],
+            'update branch' => ['PUT', '/api/v1/branches/{branch}'],
+            'branch hours' => ['PUT', '/api/v1/branches/{branch}/opening-hours'],
+            'branch status' => ['GET', '/api/v1/branches/{branch}/open-status'],
+            'member roles' => ['PUT', '/api/v1/team/{member}/roles'],
+            'update category' => ['PUT', '/api/v1/catalog/categories/{category}'],
+            'delete category' => ['DELETE', '/api/v1/catalog/categories/{category}'],
+            'show product' => ['GET', '/api/v1/catalog/products/{product}'],
+            'update product' => ['PUT', '/api/v1/catalog/products/{product}'],
+            'delete product' => ['DELETE', '/api/v1/catalog/products/{product}'],
+            'product variants' => ['PUT', '/api/v1/catalog/products/{product}/variants'],
+            'product branch prices' => ['PUT', '/api/v1/catalog/products/{product}/branch-prices'],
+            'product modifier groups' => ['PUT', '/api/v1/catalog/products/{product}/modifier-groups'],
+            'product availability' => ['PUT', '/api/v1/catalog/products/{product}/availability'],
+            'product image upload' => ['POST', '/api/v1/catalog/products/{product}/images'],
+            'product image delete' => ['DELETE', '/api/v1/catalog/products/{product}/images/{image}'],
+            'update modifier group' => ['PUT', '/api/v1/catalog/modifier-groups/{group}'],
+            'delete modifier group' => ['DELETE', '/api/v1/catalog/modifier-groups/{group}'],
+            'update table' => ['PUT', '/api/v1/tables/{table}'],
+            'issue table qr' => ['POST', '/api/v1/tables/{table}/qr'],
+            'close table session' => ['POST', '/api/v1/tables/{table}/close-session'],
+            'acknowledge table request' => ['POST', '/api/v1/table-requests/{request}/acknowledge'],
+            'update delivery zone' => ['PUT', '/api/v1/delivery-zones/{zone}'],
+            'delete delivery zone' => ['DELETE', '/api/v1/delivery-zones/{zone}'],
+            'show order' => ['GET', '/api/v1/orders/{order}'],
+            'order status' => ['POST', '/api/v1/orders/{order}/status'],
+            'update discount' => ['PUT', '/api/v1/discounts/{discount}'],
+            'delete discount' => ['DELETE', '/api/v1/discounts/{discount}'],
+            'order payments' => ['GET', '/api/v1/orders/{order}/payments'],
+            'record payment' => ['POST', '/api/v1/orders/{order}/payments'],
+            'refund payment' => ['POST', '/api/v1/payments/{payment}/refunds'],
+            'show customer' => ['GET', '/api/v1/customers/{customer}'],
+            'update customer' => ['PATCH', '/api/v1/customers/{customer}'],
+            'customer wallet ledger' => ['GET', '/api/v1/customers/{customer}/wallet-transactions'],
+            'customer points ledger' => ['GET', '/api/v1/customers/{customer}/points-transactions'],
+            'wallet adjustment' => ['POST', '/api/v1/customers/{customer}/wallet-adjustments'],
+            'points adjustment' => ['POST', '/api/v1/customers/{customer}/points-adjustments'],
+            'staff wallet payment' => ['POST', '/api/v1/orders/{order}/wallet-payment'],
+            'update tier' => ['PUT', '/api/v1/loyalty/tiers/{tier}'],
+            'delete tier' => ['DELETE', '/api/v1/loyalty/tiers/{tier}'],
+            'update cashback rule' => ['PUT', '/api/v1/loyalty/cashback-rules/{rule}'],
+            'delete cashback rule' => ['DELETE', '/api/v1/loyalty/cashback-rules/{rule}'],
+            'delete shift note' => ['DELETE', '/api/v1/dashboard/shift-notes/{note}'],
+            'update station' => ['PUT', '/api/v1/kitchen/stations/{station}'],
+            'delete station' => ['DELETE', '/api/v1/kitchen/stations/{station}'],
+            'station routing' => ['PUT', '/api/v1/kitchen/stations/{station}/products'],
+            'repair device' => ['POST', '/api/v1/kitchen/devices/{device}/repair'],
+            'revoke device' => ['POST', '/api/v1/kitchen/devices/{device}/revoke'],
+            'kds start item' => ['POST', '/api/v1/kds/items/{kitchenItem}/start'],
+            'kds ready item' => ['POST', '/api/v1/kds/items/{kitchenItem}/ready'],
+            'kds recall item' => ['POST', '/api/v1/kds/items/{kitchenItem}/recall'],
+            'kds bump order' => ['POST', '/api/v1/kds/orders/{order}/bump'],
+            'kds acknowledge call' => ['POST', '/api/v1/kds/table-requests/{request}/acknowledge'],
+            'category image' => ['POST', '/api/v1/catalog/categories/{category}/image'],
+            'delete category image' => ['DELETE', '/api/v1/catalog/categories/{category}/image'],
+            'update story' => ['POST', '/api/v1/stories/{story}'],
+            'delete story' => ['DELETE', '/api/v1/stories/{story}'],
+        ];
+    }
+
+    #[DataProvider('recordEndpoints')]
+    public function test_foreign_record_ids_do_not_exist_inside_own_tenant(string $method, string $uri): void
+    {
+        $uri = str_replace(
+            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}'],
+            [$this->branchB->id, $this->memberB->id, $this->catalogB['category'], $this->catalogB['product'], $this->catalogB['group'], $this->catalogB['image'],
+                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story']],
+            $uri,
+        );
+
+        $this->json($method, $uri, ['name' => 'x', 'slug' => 'x', 'intervals' => [], 'role_ids' => ['x'], 'amount' => 1000, 'reason' => 'x', 'idempotency_key' => 'x', 'min_spend' => 5, 'kind' => 'fixed', 'value' => 5, 'station_id' => $this->commerceB['station'], 'product_ids' => []], $this->staffHeaders($this->ownerA, $this->a))
+            ->assertNotFound()
+            ->assertJsonPath('code', 'not_found');
+
+        // And nothing changed on B's side.
+        $this->inTenant($this->b, function (): void {
+            $this->assertSame('شعبه مرکزی', $this->branchB->fresh()?->name);
+            $product = Product::query()->with('variants.prices', 'images')->findOrFail($this->catalogB['product']);
+            $this->assertSame('محصول ب', $product->name);
+            $this->assertSame(500_000, $product->variants->sole()->prices->sole()->amount);
+            $this->assertCount(1, $product->images);
+            $this->assertTrue(ModifierGroup::query()->whereKey($this->catalogB['group'])->exists());
+            $this->assertTrue(Category::query()->whereKey($this->catalogB['category'])->exists());
+            $this->assertSame('placed', Order::query()->findOrFail($this->commerceB['order'])->status->value);
+            $this->assertTrue(DeliveryZone::query()->whereKey($this->commerceB['zone'])->exists());
+            $this->assertTrue((bool) Discount::query()->whereKey($this->commerceB['discount'])->value('is_active'));
+            $this->assertSame('میز ب', RestaurantTable::query()->findOrFail($this->commerceB['table'])->label);
+            $this->assertSame(0, Payment::query()->where('order_id', $this->commerceB['order'])->where('status', PaymentAttemptStatus::Paid)->count());
+            $this->assertSame(500_000, Wallet::query()->where('customer_id', $this->commerceB['customer'])->value('balance'));
+            $this->assertSame('مشتری ب', Customer::query()->findOrFail($this->commerceB['customer'])->name);
+            $this->assertSame(0, LoyaltyTier::query()->findOrFail($this->commerceB['tier'])->min_spend);
+            $this->assertSame(1, CashbackRule::query()->findOrFail($this->commerceB['rule'])->value);
+            $this->assertSame('queued', KitchenItem::query()->findOrFail($this->commerceB['kitchen_item'])->status->value);
+            $this->assertSame('بار ب', KitchenStation::query()->findOrFail($this->commerceB['station'])->name);
+            $this->assertTrue(ShiftNote::query()->whereKey($this->commerceB['note'])->exists());
+            $this->assertSame('استوری ب', Story::query()->findOrFail($this->commerceB['story'])->caption);
+        });
+    }
+
+    public function test_lists_contain_only_own_tenant_rows(): void
+    {
+        $headers = $this->staffHeaders($this->ownerA, $this->a);
+
+        $branchIds = collect($this->getJson('/api/v1/branches', $headers)->assertOk()->json('data'))->pluck('id');
+        $this->assertNotContains($this->branchB->id, $branchIds);
+
+        $memberUserIds = collect($this->getJson('/api/v1/team', $headers)->assertOk()->json('data'))->pluck('user.id');
+        $this->assertNotContains($this->ownerB->id, $memberUserIds);
+
+        $auditTenantActions = collect($this->getJson('/api/v1/audit-logs', $headers)->assertOk()->json('data'))->pluck('subject_id');
+        $this->assertNotContains($this->b->id, $auditTenantActions);
+
+        $this->assertSame([], $this->getJson('/api/v1/catalog/products', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/catalog/categories', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/catalog/modifier-groups', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/catalog/price-history', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/public/menu', ['X-Tenant' => $this->a->slug])->assertOk()->json('data.products'));
+        $this->assertSame([], $this->getJson('/api/v1/orders', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/tables', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/table-requests', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/delivery-zones', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/discounts', $headers)->assertOk()->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/payments', $headers)->assertOk()->json('data'));
+        $this->assertSame(0, collect($this->getJson('/api/v1/payments/summary', $headers)->assertOk()->json('data.methods'))->sum('count'));
+        $this->assertSame([], $this->getJson('/api/v1/customers', $headers)->assertOk()->json('data'));
+        $this->assertStringNotContainsString('09127777777', $this->get('/api/v1/customers/export', $headers)->assertOk()->streamedContent());
+        $this->assertSame([], $this->getJson('/api/v1/loyalty/program', $headers)->assertOk()->json('data.tiers'));
+        $this->assertSame([], $this->getJson('/api/v1/dashboard/widgets/shift_notes', $headers)->assertOk()->json('data.notes'));
+        $this->assertSame([], $this->getJson('/api/v1/dashboard/widgets/branches', $headers)->assertOk()->json('data.branches.1') ?? []);
+    }
+
+    public function test_storefront_tokens_of_tenant_b_are_worthless_at_tenant_a(): void
+    {
+        $a = ['X-Tenant' => $this->a->slug, 'Accept' => 'application/json'];
+
+        $this->postJson('/api/v1/public/tables/session', ['qr_token' => $this->commerceB['qr']], $a)->assertNotFound();
+        $this->postJson('/api/v1/public/tables/requests', ['type' => 'call_waiter'], [...$a, 'X-Table-Session' => $this->commerceB['session']])->assertStatus(410);
+        $this->getJson('/api/v1/public/cart', [...$a, 'X-Cart-Token' => $this->commerceB['cart']])->assertNotFound();
+        $this->postJson('/api/v1/public/checkout', [], [...$a, 'X-Cart-Token' => $this->commerceB['cart'], 'Idempotency-Key' => 'x'])->assertNotFound();
+        $this->getJson("/api/v1/public/orders/{$this->commerceB['order']}?token={$this->commerceB['tracking']}", $a)->assertNotFound();
+        $this->postJson("/api/v1/public/orders/{$this->commerceB['order']}/pay", [], [...$a, 'X-Order-Token' => $this->commerceB['tracking']])->assertNotFound();
+        $this->postJson("/api/v1/public/payments/{$this->commerceB['payment']}/verify", ['authority' => 'FAKEBONLY'], $a)->assertNotFound();
+
+        // B's kitchen tablet is useless at A, and A's staff can't open B's kitchen.
+        $this->getJson('/api/v1/kds/board', [...$a, 'Authorization' => 'Bearer '.$this->commerceB['device_token']])->assertUnauthorized();
+        $this->getJson('/api/v1/kds/board', $this->staffHeaders($this->ownerA, $this->b))->assertForbidden();
+        $this->assertSame([], $this->getJson('/api/v1/kds/board', $this->staffHeaders($this->ownerA, $this->a))->json('data.orders') ?? []);
+        $this->assertSame('pending', $this->inTenant($this->b, fn () => Payment::query()->findOrFail($this->commerceB['payment'])->status->value));
+
+        // Tenant B's coupon means nothing at tenant A.
+        $branchA = $this->inTenant($this->a, fn () => Branch::query()->firstOrFail());
+        $table = $this->inTenant($this->a, fn () => RestaurantTable::query()->create(['branch_id' => $branchA->id, 'label' => 'الف']));
+        $qr = $this->inTenant($this->a, fn () => app(ManageTableQr::class)->issue($table)['token']);
+        $session = $this->postJson('/api/v1/public/tables/session', ['qr_token' => $qr], $a)->json('data.session_token');
+        $cart = $this->postJson('/api/v1/public/carts', ['order_type' => 'qr_table'], [...$a, 'X-Table-Session' => $session])->assertCreated()->json('data.cart_token');
+
+        // And B's product variant can't be put in A's cart.
+        $variantB = $this->inTenant($this->b, fn () => Product::query()->findOrFail($this->catalogB['product'])->variants()->value('id'));
+        $this->postJson('/api/v1/public/cart/items', ['variant_id' => $variantB, 'quantity' => 1], [...$a, 'X-Cart-Token' => $cart])
+            ->assertUnprocessable()->assertJsonValidationErrors('variant_id');
+
+        $this->getJson('/api/v1/public/cart?coupon_code=BONLY', [...$a, 'X-Cart-Token' => $cart])->assertOk()->assertJsonPath('data.quote.discount', null);
+
+        // Phase 7 storefront: A's shell never lists B's branches; B's branch can't be zone-checked at A.
+        $shell = $this->getJson('/api/v1/public/storefront', $a)->assertOk();
+        $this->assertNotContains($this->branchB->id, array_column($shell->json('data.branches'), 'id'));
+        $this->postJson('/api/v1/public/delivery/check', ['branch_id' => $this->branchB->id, 'latitude' => 35.7, 'longitude' => 51.4], $a)
+            ->assertUnprocessable()->assertJsonValidationErrors('branch_id');
+        $this->getJson("/api/v1/public/preorder-slots?branch_id={$this->branchB->id}", $a)->assertUnprocessable()->assertJsonValidationErrors('branch_id');
+
+        // Phase 7b stories: B's story is invisible and can't be counted at A; B's product can't be linked from A.
+        $this->assertSame([], $this->getJson('/api/v1/public/stories', $a)->assertOk()->json('data'));
+        $this->postJson("/api/v1/public/stories/{$this->commerceB['story']}/seen", [], $a)->assertNotFound();
+        $this->postJson("/api/v1/public/stories/{$this->commerceB['story']}/click", [], $a)->assertNotFound();
+        $this->assertSame(0, $this->inTenant($this->b, fn () => Story::query()->findOrFail($this->commerceB['story'])->views));
+        $this->assertSame([], $this->getJson('/api/v1/stories', $this->staffHeaders($this->ownerA, $this->a))->assertOk()->json('data'));
+        Storage::fake('public');
+        $this->post('/api/v1/stories', [
+            'image' => UploadedFile::fake()->image('s.jpg', 900, 1600),
+            'link_type' => 'product', 'link_target' => $this->catalogB['product'],
+        ], [...$this->staffHeaders($this->ownerA, $this->a), 'Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('link_target');
+        $this->app['auth']->forgetGuards();
+
+        // Reorder: B's customer token is worthless at A, and A's customer can't copy B's order.
+        $customerB = $this->inTenant($this->b, fn () => Customer::query()->findOrFail($this->commerceB['customer']));
+        $this->postJson('/api/v1/public/cart/reorder', ['order_id' => $this->commerceB['order']], [...$a, 'X-Cart-Token' => $cart, 'Authorization' => 'Bearer '.$customerB->createToken('t', ['customer'])->plainTextToken])
+            ->assertStatus(401);
+        $customerA = $this->inTenant($this->a, fn () => Customer::query()->create(['phone_e164' => '+989127777777', 'name' => 'مشتری الف']));
+        $this->app['auth']->forgetGuards();
+        $this->postJson('/api/v1/public/cart/reorder', ['order_id' => $this->commerceB['order']], [...$a, 'X-Cart-Token' => $cart, 'Authorization' => 'Bearer '.$customerA->createToken('t', ['customer'])->plainTextToken])
+            ->assertNotFound();
+    }
+
+    public function test_foreign_ids_inside_payloads_are_rejected(): void
+    {
+        $headers = $this->staffHeaders($this->ownerA, $this->a);
+
+        $this->postJson('/api/v1/catalog/products', [
+            'name' => 'نفوذی',
+            'category_ids' => [$this->catalogB['category']],
+            'variants' => [['base_price' => 1]],
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('category_ids.0');
+
+        $this->postJson('/api/v1/catalog/prices/bulk', [
+            'target' => ['product_ids' => [$this->catalogB['product']]],
+            'operation' => 'exact',
+            'value' => 1,
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('target.product_ids.0');
+
+        $productA = $this->postJson('/api/v1/catalog/products/quick', ['name' => 'الف', 'price' => 1000], $headers)->assertCreated()->json('data.id');
+
+        $this->putJson("/api/v1/catalog/products/{$productA}/modifier-groups", ['modifier_group_ids' => [$this->catalogB['group']]], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('modifier_group_ids.0');
+        $this->putJson("/api/v1/catalog/products/{$productA}/availability", ['branch_id' => $this->branchB->id, 'status' => 'hidden'], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('branch_id');
+        $this->putJson("/api/v1/catalog/products/{$productA}/branch-prices", ['branch_id' => $this->branchB->id, 'prices' => [['variant_id' => 'x', 'amount' => 1]]], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('branch_id');
+    }
+
+    public function test_foreign_role_ids_cannot_be_assigned(): void
+    {
+        $roleOfB = $this->inTenant($this->b, fn () => Role::query()->where('key', 'manager')->firstOrFail());
+
+        $this->postJson('/api/v1/team', [
+            'name' => 'نفوذی',
+            'phone' => '09350000000',
+            'role_ids' => [$roleOfB->id],
+        ], $this->staffHeaders($this->ownerA, $this->a))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('role_ids.0');
+    }
+
+    public function test_same_branch_slug_is_allowed_in_different_tenants(): void
+    {
+        // Both tenants already own a branch with slug "main"; uniqueness is per tenant.
+        $this->postJson('/api/v1/branches', ['name' => 'ونک', 'slug' => 'vanak'], $this->staffHeaders($this->ownerA, $this->a))->assertCreated();
+        $this->postJson('/api/v1/branches', ['name' => 'ونک', 'slug' => 'vanak'], $this->staffHeaders($this->ownerB, $this->b))->assertCreated();
+    }
+}

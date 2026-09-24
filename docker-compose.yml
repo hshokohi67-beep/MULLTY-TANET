@@ -1,0 +1,35 @@
+# Local development services. Application code runs on the host (php artisan serve / next dev).
+#   docker compose up -d
+# Then in apps/api/.env: DB_CONNECTION=mysql, DB_HOST=127.0.0.1, DB_PORT=3307, DB_DATABASE=cafe,
+# DB_USERNAME=cafe, DB_PASSWORD=cafe, REDIS_HOST=127.0.0.1, REDIS_PORT=6380
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: cafe
+      MYSQL_USER: cafe
+      MYSQL_PASSWORD: cafe
+      MYSQL_ROOT_PASSWORD: root
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot']
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6380:6379'
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '8026:8025'
+      - '1026:1025'
+
+volumes:
+  mysql-data:

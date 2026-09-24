@@ -1,0 +1,22 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - app
+        - database/seeders
+    tmpDir: storage/framework/phpstan
+    # Module migrations live next to their module, so Larastan must be told where to read the schema.
+    databaseMigrationsPath:
+        - database/migrations
+        - app/Modules/Core/Database/Migrations
+        - app/Modules/Identity/Database/Migrations
+        - app/Modules/Customers/Database/Migrations
+        - app/Modules/Catalog/Database/Migrations
+        - app/Modules/Commerce/Database/Migrations
+        - app/Modules/Discounts/Database/Migrations
+        - app/Modules/Payments/Database/Migrations
+        - app/Modules/Loyalty/Database/Migrations
+        - app/Modules/Kitchen/Database/Migrations
+        - app/Modules/Insights/Database/Migrations

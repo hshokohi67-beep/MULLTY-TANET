@@ -1,0 +1,157 @@
+/* دکمه شناور باز کردن پاپ‌آپ — هم‌رنگ با تم اصلی کافه (تیل) به‌جای نارنجی قبلی */
+.lcm-floating-btn {
+    position: fixed;
+    bottom: 95px;
+    right: 20px;
+    background: linear-gradient(135deg, var(--accent-color, #2ec4b6) 0%, #139a8c 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(46, 196, 182, 0.4);
+    z-index: 9999;
+    transition: transform 0.3s ease;
+}
+
+.lcm-floating-btn:hover {
+    transform: translateY(-3px);
+}
+
+/* پس‌زمینه تاریک پاپ‌آپ */
+.lcm-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px); /* افکت تار شدن پس‌زمینه */
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* بدنه اصلی پاپ‌آپ با افکت شیشه‌ای (Glassmorphism) — حالا دقیقاً هم‌سبک با کارت‌های منو و پنل کاربری */
+.lcm-popup-content {
+    background: var(--surface-color, rgba(22, 26, 29, 0.9));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 24px;
+    padding: 30px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    position: relative;
+    color: var(--text-color, #f5f3f4);
+    direction: rtl;
+    text-align: right;
+}
+
+/* دکمه بستن */
+.lcm-close-btn {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.3s ease;
+}
+
+.lcm-close-btn:hover {
+    color: var(--accent-color, #2ec4b6);
+}
+
+/* هدر و متون پاپ‌آپ */
+.lcm-popup-header h3 {
+    margin-top: 0;
+    font-size: 22px;
+    color: var(--text-color, #fff);
+}
+
+.lcm-popup-header p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 20px;
+}
+
+/* استایل فرم و اینپوت‌ها */
+.lcm-input-group, .lcm-date-group {
+    margin-bottom: 15px;
+}
+
+.lcm-date-group {
+    display: flex;
+    gap: 10px;
+}
+
+.lcm-popup-content input,
+.lcm-popup-content select {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--ios-glass, rgba(255, 255, 255, 0.05));
+    color: var(--text-color, #fff);
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.lcm-popup-content input:focus,
+.lcm-popup-content select:focus {
+    border-color: var(--accent-color, #2ec4b6);
+}
+
+.lcm-popup-content input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.lcm-popup-content select option {
+    background: #161a1d;
+    color: #fff;
+}
+
+/* دکمه ثبت نام — هم‌رنگ با دکمه‌های اصلی اپلیکیشن (تیل) به‌جای گرادینت سبز قبلی */
+.lcm-submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent-color, #2ec4b6) 0%, #139a8c 100%);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 14px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(46, 196, 182, 0.3);
+    transition: opacity 0.3s ease;
+}
+
+.lcm-submit-btn:hover {
+    opacity: 0.9;
+}
+
+/* استایل‌های مربوط به موتور تخفیف گروهی (خط خوردن قیمت در منو) */
+.lcm-original-price {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+.lcm-discounted-price {
+    font-weight: bold;
+    animation: lcm-pulse 1.5s infinite;
+}
+
+@keyframes lcm-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}

@@ -1,0 +1,7 @@
+# Keep LF everywhere (the code runs on Linux in CI and cloud sessions).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.woff2 binary
+*.ico binary

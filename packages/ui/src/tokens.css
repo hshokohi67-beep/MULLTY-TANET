@@ -1,0 +1,184 @@
+/*
+ * Design tokens: the single source of colour, type, radius, elevation and motion for every
+ * experience (dashboard, KDS, storefront, super admin). Components never hard-code colours.
+ *
+ * Direction ("calm café"): warm paper-like neutrals instead of cold greys, one confident
+ * teal-green brand colour, a restrained amber accent for highlights, soft layered shadows and
+ * short, quiet motion. Dark mode is its own palette (soft charcoal, never pure black), not an
+ * inversion. RTL-first: layout uses logical properties (start/end), never left/right.
+ */
+:root {
+  color-scheme: light;
+
+  --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  --color-brand: #0e7c6b;
+  --color-brand-strong: #0a5f52;
+  --color-brand-soft: #daf1ea;
+  --color-on-brand: #ffffff;
+
+  --color-accent: #b45309;
+  --color-accent-soft: #fdf1dc;
+
+  --color-bg: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1efea;
+  --color-surface-raised: #ffffff;
+  --color-border: #e6e2da;
+  --color-border-strong: #d2cdc2;
+
+  --color-text: #1d1c1a;
+  --color-text-muted: #625f57;
+  --color-text-subtle: #8a867c;
+
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+  --color-success: #067647;
+  --color-success-soft: #e3f6ec;
+  --color-warning: #a15c07;
+  --color-warning-soft: #fdf3dd;
+  --color-info: #175cd3;
+  --color-info-soft: #e5f0ff;
+
+  /* Chart roles (validated with the dataviz method): one brand series, a neutral reference,
+     and a fixed categorical order for shares. */
+  --viz-1: #0e7c6b;
+  --viz-ref: #c9c4b8;
+  --viz-cat-1: #2a78d6;
+  --viz-cat-2: #eb6834;
+  --viz-cat-3: #1baf7a;
+  --viz-cat-4: #eda100;
+  --viz-grid: #ece9e2;
+
+  /* Menu mood (storefront): warm amber/terracotta for hot items, clear sky blue for cold.
+     "ink" is the text colour (AA on surface and soft), "glow" the halo behind photos. */
+  --mood-hot: #f97316;
+  --mood-hot-ink: #c2410c;
+  --mood-hot-soft: #fff1e6;
+  --mood-cold: #0ea5e9;
+  --mood-cold-ink: #0369a1;
+  --mood-cold-soft: #e6f3fb;
+
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-brand) 30%, transparent);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-sm: 0 1px 2px rgb(40 32 20 / 0.05), 0 1px 1px rgb(40 32 20 / 0.03);
+  --shadow-md: 0 2px 4px rgb(40 32 20 / 0.04), 0 8px 24px -6px rgb(40 32 20 / 0.10);
+  --shadow-lg: 0 4px 8px rgb(40 32 20 / 0.05), 0 20px 48px -12px rgb(40 32 20 / 0.18);
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-brand: #3cc4a8;
+    --color-brand-strong: #6ad8c1;
+    --color-brand-soft: #143a33;
+    --color-on-brand: #04241d;
+    --color-accent: #f0a73a;
+    --color-accent-soft: #3a2a10;
+    --color-bg: #121211;
+    --color-surface: #1a1a18;
+    --color-surface-muted: #222220;
+    --color-surface-raised: #242421;
+    --color-border: #2e2d2a;
+    --color-border-strong: #3e3d39;
+    --color-text: #f1efe9;
+    --color-text-muted: #b3b0a6;
+    --color-text-subtle: #8a877e;
+    --color-danger: #f47067;
+    --color-danger-soft: #3a1714;
+    --color-success: #4cc98c;
+    --color-success-soft: #10301f;
+    --color-warning: #f4b43d;
+    --color-warning-soft: #362710;
+    --color-info: #7fb8ff;
+    --color-info-soft: #122840;
+    --viz-1: #3cc4a8;
+    --viz-ref: #4a4944;
+    --viz-cat-1: #3987e5;
+    --viz-cat-2: #d95926;
+    --viz-cat-3: #199e70;
+    --viz-cat-4: #c98500;
+    --viz-grid: #2a2a27;
+    --mood-hot: #fb923c;
+    --mood-hot-ink: #fdba74;
+    --mood-hot-soft: #3a2415;
+    --mood-cold: #38bdf8;
+    --mood-cold-ink: #7dd3fc;
+    --mood-cold-soft: #0e2a38;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.35), 0 20px 48px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-brand: #3cc4a8;
+  --color-brand-strong: #6ad8c1;
+  --color-brand-soft: #143a33;
+  --color-on-brand: #04241d;
+  --color-accent: #f0a73a;
+  --color-accent-soft: #3a2a10;
+  --color-bg: #121211;
+  --color-surface: #1a1a18;
+  --color-surface-muted: #222220;
+  --color-surface-raised: #242421;
+  --color-border: #2e2d2a;
+  --color-border-strong: #3e3d39;
+  --color-text: #f1efe9;
+  --color-text-muted: #b3b0a6;
+  --color-text-subtle: #8a877e;
+  --color-danger: #f47067;
+  --color-danger-soft: #3a1714;
+  --color-success: #4cc98c;
+  --color-success-soft: #10301f;
+  --color-warning: #f4b43d;
+  --color-warning-soft: #362710;
+  --color-info: #7fb8ff;
+  --color-info-soft: #122840;
+  --viz-1: #3cc4a8;
+  --viz-ref: #4a4944;
+  --viz-cat-1: #3987e5;
+  --viz-cat-2: #d95926;
+  --viz-cat-3: #199e70;
+  --viz-cat-4: #c98500;
+  --viz-grid: #2a2a27;
+  --mood-hot: #fb923c;
+  --mood-hot-ink: #fdba74;
+  --mood-hot-soft: #3a2415;
+  --mood-cold: #38bdf8;
+  --mood-cold-ink: #7dd3fc;
+  --mood-cold-soft: #0e2a38;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.35), 0 20px 48px -12px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
