@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
-  Aperture, Armchair, Boxes, ChefHat, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
+  Aperture, Armchair, Boxes, ChefHat, CalendarClock, Receipt, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
   Search, Settings, ShoppingCart, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
@@ -15,7 +15,7 @@ import { NotificationBell } from './NotificationBell';
 
 const ICONS: Record<string, LucideIcon> = {
   overview: LayoutDashboard, orders: ReceiptText, kitchen: ChefHat, tables: Armchair, menu: UtensilsCrossed,
-  discounts: Tags, stories: Aperture, inventory: Boxes, purchases: ShoppingCart, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
+  discounts: Tags, stories: Aperture, inventory: Boxes, purchases: ShoppingCart, staff: CalendarClock, expenses: Receipt, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
 };
 
 export interface NavLink { href: string; label: string; icon: keyof typeof ICONS | string; external?: boolean }

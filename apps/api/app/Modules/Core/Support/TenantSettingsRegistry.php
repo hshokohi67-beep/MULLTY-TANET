@@ -24,6 +24,7 @@ final class TenantSettingsRegistry
             'preorder.slot_capacity' => ['type' => 'int', 'secret' => false, 'label' => 'ظرفیت هر بازه (۰ = نامحدود)', 'rules' => ['integer', 'between:0,500'], 'default' => 0],
             'preorder.release_minutes' => ['type' => 'int', 'secret' => false, 'label' => 'ارسال به آشپزخانه چند دقیقه قبل از زمان تحویل', 'rules' => ['integer', 'between:0,240'], 'default' => 20],
             'onboarding.skipped' => ['type' => 'string', 'secret' => false, 'label' => 'مراحل راه‌اندازی ردشده', 'rules' => ['nullable', 'string', 'max:200', 'regex:/^[a-z,]*$/'], 'default' => null],
+            'staff.monthly_hours' => ['type' => 'int', 'secret' => false, 'label' => 'ساعت کار استاندارد ماهانه (برای حقوق ماهانه)', 'rules' => ['integer', 'between:40,400'], 'default' => 192],
             'payments.online.enabled' => ['type' => 'bool', 'secret' => false, 'label' => 'پرداخت آنلاین', 'rules' => ['boolean'], 'default' => false],
             'payments.zarinpal.merchant_id' => ['type' => 'string', 'secret' => true, 'label' => 'مرچنت کد زرین‌پال', 'rules' => ['nullable', 'string', 'regex:/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/'], 'default' => null],
             'loyalty.enabled' => ['type' => 'bool', 'secret' => false, 'label' => 'باشگاه مشتریان فعال است', 'rules' => ['boolean'], 'default' => false],

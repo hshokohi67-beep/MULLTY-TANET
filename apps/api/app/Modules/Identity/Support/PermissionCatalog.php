@@ -77,6 +77,12 @@ final class PermissionCatalog
 
     public const PURCHASING_MANAGE = 'purchasing.manage';
 
+    public const EXPENSES_MANAGE = 'expenses.manage';
+
+    public const STAFF_MANAGE = 'staff.manage';
+
+    public const ATTENDANCE_SELF = 'attendance.self';
+
     /**
      * key => [group, Persian label]
      *
@@ -119,6 +125,9 @@ final class PermissionCatalog
             self::INVENTORY_VIEW => ['group' => 'inventory', 'label' => 'مشاهده‌ی انبار، موجودی و دستور پخت'],
             self::INVENTORY_MANAGE => ['group' => 'inventory', 'label' => 'مدیریت مواد اولیه، دستور پخت، ضایعات و انبارگردانی'],
             self::PURCHASING_MANAGE => ['group' => 'inventory', 'label' => 'خرید از تأمین‌کننده و پرداخت به او'],
+            self::EXPENSES_MANAGE => ['group' => 'operations', 'label' => 'ثبت و مدیریت هزینه‌ها'],
+            self::STAFF_MANAGE => ['group' => 'operations', 'label' => 'کارکنان، برنامه‌ی شیفت، حضور و غیاب و حقوق'],
+            self::ATTENDANCE_SELF => ['group' => 'operations', 'label' => 'ثبت ورود و خروج خود'],
         ];
     }
 

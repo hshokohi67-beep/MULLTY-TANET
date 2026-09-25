@@ -3,6 +3,7 @@ import { ChefHat } from 'lucide-react';
 import { formatPhone } from '@cafe/locale';
 import { requireMembership } from '@/lib/auth';
 import { AppShell, type NavGroup } from './AppShell';
+import { TimeClockButton } from './TimeClockButton';
 
 export default async function DashboardLayout({ children }: LayoutProps<'/dashboard'>) {
   const { user, membership, memberships, can } = await requireMembership();
@@ -34,6 +35,13 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       ],
     },
     {
+      title: 'کارکنان و هزینه‌ها',
+      items: [
+        ...(can('staff.manage') ? [{ href: '/dashboard/staff', label: 'کارکنان و شیفت', icon: 'staff' }] : []),
+        ...(can('expenses.manage') ? [{ href: '/dashboard/expenses', label: 'هزینه‌ها', icon: 'expenses' }] : []),
+      ],
+    },
+    {
       title: 'مشتریان و مالی',
       items: [
         ...(can('customers.view') ? [{ href: '/dashboard/customers', label: 'مشتریان', icon: 'customers' }] : []),
@@ -60,11 +68,14 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       canSwitchTenant={memberships.length > 1}
       permissions={membership.permissions}
       storefrontUrl={`/s/${membership.tenant.slug}`}
-      topActions={can('kds.operate') ? (
-        <Link href="/kds" target="_blank" className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:text-text sm:inline-flex">
-          <ChefHat className="size-4" aria-hidden="true" /> نمایشگر آشپزخانه
-        </Link>
-      ) : null}
+      topActions={<>
+        {can('attendance.self') ? <TimeClockButton /> : null}
+        {can('kds.operate') ? (
+          <Link href="/kds" target="_blank" className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:text-text sm:inline-flex">
+            <ChefHat className="size-4" aria-hidden="true" /> نمایشگر آشپزخانه
+          </Link>
+        ) : null}
+      </>}
     >
       {children}
     </AppShell>

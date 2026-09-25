@@ -47,6 +47,8 @@ const PAGE_KEYWORDS: Record<string, string> = {
   '/dashboard/team': 'کارمند همکار نقش دسترسی',
   '/dashboard/inventory': 'انبار موجودی مواد اولیه ضایعات انبارگردانی',
   '/dashboard/purchases': 'خرید تامین کننده فروشنده بدهی فاکتور خرید',
+  '/dashboard/staff': 'کارکنان کارمند پرسنل شیفت برنامه حضور غیاب ورود خروج تاخیر حقوق دستمزد',
+  '/dashboard/expenses': 'هزینه خرج اجاره قبض برق آب گاز تعمیر مخارج',
 };
 
 const normalize = (s: string) => toLatinDigits(s).replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/‌/g, ' ').toLowerCase().trim();
@@ -138,6 +140,9 @@ export function CommandPalette({ groups, permissions, storefrontUrl, open, onOpe
       can('storefront.manage') ? { id: 'act:story', group: 'کارها', title: 'استوری جدید', keywords: 'story', href: '/dashboard/stories?new=1', icon: <Aperture className="size-4" /> } : null,
       can('discounts.manage') ? { id: 'act:discount', group: 'کارها', title: 'کد تخفیف جدید', keywords: 'کوپن', href: '/dashboard/discounts', icon: <Tags className="size-4" /> } : null,
       can('purchasing.manage') ? { id: 'act:purchase', group: 'کارها', title: 'ثبت سفارش خرید', keywords: 'خرید تامین کننده مواد', href: '/dashboard/purchases/new', icon: <Plus className="size-4" /> } : null,
+      can('expenses.manage') ? { id: 'act:expense', group: 'کارها', title: 'ثبت هزینه', keywords: 'خرج اجاره قبض', href: '/dashboard/expenses', icon: <Plus className="size-4" /> } : null,
+      can('staff.manage') ? { id: 'act:shifts', group: 'کارها', title: 'برنامه‌ی شیفت این هفته', keywords: 'شیفت کارکنان برنامه', href: '/dashboard/staff?tab=schedule', icon: <FileText className="size-4" /> } : null,
+      can('staff.manage') ? { id: 'act:payroll', group: 'کارها', title: 'کارکرد و دستمزد این ماه', keywords: 'حقوق دستمزد ساعت کار', href: '/dashboard/staff?tab=payroll', icon: <FileText className="size-4" /> } : null,
       can('inventory.manage') ? { id: 'act:count', group: 'کارها', title: 'انبارگردانی', keywords: 'شمارش موجودی انبار', href: '/dashboard/inventory/count', icon: <FileText className="size-4" /> } : null,
       can('orders.view') ? { id: 'act:history', group: 'کارها', title: 'تاریخچه‌ی سفارش‌ها', keywords: 'گزارش فروش امروز دیروز', href: '/dashboard/orders/history', icon: <FileText className="size-4" /> } : null,
       { id: 'act:store', group: 'کارها', title: 'دیدن منوی آنلاین', keywords: 'فروشگاه سایت مشتری', href: storefrontUrl, external: true, icon: <ExternalLink className="size-4" /> },

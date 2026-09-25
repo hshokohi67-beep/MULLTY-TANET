@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
-  Aperture, Armchair, Bell, Boxes, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
+  Aperture, Armchair, Bell, Boxes, Receipt, Scale, UserCheck, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
 } from 'lucide-react';
 import { Badge, Card, CardHeader, EmptyState, StatTile } from '@cafe/ui';
-import { formatMoney, formatMoneyCompact, formatNumber, formatPercent, JALALI_MONTHS, toPersianDigits } from '@cafe/locale';
+import { formatMoney, formatMoneyCompact, formatNumber, formatPercent, formatTime, JALALI_MONTHS, toPersianDigits } from '@cafe/locale';
 import { MoneyColumnChart, MoneyHeatmap, MoneyShareBar } from '@/components/MoneyCharts';
 import { GoalEditor, ShiftNotes, type Note } from './WidgetClients';
 
@@ -462,7 +462,7 @@ export function FoodCostWidget({ data, ctx }: { data: { revenue: number; cost: n
       {data.coverage === null ? <Empty text="در این بازه فروشی ثبت نشده است." /> : data.coverage === 0 ? (
         <Empty text="برای آیتم‌های فروخته‌شده دستور پخت ثبت نشده؛ در صفحه‌ی هر محصول، «دستور پخت» را پر کنید." />
       ) : (
-        <div className="flex flex-col gap-4 px-5 pb-5">
+        <div className="flex flex-col gap-4 p-5">
           <div className="grid grid-cols-3 gap-3">
             <div><p className="text-xs text-text-muted">فروش</p><p className="tabular font-bold">{formatMoneyCompact(data.revenue)}</p></div>
             <div><p className="text-xs text-text-muted">بهای مواد</p><p className="tabular font-bold">{formatMoneyCompact(data.cost)}</p></div>
@@ -509,6 +509,108 @@ export function StockAlertsWidget({ data }: { data: { items: { id: string; name:
           ))}
         </ul>
       )}
+    </Shell>
+  );
+}
+
+/* ------------------------------------ operations ------------------------------------ */
+
+function Ratio({ label, ratio, limit, hint }: { label: string; ratio: number; limit: number; hint: string }) {
+  const over = ratio > limit;
+
+  return (
+    <div>
+      <p className="flex justify-between text-xs"><span className="text-text-muted">{label}</span><span className={`tabular font-semibold ${over ? 'text-warning' : ''}`}>{ratio > 1 ? 'بیش از ۱۰۰٪' : formatPercent(ratio)}</span></p>
+      <div className="relative mt-1 h-2 overflow-hidden rounded-full bg-surface-muted">
+        <div className={`h-full rounded-full ${over ? 'bg-warning' : 'bg-brand'}`} style={{ width: `${Math.min(100, ratio * 100)}%` }} />
+        <span className="absolute inset-y-0 w-0.5 bg-text-subtle/70" style={{ insetInlineStart: `${limit * 100}%` }} aria-hidden="true" />
+      </div>
+      <p className="mt-1 text-[11px] text-text-subtle">{hint}</p>
+    </div>
+  );
+}
+
+export function ProfitWidget({ data, ctx }: { data: { sales: number; cogs: number; labour: number; expenses: number; profit: number; margin: number | null; prime_cost: number | null; cogs_coverage: number | null }; ctx: WidgetContext }) {
+  const rows = [
+    { key: 'cogs', label: 'بهای مواد', value: data.cogs, href: '/dashboard/inventory' },
+    { key: 'labour', label: 'دستمزد', value: data.labour, href: '/dashboard/staff?tab=payroll' },
+    { key: 'expenses', label: 'هزینه‌ها', value: data.expenses, href: '/dashboard/expenses' },
+  ];
+  const scale = Math.max(data.sales, data.cogs + data.labour + data.expenses, 1);
+  const loss = data.profit < 0;
+
+  return (
+    <Shell icon={<Scale />} title="سود و زیان" description={`${ctx.rangeLabel} • فروش منهای مواد، دستمزد و هزینه‌ها`}>
+      {data.sales === 0 && rows.every((r) => r.value === 0) ? <Empty text="در این بازه فروش یا هزینه‌ای ثبت نشده است." /> : (
+        <div className="flex flex-col gap-4 p-5">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-xs text-text-muted">{loss ? 'زیان' : 'سود'}</p>
+              <p className={`tabular text-2xl font-bold ${loss ? 'text-danger' : 'text-success'}`}>{formatMoneyCompact(Math.abs(data.profit))}</p>
+            </div>
+            {data.margin !== null ? (
+              <Badge tone={loss ? 'danger' : data.margin < 0.1 ? 'warning' : 'success'}>
+                {data.margin < -1 ? 'هزینه‌ها بیش از دو برابر فروش' : `حاشیه‌ی سود ${formatPercent(data.margin)}`}
+              </Badge>
+            ) : null}
+          </div>
+          <ul className="flex flex-col gap-2 text-sm">
+            <li>
+              <p className="flex justify-between"><span>فروش</span><span className="tabular font-semibold">{formatMoneyCompact(data.sales)}</span></p>
+              <div className="mt-1 h-2 rounded-full bg-success/80" style={{ width: `${(data.sales / scale) * 100}%` }} aria-hidden="true" />
+            </li>
+            {rows.map((r) => (
+              <li key={r.key}>
+                <p className="flex justify-between"><Link href={r.href} className="text-text-muted hover:text-text hover:underline">− {r.label}</Link><span className="tabular">{formatMoneyCompact(r.value)}</span></p>
+                <div className="mt-1 h-2 rounded-full bg-surface-muted"><div className="h-full rounded-full bg-text-subtle/50" style={{ width: `${(r.value / scale) * 100}%` }} /></div>
+              </li>
+            ))}
+          </ul>
+          {data.prime_cost !== null ? <Ratio label="هزینه‌ی اصلی (مواد + دستمزد)" ratio={data.prime_cost} limit={0.65} hint="در کافه‌ها معمولاً زیر ۶۵٪ فروش سالم است." /> : null}
+          {data.cogs_coverage !== null && data.cogs_coverage < 1 ? <p className="text-[11px] text-text-subtle">فقط {formatPercent(data.cogs_coverage)} از اقلام فروخته‌شده دستور پخت دارند؛ بهای مواد کمتر از واقع است.</p> : null}
+        </div>
+      )}
+    </Shell>
+  );
+}
+
+export function LabourWidget({ data }: { data: { on_shift: { name: string; position: string | null; since: string; late: boolean }[]; cost_today: number; sales_today: number; ratio: number | null } }) {
+  return (
+    <Shell icon={<UserCheck />} title="نیروی کار امروز" actions={link('/dashboard/staff?tab=attendance', 'حضور و غیاب')}>
+      <div className="flex flex-col gap-4 p-5">
+        <div className="grid grid-cols-2 gap-3">
+          <div><p className="text-xs text-text-muted">سر کار</p><p className="tabular text-xl font-bold">{formatNumber(data.on_shift.length)} <span className="text-sm font-normal text-text-muted">نفر</span></p></div>
+          <div><p className="text-xs text-text-muted">دستمزد تا این لحظه</p><p className="tabular text-xl font-bold">{formatMoneyCompact(data.cost_today)}</p></div>
+        </div>
+        {data.ratio !== null ? <Ratio label="دستمزد به فروش امروز" ratio={data.ratio} limit={0.3} hint="هدف معمول: زیر ۳۰٪" /> : null}
+        {data.on_shift.length ? (
+          <ul className="flex flex-col gap-1.5 text-sm">
+            {data.on_shift.slice(0, 5).map((p) => (
+              <li key={`${p.name}${p.since}`} className="flex items-center gap-2">
+                <span className="size-2 shrink-0 rounded-full bg-success" aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate">{p.name}{p.position ? <span className="text-text-muted"> • {p.position}</span> : null}</span>
+                {p.late ? <Badge tone="warning">تأخیر</Badge> : null}
+                <span className="tabular text-xs text-text-muted">از {formatTime(p.since)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="text-sm text-text-muted">الان کسی ورود نزده است.</p>}
+      </div>
+    </Shell>
+  );
+}
+
+export function ExpensesWidget({ data, ctx }: { data: { total: number; categories: { id: string; name: string; amount: number }[] }; ctx: WidgetContext }) {
+  const parts = data.categories.slice(0, 3).map((c) => ({ key: c.id, label: c.name, value: c.amount }));
+  const rest = data.categories.slice(3).reduce((s, c) => s + c.amount, 0);
+  if (rest > 0) parts.push({ key: 'rest', label: 'سایر', value: rest });
+
+  return (
+    <Shell icon={<Receipt />} title="هزینه‌ها" description={ctx.rangeLabel} actions={link('/dashboard/expenses', 'ثبت و مرور')}>
+      <div className="flex flex-col gap-3 p-5">
+        <p className="tabular text-2xl font-bold">{formatMoneyCompact(data.total)}</p>
+        <MoneyShareBar parts={parts} caption={`هزینه‌های ${ctx.rangeLabel} به تفکیک دسته`} empty="در این بازه هزینه‌ای ثبت نشده." />
+      </div>
     </Shell>
   );
 }

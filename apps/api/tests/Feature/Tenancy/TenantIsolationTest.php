@@ -42,6 +42,11 @@ use App\Modules\Loyalty\Enums\WalletTransactionType;
 use App\Modules\Loyalty\Models\CashbackRule;
 use App\Modules\Loyalty\Models\LoyaltyTier;
 use App\Modules\Loyalty\Models\Wallet;
+use App\Modules\Operations\Models\AttendanceRecord;
+use App\Modules\Operations\Models\Employee;
+use App\Modules\Operations\Models\Expense;
+use App\Modules\Operations\Models\ExpenseCategory;
+use App\Modules\Operations\Models\Shift;
 use App\Modules\Payments\Enums\PaymentAttemptStatus;
 use App\Modules\Payments\Enums\PaymentMethod;
 use App\Modules\Payments\Models\Payment;
@@ -131,6 +136,11 @@ final class TenantIsolationTest extends TestCase
             $supplier = Supplier::query()->create(['name' => 'تأمین‌کننده ب']);
             $purchase = PurchaseOrder::query()->create(['supplier_id' => $supplier->id, 'branch_id' => $this->branchB->id, 'number' => 1, 'status' => 'ordered', 'total' => 5000]);
             $purchase->items()->create(['ingredient_id' => $ingredient->id, 'quantity' => 1000, 'unit_price' => 5000, 'line_total' => 5000]);
+            $employee = Employee::query()->create(['name' => 'کارمند ب', 'branch_id' => $this->branchB->id, 'user_id' => $this->ownerB->id, 'pay_type' => 'hourly', 'rate' => 1000]);
+            $shift = Shift::query()->create(['employee_id' => $employee->id, 'branch_id' => $this->branchB->id, 'starts_at' => now()->addDay(), 'ends_at' => now()->addDay()->addHours(8)]);
+            $attendance = AttendanceRecord::query()->create(['employee_id' => $employee->id, 'branch_id' => $this->branchB->id, 'clock_in_at' => now()->subHour(), 'source' => 'self']);
+            $expenseCategory = ExpenseCategory::query()->create(['name' => 'دسته ب']);
+            $expense = Expense::query()->create(['branch_id' => $this->branchB->id, 'category_id' => $expenseCategory->id, 'amount' => 5000, 'spent_on' => now()->toDateString(), 'method' => 'cash']);
             $story = Story::query()->create(['image_path' => 'b/s.webp', 'thumb_path' => 'b/t.webp', 'width' => 900, 'height' => 1600, 'caption' => 'استوری ب', 'starts_at' => now()->subHour(), 'ends_at' => now()->addDay()]);
             $payment = Payment::query()->create(['order_id' => $order->id, 'method' => PaymentMethod::Online, 'gateway' => 'fake', 'status' => PaymentAttemptStatus::Pending, 'amount' => $order->total, 'authority' => 'FAKEBONLY']);
 
@@ -141,6 +151,7 @@ final class TenantIsolationTest extends TestCase
                 'customer' => $customer->id, 'tier' => $tier->id, 'rule' => $rule->id,
                 'station' => $station->id, 'kitchen_item' => (string) $kitchenItem, 'device' => $device->id, 'device_token' => $deviceToken, 'note' => $note->id, 'story' => $story->id,
                 'ingredient' => $ingredient->id, 'supplier' => $supplier->id, 'purchase' => $purchase->id,
+                'employee' => $employee->id, 'shift' => $shift->id, 'attendance' => $attendance->id, 'expense_category' => $expenseCategory->id, 'expense' => $expense->id,
             ];
         });
     }
@@ -155,6 +166,22 @@ final class TenantIsolationTest extends TestCase
             'tenant profile' => ['GET', '/api/v1/tenant'],
             'stories' => ['GET', '/api/v1/stories'],
             'ingredients' => ['GET', '/api/v1/inventory/ingredients'],
+            'expense categories' => ['GET', '/api/v1/expense-categories'],
+            'create expense category' => ['POST', '/api/v1/expense-categories'],
+            'expenses' => ['GET', '/api/v1/expenses'],
+            'create expense' => ['POST', '/api/v1/expenses'],
+            'expense summary' => ['GET', '/api/v1/expenses/summary'],
+            'employees' => ['GET', '/api/v1/staff/employees'],
+            'create employee' => ['POST', '/api/v1/staff/employees'],
+            'shifts' => ['GET', '/api/v1/staff/shifts'],
+            'create shift' => ['POST', '/api/v1/staff/shifts'],
+            'copy week' => ['POST', '/api/v1/staff/shifts/copy-week'],
+            'attendance' => ['GET', '/api/v1/staff/attendance'],
+            'create attendance' => ['POST', '/api/v1/staff/attendance'],
+            'payroll' => ['GET', '/api/v1/staff/payroll'],
+            'time clock' => ['GET', '/api/v1/time-clock/me'],
+            'clock in' => ['POST', '/api/v1/time-clock/in'],
+            'clock out' => ['POST', '/api/v1/time-clock/out'],
             'create ingredient' => ['POST', '/api/v1/inventory/ingredients'],
             'stock movements' => ['GET', '/api/v1/inventory/movements'],
             'stock adjustment' => ['POST', '/api/v1/inventory/adjustments'],
@@ -292,6 +319,15 @@ final class TenantIsolationTest extends TestCase
             'delete category image' => ['DELETE', '/api/v1/catalog/categories/{category}/image'],
             'update story' => ['POST', '/api/v1/stories/{story}'],
             'update ingredient' => ['PUT', '/api/v1/inventory/ingredients/{ingredient}'],
+            'update expense category' => ['PUT', '/api/v1/expense-categories/{expenseCategory}'],
+            'delete expense category' => ['DELETE', '/api/v1/expense-categories/{expenseCategory}'],
+            'update expense' => ['PUT', '/api/v1/expenses/{expense}'],
+            'delete expense' => ['DELETE', '/api/v1/expenses/{expense}'],
+            'update employee' => ['PUT', '/api/v1/staff/employees/{employee}'],
+            'update shift' => ['PUT', '/api/v1/staff/shifts/{shift}'],
+            'delete shift' => ['DELETE', '/api/v1/staff/shifts/{shift}'],
+            'update attendance' => ['PUT', '/api/v1/staff/attendance/{attendance}'],
+            'delete attendance' => ['DELETE', '/api/v1/staff/attendance/{attendance}'],
             'delete ingredient' => ['DELETE', '/api/v1/inventory/ingredients/{ingredient}'],
             'update supplier' => ['PUT', '/api/v1/inventory/suppliers/{supplier}'],
             'show purchase' => ['GET', '/api/v1/inventory/purchases/{purchase}'],
@@ -310,9 +346,9 @@ final class TenantIsolationTest extends TestCase
     public function test_foreign_record_ids_do_not_exist_inside_own_tenant(string $method, string $uri): void
     {
         $uri = str_replace(
-            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}'],
+            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}', '{employee}', '{shift}', '{attendance}', '{expenseCategory}', '{expense}'],
             [$this->branchB->id, $this->memberB->id, $this->catalogB['category'], $this->catalogB['product'], $this->catalogB['group'], $this->catalogB['image'],
-                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase']],
+                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase'], $this->commerceB['employee'], $this->commerceB['shift'], $this->commerceB['attendance'], $this->commerceB['expense_category'], $this->commerceB['expense']],
             $uri,
         );
 
@@ -345,6 +381,10 @@ final class TenantIsolationTest extends TestCase
             $this->assertSame('قهوه ب', Ingredient::query()->findOrFail($this->commerceB['ingredient'])->name);
             $this->assertSame('ordered', PurchaseOrder::query()->findOrFail($this->commerceB['purchase'])->status);
             $this->assertSame(0, PurchaseOrder::query()->findOrFail($this->commerceB['purchase'])->paid_total);
+            $this->assertSame('کارمند ب', Employee::query()->findOrFail($this->commerceB['employee'])->name);
+            $this->assertTrue(Shift::query()->whereKey($this->commerceB['shift'])->exists());
+            $this->assertNull(AttendanceRecord::query()->findOrFail($this->commerceB['attendance'])->clock_out_at);
+            $this->assertSame(5000, Expense::query()->findOrFail($this->commerceB['expense'])->amount);
         });
     }
 
@@ -496,6 +536,24 @@ final class TenantIsolationTest extends TestCase
         $this->putJson("/api/v1/catalog/products/{$productA['id']}/recipe", ['variants' => [['variant_id' => $variantA, 'items' => [['ingredient_id' => $this->commerceB['ingredient'], 'quantity' => 5]]]]], $headers)
             ->assertUnprocessable()->assertJsonValidationErrors('variants.0.items.0.ingredient_id');
         $this->assertSame([], $this->getJson('/api/v1/inventory/ingredients', $headers)->assertOk()->json('data'));
+    }
+
+    public function test_foreign_operations_ids_inside_payloads_are_rejected(): void
+    {
+        $headers = $this->staffHeaders($this->ownerA, $this->a);
+        $branchA = $this->inTenant($this->a, fn () => Branch::query()->firstOrFail());
+
+        $this->postJson('/api/v1/staff/shifts', ['employee_id' => $this->commerceB['employee'], 'starts_at' => now()->addDay()->toIso8601String(), 'ends_at' => now()->addDay()->addHours(4)->toIso8601String()], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('employee_id');
+        $this->postJson('/api/v1/staff/attendance', ['employee_id' => $this->commerceB['employee'], 'clock_in_at' => now()->subHour()->toIso8601String()], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('employee_id');
+        $this->postJson('/api/v1/expenses', ['branch_id' => $branchA->id, 'category_id' => $this->commerceB['expense_category'], 'amount' => 1, 'spent_on' => now()->toDateString(), 'method' => 'cash'], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('category_id');
+        // B's owner is not a member of A: can't be linked as A's employee (and isn't linked at A).
+        $this->postJson('/api/v1/staff/employees', ['name' => 'x', 'branch_id' => $branchA->id, 'user_id' => $this->ownerB->id, 'pay_type' => 'hourly', 'rate' => 1], $headers)
+            ->assertStatus(422)->assertJsonPath('code', 'user_not_member');
+        $this->postJson('/api/v1/time-clock/in', [], $headers)->assertStatus(403)->assertJsonPath('code', 'not_an_employee');
+        $this->assertSame([], $this->getJson('/api/v1/staff/attendance', $headers)->assertOk()->json('data'));
     }
 
     public function test_foreign_role_ids_cannot_be_assigned(): void

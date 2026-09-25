@@ -39,6 +39,9 @@ final class WidgetCatalog
             'club_liability' => $w('بدهی باشگاه', 'موجودی کیف پول و امتیاز مشتریان، کش‌بک داده‌شده', P::CUSTOMERS_VIEW, ['sm', 'md'], 'sm'),
             'discounts' => $w('عملکرد تخفیف‌ها', 'دفعات استفاده، مبلغ تخفیف و فروش هر تخفیف', P::DISCOUNTS_MANAGE, ['sm', 'md'], 'md'),
             'shift_notes' => $w('یادداشت شیفت', 'پیام شیفت قبل برای شیفت بعد', P::TENANT_VIEW, ['sm', 'md'], 'sm'),
+            'profit' => $w('سود و زیان', 'فروش منهای بهای مواد، دستمزد و هزینه‌ها؛ درصد هزینه‌ی اصلی (پرایم کاست)', P::EXPENSES_MANAGE, ['md', 'lg'], 'md'),
+            'labour' => $w('نیروی کار', 'چه کسانی سر کارند و هزینه‌ی دستمزد امروز نسبت به فروش', P::STAFF_MANAGE, ['sm', 'md'], 'sm'),
+            'expenses' => $w('هزینه‌ها', 'هزینه‌های این بازه به تفکیک دسته', P::EXPENSES_MANAGE, ['sm', 'md'], 'sm'),
             'food_cost' => $w('بهای تمام‌شده و سود ناخالص', 'هزینه‌ی مواد اولیه‌ی فروش، درصد فود کاست و سودآورترین آیتم‌ها', P::INVENTORY_VIEW, ['md', 'lg'], 'md'),
             'stock_alerts' => $w('هشدار موجودی', 'مواد اولیه‌ی رو به اتمام یا منفی', P::INVENTORY_VIEW, ['sm', 'md'], 'sm'),
             'stories' => $w('استوری‌ها', 'استوری‌های در حال نمایش، بازدید و کلیک هر کدام', P::STOREFRONT_MANAGE, ['sm', 'md'], 'sm'),
@@ -47,8 +50,8 @@ final class WidgetCatalog
 
     /** @var array<string, list<string>> default widget keys per role */
     private const DEFAULTS = [
-        'owner' => ['kpis', 'goal', 'sales_chart', 'live', 'top_products', 'channel_mix', 'payment_mix', 'customers', 'heatmap', 'club_liability', 'at_risk', 'shift_notes'],
-        'manager' => ['kpis', 'sales_chart', 'live', 'top_products', 'channel_mix', 'kitchen_speed', 'tables_now', 'payment_mix', 'customers', 'cancellations', 'shift_notes'],
+        'owner' => ['kpis', 'goal', 'profit', 'sales_chart', 'live', 'top_products', 'channel_mix', 'payment_mix', 'customers', 'heatmap', 'club_liability', 'at_risk', 'shift_notes'],
+        'manager' => ['kpis', 'sales_chart', 'live', 'labour', 'top_products', 'channel_mix', 'kitchen_speed', 'tables_now', 'payment_mix', 'customers', 'cancellations', 'shift_notes'],
         'cashier' => ['live', 'kpis', 'tables_now', 'payment_mix', 'shift_notes'],
         'kitchen' => ['live', 'kitchen_speed', 'top_products', 'shift_notes'],
         'waiter' => ['live', 'tables_now', 'shift_notes'],

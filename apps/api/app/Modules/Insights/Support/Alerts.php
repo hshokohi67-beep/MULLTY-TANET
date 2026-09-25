@@ -10,6 +10,7 @@ use App\Modules\Commerce\Models\TableSessionRequest;
 use App\Modules\Inventory\Models\IngredientStock;
 use App\Modules\Kitchen\Models\KitchenDevice;
 use App\Modules\Loyalty\Models\Wallet;
+use App\Modules\Operations\Models\AttendanceRecord;
 use App\Support\Localization\PersianNumber;
 use Closure;
 
@@ -78,6 +79,15 @@ final class Alerts
                 ->distinct()->count('ingredient_stocks.ingredient_id');
             if ($low > 0) {
                 $alerts[] = ['type' => 'low_stock', 'severity' => 'warning', 'title' => "{$n($low)} ماده‌ی اولیه رو به اتمام است", 'count' => $low, 'href' => '/dashboard/inventory?low=1'];
+            }
+        }
+
+        if ($can('staff.manage')) {
+            // Someone forgot to clock out: their hours (and cost) keep growing until fixed.
+            $forgotten = AttendanceRecord::query()->whereNull('clock_out_at')->where('clock_in_at', '<', now()->subHours(16))
+                ->when($branchId, fn ($q, $id) => $q->where('branch_id', $id))->count();
+            if ($forgotten > 0) {
+                $alerts[] = ['type' => 'open_attendance', 'severity' => 'warning', 'title' => "{$n($forgotten)} نفر بیش از ۱۶ ساعت است خروج نزده‌اند", 'count' => $forgotten, 'href' => '/dashboard/staff?tab=attendance'];
             }
         }
 

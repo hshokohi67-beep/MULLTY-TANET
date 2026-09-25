@@ -10,6 +10,7 @@ use App\Modules\Insights\Providers\InsightsServiceProvider;
 use App\Modules\Inventory\Providers\InventoryServiceProvider;
 use App\Modules\Kitchen\Providers\KitchenServiceProvider;
 use App\Modules\Loyalty\Providers\LoyaltyServiceProvider;
+use App\Modules\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Payments\Providers\PaymentsServiceProvider;
 use App\Modules\Storefront\Providers\StorefrontServiceProvider;
 use App\Providers\AppServiceProvider;
@@ -31,5 +32,6 @@ return [
     KitchenServiceProvider::class,
     StorefrontServiceProvider::class,
     InventoryServiceProvider::class,
+    OperationsServiceProvider::class,
     InsightsServiceProvider::class,
 ];

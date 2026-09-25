@@ -21,6 +21,9 @@ use App\Modules\Loyalty\Enums\WalletTransactionType;
 use App\Modules\Loyalty\Models\LoyaltyAccount;
 use App\Modules\Loyalty\Models\Wallet;
 use App\Modules\Loyalty\Models\WalletTransaction;
+use App\Modules\Operations\Models\AttendanceRecord;
+use App\Modules\Operations\Support\ExpenseSummary;
+use App\Modules\Operations\Support\Payroll;
 use App\Modules\Payments\Enums\PaymentAttemptStatus;
 use App\Modules\Payments\Enums\PaymentMethod;
 use App\Modules\Payments\Models\Payment;
@@ -62,6 +65,9 @@ final class WidgetData
             'shift_notes' => $this->shiftNotes(),
             'stories' => $this->stories(),
             'food_cost' => $this->foodCost($range),
+            'profit' => $this->profit($range),
+            'labour' => $this->labour(),
+            'expenses' => $this->expenses($range),
             'stock_alerts' => $this->stockAlerts(),
             default => [],
         };
@@ -406,6 +412,67 @@ final class WidgetData
             'top' => $byProduct->sortByDesc('margin')->take(5)->values()->all(),
             'heavy' => $byProduct->filter(fn (array $r) => $r['ratio'] !== null)->sortByDesc('ratio')->take(3)->values()->all(),
         ];
+    }
+
+    /**
+     * A simple profit and loss for the range: sales − cost of goods (recipes) − labour (attendance)
+     * − expenses. Prime cost = (cost of goods + labour) / sales, the number cafés steer by.
+     *
+     * @return array{sales: int, cogs: int, labour: int, expenses: int, profit: int, margin: ?float, prime_cost: ?float, cogs_coverage: ?float}
+     */
+    public function profit(string $range): array
+    {
+        [$from, $to] = $this->overview->window($range);
+        $orders = $this->overview->counted($this->overview->orders($from, $to));
+        $sales = (int) (clone $orders)->sum('total');
+        $items = OrderItem::query()->whereIn('order_id', (clone $orders)->select('id'));
+        $itemCount = (clone $items)->count();
+        $costRows = OrderItemCost::query()->whereIn('order_item_id', (clone $items)->select('id'));
+        $cogs = (int) (clone $costRows)->sum('cost');
+        $labour = Payroll::cost($from->utc(), $to->addDay()->utc(), $this->branchId);
+        $expenses = ExpenseSummary::between($from->toDateString(), $to->toDateString(), $this->branchId)['total'];
+        $profit = $sales - $cogs - $labour - $expenses;
+
+        return [
+            'sales' => $sales,
+            'cogs' => $cogs,
+            'labour' => $labour,
+            'expenses' => $expenses,
+            'profit' => $profit,
+            'margin' => $sales > 0 ? round($profit / $sales, 4) : null,
+            'prime_cost' => $sales > 0 ? round(($cogs + $labour) / $sales, 4) : null,
+            'cogs_coverage' => $itemCount > 0 ? round((clone $costRows)->count() / $itemCount, 4) : null,
+        ];
+    }
+
+    /** @return array{on_shift: list<array{name: string, position: ?string, since: string, late: bool}>, cost_today: int, sales_today: int, ratio: ?float} */
+    public function labour(): array
+    {
+        $today = $this->overview->today();
+        $open = AttendanceRecord::query()->with(['employee', 'shift'])->whereNull('clock_out_at')
+            ->when($this->branchId, fn ($q, $id) => $q->where('branch_id', $id))->orderBy('clock_in_at')->get();
+        $cost = Payroll::cost($today->utc(), $today->addDay()->utc(), $this->branchId);
+        $sales = (int) $this->overview->counted($this->overview->orders($today, $today))->sum('total');
+
+        return [
+            'on_shift' => $open->map(fn (AttendanceRecord $r) => [
+                'name' => $r->employee->name,
+                'position' => $r->employee->position,
+                'since' => $r->clock_in_at->toIso8601String(),
+                'late' => $r->lateMinutes() > 0,
+            ])->values()->all(),
+            'cost_today' => $cost,
+            'sales_today' => $sales,
+            'ratio' => $sales > 0 ? round($cost / $sales, 4) : null,
+        ];
+    }
+
+    /** @return array{total: int, categories: list<array{id: string, name: string, color: int, amount: int}>} */
+    public function expenses(string $range): array
+    {
+        [$from, $to] = $this->overview->window($range);
+
+        return ExpenseSummary::between($from->toDateString(), $to->toDateString(), $this->branchId);
     }
 
     /** @return array{items: list<array{id: string, name: string, unit: string, quantity: float, threshold: float, branch: string, negative: bool}>} */

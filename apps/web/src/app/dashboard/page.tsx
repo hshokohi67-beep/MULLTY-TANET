@@ -76,6 +76,9 @@ export default async function DashboardHome({ searchParams }: PageProps<'/dashbo
     stories: (d) => <W.StoriesWidget data={d} />,
     food_cost: (d) => <W.FoodCostWidget data={d} ctx={ctx} />,
     stock_alerts: (d) => <W.StockAlertsWidget data={d} />,
+    profit: (d) => <W.ProfitWidget data={d} ctx={ctx} />,
+    labour: (d) => <W.LabourWidget data={d} />,
+    expenses: (d) => <W.ExpensesWidget data={d} ctx={ctx} />,
   };
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
