@@ -49,6 +49,21 @@ final class BranchTest extends TestCase
             ->assertJsonPath('code', 'last_active_branch');
     }
 
+    public function test_district_and_map_location_are_saved(): void
+    {
+        ['tenant' => $tenant, 'owner' => $owner] = $this->createTenantWithOwner('cafe-a');
+        $main = $this->inTenant($tenant, fn () => Branch::query()->where('slug', 'main')->firstOrFail());
+
+        $this->putJson("/api/v1/branches/{$main->id}", [
+            'name' => 'مرکزی', 'slug' => 'main', 'city' => 'تهران', 'district' => 'ونک', 'latitude' => 35.7575123, 'longitude' => 51.4099456,
+        ], $this->staffHeaders($owner, $tenant))->assertOk()
+            ->assertJsonPath('data.district', 'ونک')->assertJsonPath('data.city', 'تهران');
+        $this->putJson("/api/v1/branches/{$main->id}", ['name' => 'مرکزی', 'slug' => 'main', 'district' => str_repeat('ا', 61)], $this->staffHeaders($owner, $tenant))
+            ->assertUnprocessable()->assertJsonValidationErrors('district');
+        $this->putJson("/api/v1/branches/{$main->id}", ['name' => 'مرکزی', 'slug' => 'main', 'latitude' => 35.7], $this->staffHeaders($owner, $tenant))
+            ->assertUnprocessable()->assertJsonValidationErrors('longitude');
+    }
+
     public function test_opening_hours_sync_and_open_status(): void
     {
         ['tenant' => $tenant, 'owner' => $owner] = $this->createTenantWithOwner('cafe-a');

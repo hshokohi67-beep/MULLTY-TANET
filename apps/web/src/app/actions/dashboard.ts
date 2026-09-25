@@ -37,6 +37,7 @@ export async function saveBranch(branchId: string | null, _prev: FormState, form
     slug: text(formData, 'slug')?.toLowerCase() ?? null,
     phone: digits(formData, 'phone'),
     province: text(formData, 'province'),
+    district: text(formData, 'district'),
     city: text(formData, 'city'),
     address: text(formData, 'address'),
     postal_code: digits(formData, 'postal_code'),

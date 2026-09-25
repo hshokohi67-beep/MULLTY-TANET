@@ -33,6 +33,7 @@
   --color-text-subtle: #8a867c;
 
   --color-danger: #b42318;
+  --color-on-danger: #ffffff;
   --color-danger-soft: #fdeceb;
   --color-success: #067647;
   --color-success-soft: #e3f6ec;
@@ -96,6 +97,8 @@
     --color-text-muted: #b3b0a6;
     --color-text-subtle: #8a877e;
     --color-danger: #f47067;
+  --color-on-danger: #2a0906;
+    --color-on-danger: #2a0906;
     --color-danger-soft: #3a1714;
     --color-success: #4cc98c;
     --color-success-soft: #10301f;

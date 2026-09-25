@@ -33,6 +33,16 @@ final class MarketplaceCatalog
         'late_night' => 'تا دیروقت باز',
     ];
 
+    /** Menu dietary tags a visitor can filter by (from the café's active products). */
+    public const DIETARY = [
+        'vegan' => 'گیاهی',
+        'vegetarian' => 'گیاه‌خواری',
+        'gluten_free' => 'بدون گلوتن',
+        'sugar_free' => 'بدون قند',
+        'dairy_free' => 'بدون لبنیات',
+        'low_calorie' => 'کم‌کالری',
+    ];
+
     public const PRICE_LEVELS = [1 => 'اقتصادی', 2 => 'متوسط', 3 => 'بالا', 4 => 'لوکس'];
 
     public const MAX_CATEGORIES = 3;

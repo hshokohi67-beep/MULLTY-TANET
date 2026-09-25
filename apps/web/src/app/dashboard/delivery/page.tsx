@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Alert, Card, CardHeader, EmptyState } from '@cafe/ui';
@@ -5,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
 import type { Branch, DeliveryZone } from '@/lib/types';
+import { ZonesMap } from './ZonesMap';
 import { ZoneForm } from './ZoneForm';
 
 export const metadata: Metadata = { title: 'محدوده‌های ارسال' };
@@ -37,8 +39,12 @@ export default async function DeliveryPage() {
             <CardHeader title={branch.name} />
             <div className="flex flex-col gap-4 p-5">
               {!located ? (
-                <Alert tone="warning">موقعیت این شعبه ثبت نشده است؛ تا مختصات شعبه را در بخش «شعبه‌ها» وارد نکنید، ارسال با پیک فعال نمی‌شود.</Alert>
-              ) : null}
+                <Alert tone="warning">
+                  محل این شعبه روی نقشه مشخص نشده است؛ تا آن را در <Link href={`/dashboard/branches/${branch.id}`} className="font-semibold underline">صفحه‌ی شعبه</Link> روی نقشه نزنید، ارسال با پیک فعال نمی‌شود.
+                </Alert>
+              ) : (
+                <ZonesMap center={{ lat: Number(branch.latitude), lng: Number(branch.longitude) }} zones={list.map((z) => ({ id: z.id, name: z.name, radius_m: z.radius_m, is_active: z.is_active }))} />
+              )}
               {list.length === 0 ? (
                 <EmptyState title="این شعبه ارسال با پیک ندارد" description="با فرم زیر اولین محدوده را بسازید." />
               ) : (

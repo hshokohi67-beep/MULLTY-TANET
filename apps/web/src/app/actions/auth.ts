@@ -16,6 +16,7 @@ function safeNext(value: FormDataEntryValue | null): string {
 export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
   const identifier = toLatinDigits(String(formData.get('identifier') ?? '')).trim();
   const password = String(formData.get('password') ?? '');
+  let target = safeNext(formData.get('next'));
 
   try {
     const result = await api<{ token: string; user: StaffUser }>('/auth/staff/login', {
@@ -25,11 +26,16 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
       body: { identifier, password, device_name: 'dashboard' },
     });
     await startSession(result.token);
+    // A platform admin who runs no café lands in the platform panel, not the café picker.
+    if (result.user.is_platform_admin && !formData.get('next')) {
+      const me = await api<MeResponse>('/auth/staff/me', { tenant: false });
+      if (me.memberships.length === 0) target = '/platform';
+    }
   } catch (error) {
     return toFormState(error);
   }
 
-  redirect(safeNext(formData.get('next')));
+  redirect(target);
 }
 
 export async function logout(): Promise<void> {

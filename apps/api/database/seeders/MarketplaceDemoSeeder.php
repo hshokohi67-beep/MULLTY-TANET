@@ -11,6 +11,7 @@ use App\Modules\Core\Data\CreateTenantData;
 use App\Modules\Core\Enums\TenantStatus;
 use App\Modules\Core\Models\Branch;
 use App\Modules\Core\Models\Tenant;
+use App\Modules\Discounts\Models\Discount;
 use App\Modules\Marketplace\Actions\ProjectStore;
 use App\Modules\Marketplace\Models\MarketplaceListing;
 use App\Support\Tenancy\TenantContext;
@@ -51,6 +52,36 @@ class MarketplaceDemoSeeder extends Seeder
             });
         }
 
+        $this->createCafes($createTenant, $hours, $save, $context);
+        $this->enrich($context);
+    }
+
+    /** Areas and a few automatic offers, applied to existing demo cafés too (idempotent). */
+    private function enrich(TenantContext $context): void
+    {
+        $areas = [
+            'cafe-nemooneh' => ['main' => 'یوسف‌آباد', 'vanak' => 'ونک'], 'narenj' => ['main' => 'کریمخان'], 'koohpayeh' => ['main' => 'دربند'],
+            'eram' => ['main' => 'ارم'], 'naghsh' => ['main' => 'نقش جهان'], 'yas' => ['main' => 'چهارباغ'], 'toranj' => ['main' => 'سجاد'], 'sabz' => ['main' => 'ولیعصر'],
+        ];
+        $offers = [
+            'narenj' => ['قهوه‌ی صبح', 1500, 0], 'eram' => ['فالوده‌ی تابستان', 1000, 500_000], 'toranj' => ['شیرینی تازه', 2000, 1_000_000],
+        ];
+        foreach (Tenant::query()->whereIn('slug', array_keys($areas))->get() as $tenant) {
+            $context->runAs($tenant, function () use ($tenant, $areas, $offers): void {
+                foreach ($areas[$tenant->slug] as $branchSlug => $district) {
+                    Branch::query()->where('slug', $branchSlug)->update(['district' => $district]);
+                }
+                if (isset($offers[$tenant->slug]) && ! Discount::query()->exists()) {
+                    [$name, $basisPoints, $minOrderToman] = $offers[$tenant->slug];
+                    Discount::query()->create(['name' => $name, 'kind' => 'percent', 'value' => $basisPoints, 'applies_to' => 'order', 'min_order' => $minOrderToman * 10, 'is_active' => true, 'priority' => 1]);
+                }
+                app(ProjectStore::class)->handle();
+            });
+        }
+    }
+
+    private function createCafes(CreateTenant $createTenant, SyncOpeningHours $hours, SaveProduct $save, TenantContext $context): void
+    {
         foreach (self::CAFES as $i => [$slug, $name, $city, $lat, $lng, $address, $categories, $amenities, $price, $headline, $items, [$opens, $closes]]) {
             if (Tenant::query()->where('slug', $slug)->exists()) {
                 continue;

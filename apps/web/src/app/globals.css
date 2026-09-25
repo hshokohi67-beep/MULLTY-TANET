@@ -10,6 +10,7 @@
   --color-brand-strong: var(--color-brand-strong);
   --color-brand-soft: var(--color-brand-soft);
   --color-on-brand: var(--color-on-brand);
+  --color-on-danger: var(--color-on-danger);
   --color-accent: var(--color-accent);
   --color-accent-soft: var(--color-accent-soft);
   --color-surface-raised: var(--color-surface-raised);
@@ -330,3 +331,6 @@ body {
   .print-break { break-before: page; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Featured cafés stand out on the explore map. */
+.map-pin-featured span { background: var(--color-danger); }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('throttle:public')->prefix('public/marketplace')->name('public.marketplace.')->group(function () {
     Route::get('home', [PublicMarketplaceController::class, 'home'])->name('home');
     Route::get('stores', [PublicMarketplaceController::class, 'stores'])->name('stores');
+    Route::get('suggest', [PublicMarketplaceController::class, 'suggest'])->name('suggest');
     Route::get('stores/{storeSlug}', [PublicMarketplaceController::class, 'show'])->where('storeSlug', '[A-Za-z0-9-]{2,64}')->name('stores.show');
 });
 

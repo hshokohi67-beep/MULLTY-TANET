@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import {
-  Accessibility, Bean, CakeSlice, ChefHat, CigaretteOff, Coffee, Croissant, EggFried, IceCreamCone, Laptop, Leaf, MapPin, Moon, Music,
+  Accessibility, BadgePercent, Bean, CakeSlice, ChefHat, CigaretteOff, Coffee, Croissant, EggFried, IceCreamCone, Laptop, Leaf, MapPin, Moon, Music,
   PawPrint, Salad, Sandwich, Sparkles, SquareParking, Trees, Users, UtensilsCrossed, Wifi, type LucideIcon,
 } from 'lucide-react';
 import { brandCss, cx } from '@cafe/ui';
 import { formatTime, toPersianDigits } from '@cafe/locale';
 import { PRICE_LABELS, type StoreCard as Card } from '@/lib/marketplace-types';
+import { FavoriteButton } from './ExploreClient';
 
 export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   cafe: Coffee, specialty_coffee: Bean, cafe_restaurant: UtensilsCrossed, restaurant: ChefHat, fast_food: Sandwich, breakfast: EggFried,
@@ -64,10 +65,18 @@ export function StoreCard({ s, priority = false }: { s: Card; priority?: boolean
             <Icon className="size-14 opacity-70" strokeWidth={1.25} aria-hidden="true" />
           </div>
         )}
-        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
-          {s.is_featured ? <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand shadow-[var(--shadow-sm)]"><Sparkles className="size-3" aria-hidden="true" />ویژه</span> : <span />}
-          <OpenPill isOpen={s.is_open} next={s.next_opening_at} className="shadow-[var(--shadow-sm)] backdrop-blur-sm" />
+        <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2.5">
+          <span className="flex flex-col items-start gap-1.5">
+            <OpenPill isOpen={s.is_open} next={s.next_opening_at} className="shadow-[var(--shadow-sm)] backdrop-blur-sm" />
+            {s.is_featured ? <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand shadow-[var(--shadow-sm)]"><Sparkles className="size-3" aria-hidden="true" />ویژه</span> : null}
+          </span>
+          <FavoriteButton store={s.store} name={s.name} />
         </div>
+        {s.offer ? (
+          <span className="absolute bottom-2.5 end-2.5 inline-flex max-w-[70%] items-center gap-1 truncate rounded-lg bg-danger px-2 py-1 text-xs font-bold text-on-danger shadow-[var(--shadow-md)]">
+            <BadgePercent className="size-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{s.offer}</span>
+          </span>
+        ) : null}
         {s.logo_url ? (
           // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
           <img src={s.logo_url} alt="" className="absolute -bottom-5 start-4 size-12 rounded-xl border-2 border-surface bg-surface object-cover shadow-[var(--shadow-md)]" />
@@ -80,9 +89,10 @@ export function StoreCard({ s, priority = false }: { s: Card; priority?: boolean
         </div>
         {s.headline ? <p className="line-clamp-1 text-sm text-text-muted">{s.headline}</p> : null}
         <p className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1.5 text-xs text-text-muted">
-          <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" aria-hidden="true" />{s.city}</span>
+          <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" aria-hidden="true" />{s.district ? `${s.district}، ${s.city}` : s.city}</span>
           {s.distance_km !== null ? <span>• {s.distance_km < 1 ? 'کمتر از ۱' : toPersianDigits(s.distance_km.toFixed(1))} کیلومتر</span> : null}
           {s.categories.slice(0, 2).map((c) => <span key={c.key}>• {c.label}</span>)}
+          {s.free_delivery ? <span className="font-medium text-success">• ارسال رایگان</span> : null}
         </p>
       </div>
     </Link>

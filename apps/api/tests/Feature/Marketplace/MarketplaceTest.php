@@ -179,6 +179,9 @@ final class MarketplaceTest extends CommerceTestCase
         $this->artisan('marketplace:refresh')->assertSuccessful();
         $this->assertEqualsCanonicalizing(['nan-shiraz', 'cafe-a'], array_column($this->getJson('/api/v1/public/marketplace/home', $this->pub())->json('data.featured'), 'store'));
 
+        // Three cafés now: the «work» collection (workspace amenity) needs two, «budget» (price 1) has two.
+        $this->assertContains('budget', array_column($this->getJson('/api/v1/public/marketplace/home', $this->pub())->json('data.collections'), 'key'));
+
         $meta = $this->getJson('/api/v1/public/marketplace/stores?page=1', $this->pub())->json('meta');
         $this->assertSame(['page' => 1, 'per_page' => 24, 'total' => 3, 'last_page' => 1], $meta);
     }

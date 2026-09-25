@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $slug
  * @property bool $is_active
  */
-#[Fillable(['name', 'slug', 'phone', 'province', 'city', 'address', 'postal_code', 'latitude', 'longitude', 'is_active', 'sort'])]
+#[Fillable(['name', 'slug', 'phone', 'province', 'city', 'district', 'address', 'postal_code', 'latitude', 'longitude', 'is_active', 'sort'])]
 #[UseFactory(BranchFactory::class)]
 class Branch extends Model
 {

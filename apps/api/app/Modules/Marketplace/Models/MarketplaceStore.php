@@ -21,6 +21,12 @@ use Illuminate\Support\Carbon;
  * @property ?string $headline
  * @property ?string $about
  * @property string $city
+ * @property ?string $district
+ * @property ?list<string> $offers
+ * @property bool $has_offer
+ * @property string $dietary_keys
+ * @property bool $closes_late
+ * @property bool $free_delivery
  * @property ?string $province
  * @property ?string $address
  * @property ?string $phone
@@ -50,7 +56,7 @@ class MarketplaceStore extends Model
     protected function casts(): array
     {
         return [
-            'categories' => 'array', 'amenities' => 'array', 'hours' => 'array', 'services' => 'array', 'highlights' => 'array',
+            'categories' => 'array', 'amenities' => 'array', 'offers' => 'array', 'has_offer' => 'boolean', 'closes_late' => 'boolean', 'free_delivery' => 'boolean', 'hours' => 'array', 'services' => 'array', 'highlights' => 'array',
             'branch_count' => 'integer', 'price_level' => 'integer', 'popularity' => 'integer',
             'featured_until' => 'datetime', 'listed_at' => 'datetime',
         ];

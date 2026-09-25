@@ -12,10 +12,12 @@ const ATTRIBUTION = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ?? '&copy; OpenStree
 export interface Point { lat: number; lng: number }
 
 /**
- * Pick the delivery point: tap the map or drag the pin, or use the phone's location. Leaflet loads
+ * Pick a point (a delivery address, a branch): tap the map or drag the pin, or use the phone's location. Leaflet loads
  * only in the browser; if tiles are unreachable the pin still works and "my location" still fills it.
  */
-export function MapPicker({ value, center, onChange }: { value: Point | null; center: Point; onChange: (p: Point) => void }) {
+export function MapPicker({ value, center, onChange, label = 'نقشه: برای انتخاب محل تحویل روی نقشه بزنید یا نشانگر را بکشید', pinTitle = 'محل تحویل', height = 'h-64' }: {
+  value: Point | null; center: Point; onChange: (p: Point) => void; label?: string; pinTitle?: string; height?: string;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<LeafletMap | null>(null);
   const marker = useRef<Marker | null>(null);
@@ -33,7 +35,7 @@ export function MapPicker({ value, center, onChange }: { value: Point | null; ce
       const m = L.map(box.current, { center: [start.lat, start.lng], zoom: value ? 16 : 14, zoomControl: true, attributionControl: true });
       L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(m);
       const icon = L.divIcon({ className: 'map-pin', html: '<span></span>', iconSize: [28, 40], iconAnchor: [14, 38] });
-      const pin = L.marker([start.lat, start.lng], { draggable: true, icon, keyboard: true, title: 'محل تحویل' });
+      const pin = L.marker([start.lat, start.lng], { draggable: true, icon, keyboard: true, title: pinTitle });
       if (value) pin.addTo(m);
       pin.on('dragend', () => { const p = pin.getLatLng(); change.current({ lat: p.lat, lng: p.lng }); });
       m.on('click', (e) => {
@@ -79,7 +81,7 @@ export function MapPicker({ value, center, onChange }: { value: Point | null; ce
   return (
     <div className="flex flex-col gap-2">
       <div className="relative overflow-hidden rounded-xl border border-border">
-        <div ref={box} className="h-64 w-full bg-surface-muted" role="application" aria-label="نقشه: برای انتخاب محل تحویل روی نقشه بزنید یا نشانگر را بکشید" />
+        <div ref={box} className={`${height} w-full bg-surface-muted`} role="application" aria-label={label} />
         <button type="button" onClick={locate} disabled={locating}
           className="absolute bottom-3 start-3 z-[500] inline-flex h-10 items-center gap-2 rounded-full bg-surface px-3 text-sm font-medium shadow-[var(--shadow-md)] hover:bg-surface-muted disabled:opacity-60">
           <LocateFixed className="size-4 text-brand" aria-hidden="true" />{locating ? 'در حال یافتن…' : 'موقعیت من'}

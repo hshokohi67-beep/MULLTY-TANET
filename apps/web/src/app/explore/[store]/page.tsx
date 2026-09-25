@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowRight, Bike, Clock, Coffee, CreditCard, MapPin, Navigation, Phone, ShoppingBag, Sparkles, Timer, UtensilsCrossed } from 'lucide-react';
+import { ArrowRight, BadgePercent, Bike, Leaf, Clock, Coffee, CreditCard, MapPin, Navigation, Phone, ShoppingBag, Sparkles, Timer, UtensilsCrossed } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatMoney, formatPhone, toPersianDigits } from '@cafe/locale';
 import { AMENITY_ICONS, BrandStyles, CATEGORY_ICONS, OpenPill, PriceLevel } from '@/components/explore/ExploreParts';
+import { FavoriteButton, ShareButton } from '@/components/explore/ExploreClient';
 import { getStoreProfile } from '@/lib/marketplace';
 import { PRICE_LABELS } from '@/lib/marketplace-types';
 
@@ -67,14 +68,31 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
               {s.price_level ? <span className="inline-flex items-center gap-1.5">• <PriceLevel level={s.price_level} />{PRICE_LABELS[s.price_level]}</span> : null}
             </p>
           </div>
-          <Link href={s.storefront_path} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 font-semibold text-on-brand shadow-[var(--shadow-md)] hover:bg-brand-strong">
-            <Coffee className="size-5" aria-hidden="true" />دیدن منو و سفارش
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <FavoriteButton store={s.store} name={s.name} className="size-12 border border-border" />
+            <ShareButton title={s.name} />
+            <Link href={s.storefront_path} className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-6 font-semibold text-on-brand shadow-[var(--shadow-md)] hover:bg-brand-strong sm:flex-none">
+              <Coffee className="size-5" aria-hidden="true" />دیدن منو و سفارش
+            </Link>
+          </div>
         </section>
+
+        {s.offers.length ? (
+          <section aria-label="پیشنهادهای ویژه" className="flex flex-wrap gap-2">
+            {s.offers.map((o) => (
+              <span key={o} className="inline-flex items-center gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2 text-sm font-semibold text-danger">
+                <BadgePercent className="size-4" aria-hidden="true" />{o}
+              </span>
+            ))}
+          </section>
+        ) : null}
 
         <ul className="flex flex-wrap gap-2" aria-label="خدمات">
           {SERVICES.filter(([key]) => s.services[key]).map(([key, label, SIcon]) => (
             <li key={key} className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-sm"><SIcon className="size-4 text-brand" aria-hidden="true" />{label}</li>
+          ))}
+          {s.dietary.map((d) => (
+            <li key={d.key} className="inline-flex items-center gap-2 rounded-full border border-success/30 bg-success-soft px-3.5 py-2 text-sm text-success"><Leaf className="size-4" aria-hidden="true" />{d.label}</li>
           ))}
         </ul>
 
@@ -135,7 +153,7 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="font-bold">{s.branches.length > 1 ? b.name : 'نشانی و ساعت کاری'}</h3>
-                      <p className="text-xs text-text-muted">{[b.province !== b.city ? b.province : null, b.city].filter(Boolean).join('، ')}</p>
+                      <p className="text-xs text-text-muted">{[b.district, b.city, b.province !== b.city ? b.province : null].filter(Boolean).join('، ')}</p>
                     </div>
                     <OpenPill isOpen={b.is_open} next={b.next_opening_at} />
                   </div>

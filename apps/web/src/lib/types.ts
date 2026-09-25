@@ -60,6 +60,7 @@ export interface Branch {
   slug: string;
   phone: string | null;
   province: string | null;
+  district?: string | null;
   city: string | null;
   address: string | null;
   postal_code: string | null;

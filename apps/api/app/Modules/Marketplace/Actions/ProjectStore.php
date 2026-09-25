@@ -16,6 +16,7 @@ use App\Modules\Core\Support\TenantSettings;
 use App\Modules\Marketplace\Models\MarketplaceListing;
 use App\Modules\Marketplace\Models\MarketplaceStore;
 use App\Modules\Marketplace\Support\MarketplaceCatalog;
+use App\Modules\Marketplace\Support\PublicOffers;
 use App\Modules\Marketplace\Support\SearchText;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Collection;
@@ -90,12 +91,19 @@ final class ProjectStore
         $preorder = (bool) TenantSettings::get('orders.allow_preorder_when_closed');
         $delivery = DeliveryZone::query()->where('is_active', true)->distinct()->pluck('branch_id')->flip();
         $tables = RestaurantTable::query()->where('is_active', true)->distinct()->pluck('branch_id')->flip();
+        $offers = PublicOffers::byBranch();
+        $dietary = Product::query()->where('is_active', true)->pluck('dietary_tags')
+            ->flatMap(fn ($tags) => is_array($tags) ? $tags : [])->unique()->values()->all();
+        $freeDelivery = DeliveryZone::query()->where('is_active', true)
+            ->where(fn ($q) => $q->where('delivery_fee', 0)->orWhereNotNull('free_delivery_min'))->distinct()->pluck('branch_id')->flip();
         $orders = DailyMetric::query()->where('business_date', '>=', now()->subDays(30)->toDateString())
             ->selectRaw('branch_id, SUM(orders) as n')->groupBy('branch_id')->pluck('n', 'branch_id');
 
-        return $branches->map(function (Branch $b) use ($tenant, $listing, $branding, $disk, $featured, $highlights, $categories, $amenities, $online, $preorder, $delivery, $tables, $orders, $branches): array {
+        return $branches->map(function (Branch $b) use ($tenant, $listing, $branding, $disk, $featured, $highlights, $categories, $amenities, $online, $preorder, $delivery, $tables, $orders, $branches, $offers, $dietary, $freeDelivery): array {
+            $myOffers = array_values(array_unique([...($offers['*'] ?? []), ...($offers[$b->id] ?? [])]));
+            $hours = $b->openingHours->map(fn (BranchOpeningHour $h) => ['weekday' => $h->weekday, 'opens_at' => substr($h->opens_at, 0, 5), 'closes_at' => substr($h->closes_at, 0, 5)])->values()->all();
             $words = [
-                $tenant->name, $b->name, $listing->headline, $b->getAttribute('city'), $b->getAttribute('province'),
+                $tenant->name, $b->name, $listing->headline, $b->getAttribute('city'), $b->getAttribute('district'), $b->getAttribute('province'),
                 ...array_map(fn (string $k) => MarketplaceCatalog::CATEGORIES[$k], $categories),
                 ...array_map(fn (string $k) => MarketplaceCatalog::AMENITIES[$k], $amenities),
                 ...array_column($highlights, 'name'),
@@ -113,6 +121,7 @@ final class ProjectStore
                 'about' => $listing->about,
                 'city' => trim((string) $b->getAttribute('city')),
                 'province' => $b->getAttribute('province'),
+                'district' => ($d = trim((string) $b->getAttribute('district'))) === '' ? null : $d,
                 'address' => $b->getAttribute('address'),
                 'phone' => $b->getAttribute('phone'),
                 'latitude' => $b->getAttribute('latitude'),
@@ -125,7 +134,13 @@ final class ProjectStore
                 'logo_url' => $branding?->logo_path ? $disk->url($branding->logo_path) : null,
                 'cover_url' => $branding?->cover_path ? $disk->url($branding->cover_path) : null,
                 'primary_color' => $branding?->primary_color,
-                'hours' => $b->openingHours->map(fn (BranchOpeningHour $h) => ['weekday' => $h->weekday, 'opens_at' => substr($h->opens_at, 0, 5), 'closes_at' => substr($h->closes_at, 0, 5)])->values()->all(),
+                'hours' => $hours,
+                // Open until 23:00 or later on some day (or past midnight).
+                'closes_late' => collect($hours)->contains(fn (array $h) => $h['closes_at'] >= '23:00' || $h['closes_at'] < $h['opens_at']),
+                'offers' => array_slice($myOffers, 0, 3),
+                'has_offer' => $myOffers !== [],
+                'dietary_keys' => '|'.implode('|', array_values(array_intersect($dietary, array_keys(Product::DIETARY_TAGS)))).'|',
+                'free_delivery' => $freeDelivery->has($b->id) && $delivery->has($b->id),
                 'timezone' => $tenant->timezone,
                 'services' => [
                     'dine_in' => $tables->has($b->id),

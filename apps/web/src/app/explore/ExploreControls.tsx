@@ -2,36 +2,13 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { Clock, LocateFixed, MapPin, Search } from 'lucide-react';
+import { LocateFixed } from 'lucide-react';
 import { cx, Spinner } from '@cafe/ui';
 import { AMENITY_ICONS } from '@/components/explore/ExploreParts';
 import type { Labelled } from '@/lib/marketplace-types';
 
-/** Big search box: text + city, submitted as a normal GET form (works without JavaScript too). */
-export function ExploreSearch({ q, city, cities }: { q: string; city: string; cities: { city: string; count: number }[] }) {
-  return (
-    <form action="/explore" method="get" role="search" className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-2 shadow-[var(--shadow-md)] sm:flex-row sm:items-center">
-      <label className="relative flex-1">
-        <span className="sr-only">نام کافه، غذا یا نوشیدنی</span>
-        <Search className="pointer-events-none absolute start-3 top-1/2 size-5 -translate-y-1/2 text-text-subtle" aria-hidden="true" />
-        <input name="q" defaultValue={q} maxLength={80} placeholder="نام کافه، «کاپوچینو»، «صبحانه»…" autoComplete="off"
-          className="h-12 w-full rounded-xl bg-transparent ps-11 pe-3 text-base focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none" />
-      </label>
-      <label className="relative sm:w-48">
-        <span className="sr-only">شهر</span>
-        <MapPin className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-text-subtle" aria-hidden="true" />
-        <select name="city" defaultValue={city} className="h-12 w-full appearance-none rounded-xl bg-surface-muted ps-9 pe-3 text-sm focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none">
-          <option value="">همه‌ی شهرها</option>
-          {cities.map((c) => <option key={c.city} value={c.city}>{c.city}</option>)}
-        </select>
-      </label>
-      <button type="submit" className="h-12 rounded-xl bg-brand px-6 font-semibold text-on-brand hover:bg-brand-strong">جست‌وجو</button>
-    </form>
-  );
-}
-
-/** Amenities, price, open-now and sort; each change updates the URL (server renders the results). */
-export function ExploreFilters({ amenities, selected, price, openNow, sort }: { amenities: Labelled[]; selected: string[]; price: string; openNow: boolean; sort: string }) {
+/** Amenities, "near me" and sort; each change updates the URL (the server renders the results). */
+export function ExploreFilters({ amenities, selected, sort }: { amenities: Labelled[]; selected: string[]; sort: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -62,10 +39,7 @@ export function ExploreFilters({ amenities, selected, price, openNow, sort }: { 
 
   return (
     <div className={cx('flex flex-col gap-3 transition-opacity', pending && 'opacity-60')} aria-busy={pending}>
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-        <button type="button" onClick={() => go((p) => (openNow ? p.delete('open_now') : p.set('open_now', '1')))} aria-pressed={openNow} className={chip(openNow)}>
-          <Clock className="size-4" aria-hidden="true" />الان باز است
-        </button>
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="امکانات">
         <button type="button" onClick={nearMe} aria-pressed={sort === 'nearest'} className={chip(sort === 'nearest')}>
           {locating ? <Spinner /> : <LocateFixed className="size-4" aria-hidden="true" />}نزدیک من
         </button>
@@ -80,21 +54,17 @@ export function ExploreFilters({ amenities, selected, price, openNow, sort }: { 
           );
         })}
       </div>
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          <span className="text-text-muted">قیمت</span>
-          <select value={price} onChange={(e) => go((p) => (e.target.value ? p.set('price', e.target.value) : p.delete('price')))} className="h-9 rounded-lg border border-border bg-surface px-2">
-            <option value="">همه</option><option value="1">اقتصادی</option><option value="2">متوسط</option><option value="3">بالا</option><option value="4">لوکس</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <span className="text-text-muted">مرتب‌سازی</span>
-          <select value={sort} onChange={(e) => go((p) => (e.target.value ? p.set('sort', e.target.value) : p.delete('sort')))} className="h-9 rounded-lg border border-border bg-surface px-2">
-            <option value="">پیشنهادی</option><option value="newest">تازه‌ترین</option>
-            {params.get('lat') ? <option value="nearest">نزدیک‌ترین</option> : null}
-          </select>
-        </label>
-      </div>
+      <label className="flex items-center gap-2 self-start text-sm">
+        <span className="text-text-muted">مرتب‌سازی</span>
+        <select value={sort} onChange={(e) => go((p) => (e.target.value ? p.set('sort', e.target.value) : p.delete('sort')))} className="h-9 rounded-lg border border-border bg-surface px-2">
+          <option value="">پیشنهادی</option>
+          <option value="popular">محبوب‌ترین</option>
+          <option value="price_asc">ارزان‌ترین</option>
+          <option value="price_desc">لوکس‌ترین</option>
+          <option value="newest">تازه‌ترین</option>
+          {params.get('lat') ? <option value="nearest">نزدیک‌ترین</option> : null}
+        </select>
+      </label>
     </div>
   );
 }
