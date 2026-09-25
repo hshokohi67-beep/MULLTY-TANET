@@ -164,6 +164,8 @@ final class ManageBilling
             }
             $locked->update(['status' => 'paid', 'paid_at' => now(), 'paid_via' => $via, 'reference' => $reference]);
             $this->apply->handle($locked);
+            // Any other open invoice was priced against the old subscription: paying it too would charge twice.
+            BillingInvoice::query()->where('status', 'open')->whereKeyNot($locked->id)->update(['status' => 'void']);
             $this->audit->record('billing.invoice_paid', $locked, ['number' => $locked->number, 'total' => $locked->total, 'via' => $via]);
         });
         $invoice->refresh();

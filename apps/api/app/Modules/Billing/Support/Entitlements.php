@@ -77,13 +77,18 @@ final class Entitlements implements EntitlementGate
         }
 
         $route = (string) $request->route()?->getName();
+        $public = str_starts_with($route, 'api.public.');
+        // Without credentials, a staff route answers 401 from auth; don't reveal the subscription state.
+        if (! $public && $request->bearerToken() === null) {
+            return;
+        }
         foreach (self::WRITABLE_WHEN_READ_ONLY as $prefix) {
             if (str_starts_with($route, $prefix)) {
                 return;
             }
         }
 
-        throw str_starts_with($route, 'api.public.') ? SubscriptionReadOnlyException::public() : SubscriptionReadOnlyException::staff();
+        throw $public ? SubscriptionReadOnlyException::public() : SubscriptionReadOnlyException::staff();
     }
 
     /** @return array{subscription: Subscription, features: array<string, bool|int|null>} */

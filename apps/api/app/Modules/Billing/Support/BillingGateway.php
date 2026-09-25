@@ -29,7 +29,13 @@ final class BillingGateway
 
     public function make(?string $name = null): PaymentGateway
     {
-        return match ($name ?? $this->driver()) {
+        $name ??= $this->driver();
+        if ($name === 'fake' && ! app()->environment(['local', 'testing'])) {
+            // Even for verifying an old attempt: a fake "paid" must never count outside dev/test.
+            throw new LogicException('The fake billing gateway is not allowed in the ['.app()->environment().'] environment.');
+        }
+
+        return match ($name) {
             'fake' => new FakeGateway,
             'zarinpal' => new ZarinpalGateway(
                 $this->http,

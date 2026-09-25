@@ -93,7 +93,7 @@ Plan: `phase-12-plan.md`. Status: done, awaiting approval.
 
 ## 2. Verification
 
-- API: 458 tests green. `tests/Feature/Billing/BillingTest.php`, 5 scenarios:
+- API: 466 tests green (458 + 8 security). `tests/Feature/Billing/BillingTest.php`, 5 scenarios:
   1. Timeline: trial → bell warning at 5 days → grace (writes still work) → read-only (staff write 402, public write 402, reads and quote allowed) → paying restores everything.
   2. Starter gates:
      - reports, inventory, expenses, club and stories return 402; public stories return empty; plan-bound widgets are gone from the catalogue and return 404;
@@ -131,7 +131,31 @@ Plan: `phase-12-plan.md`. Status: done, awaiting approval.
   - the plan editor now groups switches and limits;
   - a duplicated "sold out" bell alert from Phase 8 was removed.
 
-## 3. Notes
+## 3. Security review (before approval)
+
+A threat-by-threat review of billing and the entitlement gate. `tests/Feature/Billing/BillingSecurityTest.php` has 8 attack scenarios; each fix below has a test that fails without it.
+
+| Threat | Result |
+|---|---|
+| Price tampering (client sends `total`, `credit`, `vat`…) | Ignored: all amounts are computed on the server from the catalogue. Hidden plans, private add-ons, add-ons for other plans, quantities outside 1–20, duplicate add-ons and unknown cycles are rejected. |
+| Forged or replayed payment | Verify needs the gateway authority stored for *that* invoice and checks the **stored** amount with the gateway; a made-up authority returns 422. Replays are idempotent (row lock on the invoice, one `paid` payment). Paid invoices can't be paid again. |
+| Cross-tenant access | A tenant-B invoice is 404 for show/pay/verify; an authority from café A can't pay café B's invoice. The isolation harness covers every billing endpoint. |
+| **Paying twice** (renewal invoice + an upgrade) | **Fixed:** paying any invoice voids the café's other open invoices. |
+| **Fake gateway in production** (a leftover `fake` payment row) | **Fixed:** `BillingGateway::make('fake')` now refuses outside local/testing even for verification, not only for new sessions. |
+| **Free credit from gifted days** (platform extension → upgrade credit) | **Fixed:** credit counts only time covered by paid invoices. |
+| **Subscription state leaked to strangers** (anonymous writes got 402) | **Fixed:** without a bearer token, staff routes answer 401 from auth; only the public storefront says it is temporarily unavailable. |
+| Read-only bypass | Writes are refused in `ResolveTenant` for every tenant route (staff, KDS devices, public). Only `api.billing.*`, logout and auth stay writable, and billing needs `billing.manage` (a cashier gets 403). Method spoofing can't help: the same method is used for routing and the check. |
+| Brute force / floods | `checkout`, `pay` and `verify` are rate-limited (10/min per user). A flood leaves a single open checkout invoice. |
+| Platform endpoints | `actor:platform` only (owners get 403). Overrides accept only catalogue keys and correctly typed values (bool for switches, ≥ 0 int or null for limits) and future expiry dates. Extensions are 1–365 days. Plan edits can't change `key` or trial flag (mass assignment) and validate every feature. Mark-paid works only on an open invoice of that café. |
+| Secrets in logs | The Zarinpal merchant ID is added only to the outgoing request, never to the stored `log`. |
+| Web | The staff token stays server-side. Server actions validate ULIDs. `/billing/return` redirects only to a fixed relative path (no open redirect) and can only verify the signed-in café's own invoice. `/platform` and print pages check permissions again on the server. |
+| Dependencies | `composer audit`: no advisories. `npm audit --omit=dev`: 0 vulnerabilities. |
+
+**Accepted residual risks:**
+- Two *simultaneous* creations could pass a limit by one (no cross-request lock; low impact).
+- Customers keep redeeming existing points when the club feature is off (their value, by design).
+
+## 4. Notes
 
 - **Production:** set `BILLING_GATEWAY=zarinpal` and `BILLING_ZARINPAL_MERCHANT` (the platform's merchant). `STOREFRONT_URL` must be the public web origin (it is the gateway return base).
 - **Scheduler:** schedule `billing:renewals` (daily) together with the existing jobs.

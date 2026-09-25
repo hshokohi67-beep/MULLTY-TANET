@@ -16,7 +16,7 @@ Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->p
         Route::get('invoices', [BillingController::class, 'invoices'])->name('invoices.index');
         Route::get('invoices/{billingInvoice}', [BillingController::class, 'invoice'])->name('invoices.show');
         Route::post('invoices/{billingInvoice}/pay', [BillingController::class, 'pay'])->middleware('throttle:billing-checkout')->name('invoices.pay');
-        Route::post('invoices/{billingInvoice}/verify', [BillingController::class, 'verify'])->name('invoices.verify');
+        Route::post('invoices/{billingInvoice}/verify', [BillingController::class, 'verify'])->middleware('throttle:billing-checkout')->name('invoices.verify');
         Route::post('cancel', [BillingController::class, 'cancel'])->name('cancel');
         Route::post('resume', [BillingController::class, 'resume'])->name('resume');
     });

@@ -4,6 +4,7 @@ namespace App\Modules\Billing\Support;
 
 use App\Modules\Billing\Exceptions\BillingException;
 use App\Modules\Billing\Models\Addon;
+use App\Modules\Billing\Models\BillingInvoice;
 use App\Modules\Billing\Models\Plan;
 use App\Modules\Billing\Models\Subscription;
 use App\Support\Entitlements\FeatureLabels;
@@ -68,7 +69,10 @@ final class QuoteBuilder
         if ($mode === 'pay_now' && $paidRunning) {
             // The unused time at the cycle's daily rate (an early renewal can make the period longer than one cycle).
             $total = ($subscription->cycle === 'yearly' ? 365 : 30) * 86400;
-            $left = max(0, $end->getTimestamp() - $now->getTimestamp());
+            // Only time that was paid for earns credit (not days the platform gifted with an extension).
+            $paidUntil = BillingInvoice::query()->where('status', 'paid')->max('period_end');
+            $coveredEnd = $paidUntil === null ? $now : $end->min(CarbonImmutable::parse((string) $paidUntil));
+            $left = max(0, $coveredEnd->getTimestamp() - $now->getTimestamp());
             $paid = $subscription->plan->price($subscription->cycle)
                 + (int) $subscription->addons->sum(fn ($a) => $a->addon->price($subscription->cycle) * $a->quantity);
             $credit = min($subtotal, intdiv((int) floor($paid * $left / $total), 10) * 10);
