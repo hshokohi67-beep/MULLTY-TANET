@@ -166,3 +166,31 @@ doc was needed — every finding was small enough to fix immediately):
 - **The API side of this phase is unverified locally**, per §4. If CI surfaces a Larastan or test
   failure, it should be treated as a real finding to fix, not a fluke — nothing here was validated
   beyond syntax checking and careful reading in this session.
+
+## 6. Verification on the full toolchain (follow-up, local machine)
+
+The branch was merged into `main` and run with the complete toolchain (vendor installed). That surfaced real problems the cloud session couldn't see:
+
+- **Two tests broke the whole suite (221 of 510 errored).**
+  - `BackupDatabaseCommandTest` and `ObservabilityTest` switched `database.default` and never restored it. Every later test's transaction then failed with "cannot VACUUM / start a transaction within a transaction" or "migrations already exists".
+  - Fix: the backup command now reads `backup.connection` (new `BACKUP_CONNECTION`, falls back to the default connection), so its test no longer touches the default. The health test restores the default in `finally`.
+- **The backup could "succeed" with an empty archive.**
+  - `mysqldump … | gzip > file` reports gzip's exit code, so a failed dump still produced a `.sql.gz` and exit 0.
+  - Fix: `mysqldump --result-file` (argument array, no shell), a non-empty check, and gzip streamed in PHP. Upload failures now fail the command too.
+- **Larastan (1 error)**: `Carbon::createFromFormat` returns `null`, not `false`. The inline `@var` override (against the project rule) was removed as well.
+- **CSP blocked every image in local/intranet deployments.**
+  - `img-src … https:` rejects media served by the API over plain http, e.g. `http://127.0.0.1:8765/storage/...`.
+  - Fix: the exact http origin of `MEDIA_ORIGIN`/`API_URL` is allowed (never `http:` in general), plus `blob:`. `'unsafe-eval'` is added in development only.
+  - Note: `next.config` is evaluated at build time, so set `API_URL`/`MEDIA_ORIGIN` for `next build`.
+
+After the fixes:
+
+- **API:** Pint clean, Larastan 0 errors, **510 tests: 509 passed, 1 skipped**. The skipped test is the MySQL-only backup dump test, which runs in CI's MySQL job.
+- **Dependencies:** `npm audit` found 0 vulnerabilities. `composer audit` runs in CI (composer isn't installed on this machine).
+- **Web:** typecheck, lint and build green.
+- **In the browser under the CSP**, images and OSM map tiles load:
+  - «خوراک‌گردی» ("food-hopping") home;
+  - the map view;
+  - the storefront;
+  - a store profile;
+  - login.

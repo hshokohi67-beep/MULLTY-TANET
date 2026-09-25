@@ -10,9 +10,10 @@ final class BackupDatabaseCommandTest extends TestCase
 {
     public function test_it_refuses_a_non_mysql_connection(): void
     {
+        // Point only the backup at a non-MySQL connection: the test's own (default) connection stays untouched.
         config([
             'database.connections.not-mysql' => ['driver' => 'sqlite', 'database' => ':memory:'],
-            'database.default' => 'not-mysql',
+            'backup.connection' => 'not-mysql',
         ]);
 
         $this->assertSame(1, Artisan::call('backup:run'));

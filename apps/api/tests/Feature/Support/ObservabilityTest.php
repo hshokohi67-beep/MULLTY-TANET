@@ -51,11 +51,17 @@ final class ObservabilityTest extends TestCase
 
     public function test_diagnosing_health_fails_when_the_database_is_unreachable(): void
     {
+        // Restore the default afterwards: the test's own transaction lives on it.
+        $default = config('database.default');
         config(['database.default' => 'a-connection-that-does-not-exist']);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Database is unreachable.');
-
-        event(new DiagnosingHealth);
+        try {
+            event(new DiagnosingHealth);
+            $this->fail('The health check should have failed.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Database is unreachable.', $e->getMessage());
+        } finally {
+            config(['database.default' => $default]);
+        }
     }
 }

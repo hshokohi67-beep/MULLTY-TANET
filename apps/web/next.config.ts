@@ -4,11 +4,20 @@ import type { NextConfig } from 'next';
 // JSON-LD blocks and Tailwind's own inline styles; there is no per-request nonce plumbing yet
 // (proxy.ts only runs on a subset of routes). Images are 'https:' broadly because the media disk
 // (local storage or S3-compatible object storage) is a deployment choice, not a fixed host.
+// Media may also be served over plain http by the API itself (local development, or an
+// intranet deployment): allow exactly that origin, never http: in general.
+const origin = (url: string | undefined) => {
+  try { return url ? new URL(url).origin : null; } catch { return null; }
+};
+const mediaOrigins = [...new Set([origin(process.env.MEDIA_ORIGIN), origin(process.env.API_URL)].filter((o): o is string => o !== null && o.startsWith('http:')))];
+const isDev = process.env.NODE_ENV === 'development';
+
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // React needs eval only in development (debug stacks); production never does.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https:",
+  ['img-src', "'self'", 'data:', 'blob:', 'https:', ...mediaOrigins].join(' '),
   "font-src 'self'",
   "connect-src 'self'",
   "object-src 'none'",

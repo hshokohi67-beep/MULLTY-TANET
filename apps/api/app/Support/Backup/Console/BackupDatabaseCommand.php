@@ -7,13 +7,15 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 /**
  * Scheduled daily (routes/console.php). MySQL only: dumps, gzips, uploads to the backups disk
  * (local by default, an S3-compatible bucket in production via BACKUP_DISK), then prunes backups
  * older than the retention window using the date already in each backup's own filename.
+ *
+ * mysqldump writes to a file (never piped): a failed dump must fail the command, not leave an
+ * empty archive that looks like a good backup.
  */
 final class BackupDatabaseCommand extends Command
 {
@@ -23,29 +25,31 @@ final class BackupDatabaseCommand extends Command
 
     public function handle(): int
     {
-        $connectionName = (string) config('database.default');
-        /** @var array<string, mixed> $connection */
-        $connection = (array) config("database.connections.{$connectionName}");
+        $connectionName = (string) (config('backup.connection') ?: config('database.default'));
+        $connection = config("database.connections.{$connectionName}");
 
-        if (($connection['driver'] ?? null) !== 'mysql') {
-            $this->error("backup:run only supports the mysql driver (current default connection is \"{$connectionName}\").");
+        if (! is_array($connection) || ($connection['driver'] ?? null) !== 'mysql') {
+            $this->error("backup:run only supports the mysql driver (connection \"{$connectionName}\").");
 
             return self::FAILURE;
         }
 
         $disk = Storage::disk((string) config('backup.disk'));
         $path = sprintf('backups/cafe-%s-%s.sql.gz', app()->environment(), now()->utc()->format('Ymd-His'));
-        $tempPath = (string) tempnam(sys_get_temp_dir(), 'backup-');
+        $sqlPath = (string) tempnam(sys_get_temp_dir(), 'backup-');
+        $gzPath = $sqlPath.'.gz';
 
         try {
-            $this->dump($connection, $tempPath);
-            $this->upload($disk, $tempPath, $path);
-        } catch (ProcessFailedException $e) {
-            $this->error('mysqldump failed: '.$e->getMessage());
+            $this->dump($connection, $sqlPath);
+            $this->gzip($sqlPath, $gzPath);
+            $this->upload($disk, $gzPath, $path);
+        } catch (RuntimeException $e) {
+            $this->error($e->getMessage());
 
             return self::FAILURE;
         } finally {
-            @unlink($tempPath);
+            @unlink($sqlPath);
+            @unlink($gzPath);
         }
 
         $pruned = $this->prune($disk);
@@ -54,38 +58,64 @@ final class BackupDatabaseCommand extends Command
         return self::SUCCESS;
     }
 
-    /** @param  array<string, mixed>  $connection */
-    private function dump(array $connection, string $tempPath): void
+    /** @param  array<mixed>  $connection */
+    private function dump(array $connection, string $sqlPath): void
     {
-        $command = sprintf(
-            'mysqldump --single-transaction --quick --no-tablespaces -h %s -P %s -u %s %s | gzip > %s',
-            escapeshellarg((string) $connection['host']),
-            escapeshellarg((string) $connection['port']),
-            escapeshellarg((string) $connection['username']),
-            escapeshellarg((string) $connection['database']),
-            escapeshellarg($tempPath),
-        );
-
-        // The password travels as an env var, never on the command line (it would otherwise show in `ps`).
-        $process = Process::fromShellCommandline($command, null, ['MYSQL_PWD' => (string) ($connection['password'] ?? '')]);
+        $process = new Process([
+            'mysqldump', '--single-transaction', '--quick', '--no-tablespaces',
+            '-h', (string) ($connection['host'] ?? '127.0.0.1'),
+            '-P', (string) ($connection['port'] ?? '3306'),
+            '-u', (string) ($connection['username'] ?? ''),
+            '--result-file='.$sqlPath,
+            (string) ($connection['database'] ?? ''),
+        ], null, [
+            // The password travels as an env var, never on the command line (it would otherwise show in `ps`).
+            'MYSQL_PWD' => (string) ($connection['password'] ?? ''),
+        ]);
         $process->setTimeout(3600);
         $process->run();
 
         if (! $process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+            throw new RuntimeException('mysqldump failed: '.trim($process->getErrorOutput()));
+        }
+        if (! is_file($sqlPath) || filesize($sqlPath) === 0) {
+            throw new RuntimeException('mysqldump produced an empty dump.');
         }
     }
 
-    private function upload(Filesystem $disk, string $tempPath, string $path): void
+    /** Streams the dump into a gzip file (no shell pipe, no whole-file buffering). */
+    private function gzip(string $from, string $to): void
     {
-        $stream = fopen($tempPath, 'r');
+        $in = fopen($from, 'rb');
+        $out = gzopen($to, 'wb6');
+        if ($in === false || $out === false) {
+            throw new RuntimeException('Could not open the dump for compression.');
+        }
+        try {
+            while (! feof($in)) {
+                $chunk = fread($in, 1 << 20);
+                if ($chunk === false || gzwrite($out, $chunk) === false) {
+                    throw new RuntimeException('Compressing the dump failed.');
+                }
+            }
+        } finally {
+            fclose($in);
+            gzclose($out);
+        }
+    }
+
+    private function upload(Filesystem $disk, string $gzPath, string $path): void
+    {
+        $stream = fopen($gzPath, 'r');
 
         if ($stream === false) {
             throw new RuntimeException('Could not open the dump file for upload.');
         }
 
         try {
-            $disk->put($path, $stream);
+            if (! $disk->put($path, $stream)) {
+                throw new RuntimeException("Could not store the backup at {$path}.");
+            }
         } finally {
             if (is_resource($stream)) {
                 fclose($stream);
@@ -105,7 +135,7 @@ final class BackupDatabaseCommand extends Command
 
             $madeAt = Carbon::createFromFormat('Ymd-His', $matches[1], 'UTC');
 
-            if ($madeAt !== false && $madeAt->lt($cutoff)) {
+            if ($madeAt !== null && $madeAt->lt($cutoff)) {
                 $disk->delete($path);
                 $pruned++;
             }
