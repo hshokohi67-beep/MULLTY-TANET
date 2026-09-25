@@ -146,6 +146,10 @@ final class TenantIsolationTest extends TestCase
         return [
             'tenant profile' => ['GET', '/api/v1/tenant'],
             'stories' => ['GET', '/api/v1/stories'],
+            'dashboard search' => ['GET', '/api/v1/dashboard/search?q=x'],
+            'dashboard alerts' => ['GET', '/api/v1/dashboard/alerts'],
+            'dashboard setup' => ['GET', '/api/v1/dashboard/setup'],
+            'skip setup step' => ['POST', '/api/v1/dashboard/setup/skip'],
             'reorder stories' => ['PUT', '/api/v1/stories/order'],
             'upload cover' => ['POST', '/api/v1/tenant/branding/cover'],
             'delete cover' => ['DELETE', '/api/v1/tenant/branding/cover'],
@@ -405,6 +409,19 @@ final class TenantIsolationTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->postJson('/api/v1/public/cart/reorder', ['order_id' => $this->commerceB['order']], [...$a, 'X-Cart-Token' => $cart, 'Authorization' => 'Bearer '.$customerA->createToken('t', ['customer'])->plainTextToken])
             ->assertNotFound();
+    }
+
+    public function test_global_search_never_crosses_tenants(): void
+    {
+        $headers = $this->staffHeaders($this->ownerA, $this->a);
+
+        foreach (['محصول ب', 'مشتری ب', '۰۹۱۲۷۷۷', '۱'] as $term) {
+            $groups = $this->getJson('/api/v1/dashboard/search?q='.urlencode($term), $headers)->assertOk()->json('data');
+            $ids = collect($groups)->flatMap(fn ($g) => array_column($g['items'], 'id'))->all();
+            $this->assertNotContains($this->catalogB['product'], $ids);
+            $this->assertNotContains($this->commerceB['customer'], $ids);
+            $this->assertNotContains($this->commerceB['order'], $ids);
+        }
     }
 
     public function test_foreign_ids_inside_payloads_are_rejected(): void

@@ -6,10 +6,11 @@ import { formatJalaliLong } from '@cafe/locale';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
-import type { Branch, Branding, TeamMember, Tenant } from '@/lib/types';
+import type { Branch, Tenant } from '@/lib/types';
 import type { LayoutWidget } from '@/app/actions/dashboard-layout';
 import { DashboardGrid, type CatalogItem } from './DashboardGrid';
-import { SetupChecklist, type SetupStep } from './SetupChecklist';
+import { SetupChecklist } from './SetupChecklist';
+import type { SetupData } from '@/app/actions/palette';
 import * as W from './widgets/Widgets';
 
 export const metadata: Metadata = { title: 'پیشخوان' };
@@ -31,12 +32,10 @@ export default async function DashboardHome({ searchParams }: PageProps<'/dashbo
   const branchId = typeof params.branch === 'string' ? params.branch : '';
   const query = new URLSearchParams({ range, ...(branchId ? { branch_id: branchId } : {}) });
 
-  const [tenant, branding, branches, team, menuTotal, { data: layout }, { data: overview }] = await Promise.all([
+  const [tenant, branches, setup, { data: layout }, { data: overview }] = await Promise.all([
     api<{ data: Tenant }>('/tenant').then((r) => r.data),
-    api<{ data: Branding }>('/tenant/branding').then((r) => r.data),
     can('branches.view') ? api<{ data: Branch[] }>('/branches').then((r) => r.data) : Promise.resolve([] as Branch[]),
-    can('team.view') ? api<{ data: TeamMember[] }>('/team').then((r) => r.data) : Promise.resolve(null),
-    can('catalog.view') ? api<{ meta: { total: number } }>('/catalog/products?per_page=1').then((r) => r.meta.total) : Promise.resolve(null),
+    api<{ data: SetupData }>('/dashboard/setup').then((r) => r.data),
     api<{ data: { widgets: LayoutWidget[]; is_default: boolean; catalog: CatalogItem[] } }>('/dashboard/layout'),
     api<{ data: W.OverviewData }>(`/dashboard/overview?${query}`),
   ]);
@@ -84,13 +83,6 @@ export default async function DashboardHome({ searchParams }: PageProps<'/dashbo
     else if (extra[key]) nodes[key] = render[key]?.(extra[key]);
   }
 
-  const steps: SetupStep[] = [
-    { done: (menuTotal ?? 0) > 0, title: 'اولین آیتم‌های منو را اضافه کنید', hint: 'با «افزودن سریع» فقط نام و قیمت کافی است.', href: '/dashboard/menu' },
-    { done: Boolean(branding.logo_url), title: 'لوگوی کافه را بارگذاری کنید', hint: 'در منوی آنلاین و فاکتورها نمایش داده می‌شود.', href: '/dashboard/settings' },
-    { done: branches.some((b) => b.address), title: 'آدرس شعبه را کامل کنید', hint: 'برای محاسبه‌ی محدوده‌ی ارسال لازم است.', href: '/dashboard/branches' },
-    { done: branches.some((b) => (b.opening_hours?.length ?? 0) > 0), title: 'ساعات کاری را تعیین کنید', hint: 'مشتری می‌بیند کافه باز است یا نه.', href: '/dashboard/branches' },
-    { done: (team?.length ?? 0) > 1, title: 'همکاران خود را اضافه کنید', hint: 'صندوق‌دار، آشپزخانه و سالن‌دار هرکدام دسترسی خودشان را دارند.', href: '/dashboard/team' },
-  ];
 
   const link = (extraParams: Record<string, string>) => `/dashboard?${new URLSearchParams(Object.entries({ range, branch: branchId, ...extraParams }).filter(([, v]) => v !== ''))}`;
   const firstName = user.name.split(/\s+/)[0];
@@ -145,7 +137,7 @@ export default async function DashboardHome({ searchParams }: PageProps<'/dashbo
         </section>
       ) : null}
 
-      <SetupChecklist steps={steps} />
+      <SetupChecklist setup={setup} canSkip={can('settings.update')} />
 
       <DashboardGrid layout={layout.widgets} catalog={layout.catalog} nodes={nodes} isDefault={layout.is_default} />
     </div>

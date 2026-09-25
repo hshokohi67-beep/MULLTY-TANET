@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member', 'can:'.P::TENANT_VIEW])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('overview', [OverviewController::class, 'show'])->name('overview');
     Route::get('layout', [DashboardController::class, 'layout'])->name('layout.show');
+    Route::get('search', [DashboardController::class, 'search'])->middleware('throttle:dashboard-search')->name('search');
+    Route::get('alerts', [DashboardController::class, 'alerts'])->name('alerts');
+    Route::get('setup', [DashboardController::class, 'setup'])->name('setup');
+    Route::post('setup/skip', [DashboardController::class, 'skipSetupStep'])->name('setup.skip');
     Route::put('layout', [DashboardController::class, 'saveLayout'])->name('layout.update');
     Route::delete('layout', [DashboardController::class, 'resetLayout'])->name('layout.reset');
     Route::get('widgets/{widget}', [DashboardController::class, 'widget'])->name('widgets.show');

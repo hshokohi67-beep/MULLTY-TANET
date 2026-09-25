@@ -38,14 +38,16 @@ const STATUS: Record<StaffStory['status'], { label: string; tone: Tone }> = {
 };
 
 /** Stories as phone-shaped cards (live first), with views, clicks and click rate; drag to reorder. */
-export function StoriesManager({ stories, products, categories, branches, storeUrl }: {
+export function StoriesManager({ stories, products, categories, branches, storeUrl, startNew = false }: {
   stories: StaffStory[];
   products: Option[];
   categories: Option[];
   branches: Option[];
   storeUrl: string;
+  /** Opened from the command palette («استوری جدید»). */
+  startNew?: boolean;
 }) {
-  const [editing, setEditing] = useState<StaffStory | 'new' | null>(null);
+  const [editing, setEditing] = useState<StaffStory | 'new' | null>(startNew ? 'new' : null);
   const [order, setOrder] = useState(() => stories.map((s) => s.id));
   const [dragging, setDragging] = useState<string | null>(null);
   const [, startReorder] = useTransition();

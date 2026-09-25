@@ -9,7 +9,7 @@ import { StoriesManager, type StaffStory } from './StoriesManager';
 export const metadata: Metadata = { title: 'استوری‌ها' };
 
 /** Stories shown at the top of the online menu: photo, short text and one call to action. */
-export default async function StoriesPage() {
+export default async function StoriesPage({ searchParams }: PageProps<'/dashboard/stories'>) {
   const { can } = await requireMembership();
   if (!can('storefront.manage')) redirect('/dashboard');
 
@@ -30,6 +30,7 @@ export default async function StoriesPage() {
         categories={categories.filter((c) => c.is_active).map((c) => ({ id: c.id, name: c.name }))}
         branches={branches.map((b) => ({ id: b.id, name: b.name }))}
         storeUrl={`/s/${tenant.slug}`}
+        startNew={(await searchParams).new === '1'}
       />
     </div>
   );

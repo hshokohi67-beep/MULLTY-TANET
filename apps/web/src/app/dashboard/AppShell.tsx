@@ -5,11 +5,13 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   Aperture, Armchair, ChefHat, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
-  Settings, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
+  Search, Settings, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { logout } from '@/app/actions/auth';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
+import { CommandPalette } from './CommandPalette';
+import { NotificationBell } from './NotificationBell';
 
 const ICONS: Record<string, LucideIcon> = {
   overview: LayoutDashboard, orders: ReceiptText, kitchen: ChefHat, tables: Armchair, menu: UtensilsCrossed,
@@ -66,8 +68,10 @@ function Nav({ groups, collapsed, onNavigate }: { groups: NavGroup[]; collapsed:
  * phones), a quiet top bar with theme and account, and the page. The collapsed state is
  * remembered per browser.
  */
-export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTenant, topActions, children }: {
+export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTenant, topActions, permissions, storefrontUrl, children }: {
   groups: NavGroup[];
+  permissions: string[];
+  storefrontUrl: string;
   tenantName: string;
   userName: string;
   userPhone: string | null;
@@ -77,6 +81,7 @@ export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTen
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -153,8 +158,16 @@ export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTen
           </button>
           <span className="text-sm font-semibold lg:hidden">{tenantName}</span>
 
-          <div className="ms-auto flex items-center gap-2">
+          <button type="button" onClick={() => setPaletteOpen(true)} aria-label="جست‌وجو و فرمان سریع (Ctrl+K)"
+            className="ms-auto flex h-9 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 text-sm text-text-subtle shadow-[var(--shadow-sm)] transition-colors hover:border-border-strong hover:text-text-muted sm:ms-0 sm:w-72 sm:px-3">
+            <Search className="size-4 shrink-0" aria-hidden="true" />
+            <span className="hidden flex-1 text-start sm:inline">جست‌وجو یا فرمان…</span>
+            <kbd className="hidden rounded-md border border-border bg-surface-muted px-1.5 font-sans text-[11px] text-text-muted sm:inline" dir="ltr">Ctrl K</kbd>
+          </button>
+
+          <div className="flex items-center gap-2 sm:ms-auto">
             {topActions}
+            <NotificationBell />
             <ThemeSwitch />
             <details className="group relative">
               <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-surface-muted [&::-webkit-details-marker]:hidden">
@@ -175,6 +188,7 @@ export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTen
             </details>
           </div>
         </header>
+        <CommandPalette groups={groups} permissions={permissions} storefrontUrl={storefrontUrl} open={paletteOpen} onOpenChange={setPaletteOpen} />
         <main id="main" key={pathname} className="page-in mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
           {children}
         </main>

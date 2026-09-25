@@ -51,6 +51,8 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       userName={user.name}
       userPhone={user.phone ? formatPhone(user.phone) : null}
       canSwitchTenant={memberships.length > 1}
+      permissions={membership.permissions}
+      storefrontUrl={`/s/${membership.tenant.slug}`}
       topActions={can('kds.operate') ? (
         <Link href="/kds" target="_blank" className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:text-text sm:inline-flex">
           <ChefHat className="size-4" aria-hidden="true" /> نمایشگر آشپزخانه

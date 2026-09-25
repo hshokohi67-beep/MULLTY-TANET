@@ -16,12 +16,14 @@ export default async function MenuPage({ searchParams }: PageProps<'/dashboard/m
   const params = await searchParams;
   const search = typeof params.search === 'string' ? params.search : '';
   const categoryId = typeof params.category === 'string' ? params.category : '';
+  const soldOutOnly = params.availability === 'sold_out';
 
   const query = new URLSearchParams();
   if (search) query.set('search', search);
   if (categoryId) query.set('category_id', categoryId);
+  if (soldOutOnly) query.set('per_page', '200');
 
-  const [{ data: products, meta }, { data: categories }, { data: branches }] = await Promise.all([
+  const [{ data: allProducts, meta }, { data: categories }, { data: branches }] = await Promise.all([
     api<{ data: Product[]; meta: { total: number } }>(`/catalog/products?${query}`),
     api<{ data: Category[] }>('/catalog/categories'),
     api<{ data: Branch[] }>('/branches'),
@@ -30,11 +32,13 @@ export default async function MenuPage({ searchParams }: PageProps<'/dashboard/m
   const branchId = typeof params.branch === 'string' && branches.some((b) => b.id === params.branch) ? params.branch : branches[0]?.id;
   const canManage = can('catalog.manage') && can('prices.manage');
   const canAvailability = can('availability.manage');
-  const filtered = Boolean(search || categoryId);
+  // «تمام شده‌ها» (from the dashboard alert): items marked sold out in any branch.
+  const products = soldOutOnly ? allProducts.filter((p) => p.availability?.some((a) => a.status === 'sold_out')) : allProducts;
+  const filtered = Boolean(search || categoryId || soldOutOnly);
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="آیتم‌های منو" description={`${formatNumber(meta.total)} آیتم`} />
+      <PageHeader title="آیتم‌های منو" description={soldOutOnly ? `${formatNumber(products.length)} آیتم تمام شده` : `${formatNumber(meta.total)} آیتم`} />
 
       {canManage ? <QuickAddForm categories={categories} /> : null}
 
@@ -53,6 +57,12 @@ export default async function MenuPage({ searchParams }: PageProps<'/dashboard/m
           <SelectField label="دسته‌بندی" name="category" defaultValue={categoryId}>
             <option value="">همه</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </SelectField>
+        </div>
+        <div className="w-40">
+          <SelectField label="وضعیت" name="availability" defaultValue={soldOutOnly ? 'sold_out' : ''}>
+            <option value="">همه</option>
+            <option value="sold_out">تمام‌شده‌ها</option>
           </SelectField>
         </div>
         {branches.length > 1 ? (

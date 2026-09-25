@@ -13,7 +13,7 @@ export function QuickAddForm({ categories }: { categories: Category[] }) {
   const e = state.errors ?? {};
 
   return (
-    <Card className="p-4">
+    <Card id="quick-add" className="scroll-mt-24 p-4">
       <form action={action} key={state.created ?? 'form'} className="flex flex-col gap-3">
         <p className="text-sm font-semibold">افزودن سریع آیتم</p>
         {state.message ? (

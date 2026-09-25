@@ -2,11 +2,15 @@
 
 namespace App\Modules\Insights\Http\Controllers;
 
+use App\Modules\Core\Actions\UpdateTenantSettings;
 use App\Modules\Identity\Models\TenantUser;
 use App\Modules\Identity\Models\User;
 use App\Modules\Insights\Models\DashboardLayout;
 use App\Modules\Insights\Models\ShiftNote;
+use App\Modules\Insights\Support\Alerts;
+use App\Modules\Insights\Support\GlobalSearch;
 use App\Modules\Insights\Support\Overview;
+use App\Modules\Insights\Support\SetupProgress;
 use App\Modules\Insights\Support\WidgetCatalog;
 use App\Modules\Insights\Support\WidgetData;
 use App\Support\Realtime\LiveVersion;
@@ -122,6 +126,42 @@ final class DashboardController
     }
 
     /** @return Closure(string): bool */
+    /** Command palette record search (products, categories, orders, customers), permission-gated per group. */
+    public function search(Request $request, TenantContext $context): JsonResponse
+    {
+        $term = (string) $request->validate(['q' => ['required', 'string', 'max:60']])['q'];
+
+        return response()->json(['data' => GlobalSearch::run($term, $this->can(), $context->require()->timezone)]);
+    }
+
+    /** The actionable alerts alone, for the notification bell. */
+    public function alerts(Request $request): JsonResponse
+    {
+        $branchId = $request->validate(['branch_id' => ['nullable', 'string', 'max:26']])['branch_id'] ?? null;
+
+        return response()->json(['data' => Alerts::for($branchId, $this->can())]);
+    }
+
+    public function setup(): JsonResponse
+    {
+        return response()->json(['data' => SetupProgress::get()]);
+    }
+
+    /** Skip (or restore) an optional setup step; essentials can't be skipped. */
+    public function skipSetupStep(Request $request, UpdateTenantSettings $settings): JsonResponse
+    {
+        abort_unless(Gate::allows('settings.update'), 403);
+        $v = $request->validate([
+            'step' => ['required', Rule::in(['payment', 'cover', 'tables', 'kitchen', 'delivery', 'team', 'story'])],
+            'skip' => ['sometimes', 'boolean'],
+        ]);
+        $skipped = SetupProgress::skipped();
+        $skipped = ($v['skip'] ?? true) ? array_values(array_unique([...$skipped, $v['step']])) : array_values(array_diff($skipped, [$v['step']]));
+        $settings->handle(['onboarding.skipped' => implode(',', $skipped) ?: null]);
+
+        return response()->json(['data' => SetupProgress::get()]);
+    }
+
     private function can(): Closure
     {
         return fn (string $ability) => Gate::allows($ability);

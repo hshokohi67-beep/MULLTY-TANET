@@ -55,6 +55,17 @@ final class Alerts
             }
         }
 
+        if ($can('catalog.view')) {
+            // Marked «تمام شد» and not due back yet: worth a look (restock or switch back on).
+            $soldOut = ProductAvailability::query()->where('status', 'sold_out')
+                ->when($branchId, fn ($q, $id) => $q->where('branch_id', $id))
+                ->where(fn ($q) => $q->whereNull('sold_out_until')->orWhere('sold_out_until', '>', now()))
+                ->distinct()->count('product_id');
+            if ($soldOut > 0) {
+                $alerts[] = ['type' => 'sold_out', 'severity' => 'warning', 'title' => "{$n($soldOut)} محصول «تمام شد» خورده است", 'count' => $soldOut, 'href' => '/dashboard/menu?availability=sold_out'];
+            }
+        }
+
         if ($can('payments.view')) {
             $refund = $orders()->whereColumn('paid_total', '>', 'refunded_total')
                 ->where(fn ($q) => $q->whereIn('status', [OrderStatus::Cancelled, OrderStatus::Rejected])->orWhereRaw('paid_total - refunded_total > total'))

@@ -12,7 +12,7 @@ export function TenantProfileForm({ tenant, readOnly }: { tenant: Tenant; readOn
   const [state, action, pending] = useActionState(updateTenantProfile, initial);
 
   return (
-    <Card>
+    <Card id="profile" className="scroll-mt-24">
       <CardHeader title="اطلاعات کسب‌وکار" />
       <form action={action} className="flex flex-col gap-4 p-5">
         <FormStatus state={state} />
@@ -34,7 +34,7 @@ export function BrandingForm({ branding, readOnly }: { branding: Branding; readO
   const e = state.errors ?? {};
 
   return (
-    <Card>
+    <Card id="brand" className="scroll-mt-24">
       <CardHeader title="برند و سئو" description="این اطلاعات در منوی آنلاین و نتایج جستجوی گوگل دیده می‌شود." />
       <form action={action} className="flex flex-col gap-4 p-5">
         <FormStatus state={state} />
@@ -86,7 +86,7 @@ export function GeneralSettingsForm({ settings, readOnly }: { settings: SettingI
   const e = state.errors ?? {};
 
   return (
-    <Card>
+    <Card id="general" className="scroll-mt-24">
       <CardHeader title="تنظیمات عمومی" />
       <form action={action} className="flex flex-col gap-4 p-5">
         <FormStatus state={state} />
@@ -121,7 +121,7 @@ export function PaymentSettingsForm({ settings, meta, readOnly }: { settings: Se
   const e = state.errors ?? {};
 
   return (
-    <Card>
+    <Card id="payments" className="scroll-mt-24">
       <CardHeader
         title="پرداخت اینترنتی (زرین‌پال)"
         description="با فعال بودن این گزینه، مشتری هنگام ثبت سفارش می‌تواند آنلاین پرداخت کند و پول مستقیم به حساب درگاه شما واریز می‌شود."
@@ -166,7 +166,7 @@ export function ReportSettingsForm({ settings, readOnly }: { settings: SettingIt
   const hour = Number(byKey['reports.daily_sms_hour']?.value ?? 23);
 
   return (
-    <Card>
+    <Card id="report" className="scroll-mt-24">
       <CardHeader title="گزارش پایان روز" description="خلاصه‌ی فروش هر روز با پیامک برای مالک کافه فرستاده می‌شود؛ حتی وقتی در کافه نیستید در جریان باشید." />
       <form action={action} className="flex flex-col gap-4 p-5">
         <FormStatus state={state} />
@@ -192,7 +192,7 @@ export function PreorderSettingsForm({ settings, readOnly }: { settings: Setting
   const e = state.errors ?? {};
 
   return (
-    <Card>
+    <Card id="preorder" className="scroll-mt-24">
       <CardHeader title="پیش‌سفارش" description="مشتری روز و ساعت دریافت را از میان بازه‌های باز کافه انتخاب می‌کند؛ سفارش کمی قبل از آن زمان به آشپزخانه می‌رود." />
       <form action={action} className="flex flex-col gap-4 p-5">
         <FormStatus state={state} />
