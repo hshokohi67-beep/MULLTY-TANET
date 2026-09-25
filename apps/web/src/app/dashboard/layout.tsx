@@ -13,6 +13,7 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       title: 'عملیات روزانه',
       items: [
         { href: '/dashboard', label: 'پیشخوان', icon: 'overview' },
+        ...(can('reports.view') ? [{ href: '/dashboard/reports', label: 'گزارش‌ها', icon: 'reports' }] : []),
         ...(can('orders.view') ? [{ href: '/dashboard/orders', label: 'سفارش‌ها', icon: 'orders' }] : []),
         ...(can('kds.manage') ? [{ href: '/dashboard/kitchen', label: 'آشپزخانه', icon: 'kitchen' }] : []),
         ...(can('orders.view') ? [{ href: '/dashboard/tables', label: 'میزها و QR', icon: 'tables' }] : []),

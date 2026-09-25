@@ -12,3 +12,4 @@ Schedule::command('payments:reconcile')->everyMinute()->withoutOverlapping()->on
 Schedule::command('kitchen:release-preorders')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('loyalty:birthdays')->hourly()->withoutOverlapping()->onOneServer();
 Schedule::command('insights:daily-report')->hourly()->withoutOverlapping()->onOneServer();
+Schedule::command('analytics:rollup')->everyFiveMinutes()->withoutOverlapping()->onOneServer();

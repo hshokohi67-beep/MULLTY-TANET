@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * Append-only stock ledger row. Written only by PostStockMovement.
  *
  * @property string $id
+ * @property string $tenant_id
  * @property string $ingredient_id
  * @property string $branch_id
  * @property StockMovementType $type

@@ -182,6 +182,13 @@ final class TenantIsolationTest extends TestCase
             'time clock' => ['GET', '/api/v1/time-clock/me'],
             'clock in' => ['POST', '/api/v1/time-clock/in'],
             'clock out' => ['POST', '/api/v1/time-clock/out'],
+            'report summary' => ['GET', '/api/v1/reports/summary'],
+            'report products' => ['GET', '/api/v1/reports/products'],
+            'report hours' => ['GET', '/api/v1/reports/hours'],
+            'report branches' => ['GET', '/api/v1/reports/branches'],
+            'report customers' => ['GET', '/api/v1/reports/customers'],
+            'report inventory' => ['GET', '/api/v1/reports/inventory'],
+            'report export' => ['GET', '/api/v1/reports/export'],
             'create ingredient' => ['POST', '/api/v1/inventory/ingredients'],
             'stock movements' => ['GET', '/api/v1/inventory/movements'],
             'stock adjustment' => ['POST', '/api/v1/inventory/adjustments'],
@@ -554,6 +561,19 @@ final class TenantIsolationTest extends TestCase
             ->assertStatus(422)->assertJsonPath('code', 'user_not_member');
         $this->postJson('/api/v1/time-clock/in', [], $headers)->assertStatus(403)->assertJsonPath('code', 'not_an_employee');
         $this->assertSame([], $this->getJson('/api/v1/staff/attendance', $headers)->assertOk()->json('data'));
+    }
+
+    public function test_reports_reject_foreign_branches_and_never_include_other_tenants(): void
+    {
+        $headers = $this->staffHeaders($this->ownerA, $this->a);
+        $branchB = $this->inTenant($this->b, fn () => Branch::query()->firstOrFail());
+
+        foreach (['summary', 'products', 'hours', 'branches', 'customers', 'inventory', 'export'] as $report) {
+            $this->getJson("/api/v1/reports/{$report}?branch_id={$branchB->id}", $headers)->assertUnprocessable()->assertJsonValidationErrors('branch_id');
+        }
+        $names = array_column($this->getJson('/api/v1/reports/branches', $headers)->assertOk()->json('data.branches'), 'name');
+        $this->assertNotContains($branchB->name, array_diff($names, $this->inTenant($this->a, fn () => Branch::query()->pluck('name')->all())));
+        $this->assertSame(0, $this->getJson('/api/v1/reports/customers', $headers)->json('data.buyers'));
     }
 
     public function test_foreign_role_ids_cannot_be_assigned(): void

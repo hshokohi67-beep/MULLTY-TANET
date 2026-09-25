@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
+ * @property string $tenant_id
  * @property string $employee_id
  * @property string $branch_id
  * @property ?string $shift_id

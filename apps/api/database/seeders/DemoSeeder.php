@@ -81,6 +81,7 @@ class DemoSeeder extends Seeder
             $this->call(StorefrontDemoSeeder::class);
             $this->call(InventoryDemoSeeder::class);
             $this->call(OperationsDemoSeeder::class);
+            $this->call(AnalyticsDemoSeeder::class);
         });
 
         $second = $createTenant->handle(new CreateTenantData(

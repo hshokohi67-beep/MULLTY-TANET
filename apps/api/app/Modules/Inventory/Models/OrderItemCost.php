@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  * The cost of one sold order line at the moment of sale.
  *
  * @property string $id
+ * @property string $tenant_id
  * @property string $order_id
  * @property string $order_item_id
  * @property int $cost

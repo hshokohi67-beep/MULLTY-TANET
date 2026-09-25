@@ -318,3 +318,15 @@ body {
   .glass { background: var(--color-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .glass-light { background: rgb(0 0 0 / 0.55); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* Printable reports (/print/*): A4, no app chrome, cards kept whole, colours as on screen. */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  .no-print { display: none !important; }
+  .print-page { background: white; }
+  .print-page main { max-width: none; padding: 0; }
+  .print-page [class*='shadow'] { box-shadow: none !important; }
+  .print-page section, .print-page .rounded-2xl, .print-page table tr { break-inside: avoid; }
+  .print-break { break-before: page; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

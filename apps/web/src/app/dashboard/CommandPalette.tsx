@@ -47,6 +47,7 @@ const PAGE_KEYWORDS: Record<string, string> = {
   '/dashboard/team': 'کارمند همکار نقش دسترسی',
   '/dashboard/inventory': 'انبار موجودی مواد اولیه ضایعات انبارگردانی',
   '/dashboard/purchases': 'خرید تامین کننده فروشنده بدهی فاکتور خرید',
+  '/dashboard/reports': 'گزارش گزارشات آمار فروش سود زیان مقایسه اکسل خروجی pdf محصولات پرفروش شعبه',
   '/dashboard/staff': 'کارکنان کارمند پرسنل شیفت برنامه حضور غیاب ورود خروج تاخیر حقوق دستمزد',
   '/dashboard/expenses': 'هزینه خرج اجاره قبض برق آب گاز تعمیر مخارج',
 };
@@ -140,6 +141,8 @@ export function CommandPalette({ groups, permissions, storefrontUrl, open, onOpe
       can('storefront.manage') ? { id: 'act:story', group: 'کارها', title: 'استوری جدید', keywords: 'story', href: '/dashboard/stories?new=1', icon: <Aperture className="size-4" /> } : null,
       can('discounts.manage') ? { id: 'act:discount', group: 'کارها', title: 'کد تخفیف جدید', keywords: 'کوپن', href: '/dashboard/discounts', icon: <Tags className="size-4" /> } : null,
       can('purchasing.manage') ? { id: 'act:purchase', group: 'کارها', title: 'ثبت سفارش خرید', keywords: 'خرید تامین کننده مواد', href: '/dashboard/purchases/new', icon: <Plus className="size-4" /> } : null,
+      can('reports.view') ? { id: 'act:report-month', group: 'کارها', title: 'گزارش ۳۰ روز اخیر', keywords: 'گزارش ماه فروش سود', href: '/dashboard/reports', icon: <FileText className="size-4" /> } : null,
+      can('reports.view') ? { id: 'act:report-products', group: 'کارها', title: 'پرفروش‌ترین محصولات', keywords: 'گزارش محصول پرفروش ABC', href: '/dashboard/reports?tab=products', icon: <FileText className="size-4" /> } : null,
       can('expenses.manage') ? { id: 'act:expense', group: 'کارها', title: 'ثبت هزینه', keywords: 'خرج اجاره قبض', href: '/dashboard/expenses', icon: <Plus className="size-4" /> } : null,
       can('staff.manage') ? { id: 'act:shifts', group: 'کارها', title: 'برنامه‌ی شیفت این هفته', keywords: 'شیفت کارکنان برنامه', href: '/dashboard/staff?tab=schedule', icon: <FileText className="size-4" /> } : null,
       can('staff.manage') ? { id: 'act:payroll', group: 'کارها', title: 'کارکرد و دستمزد این ماه', keywords: 'حقوق دستمزد ساعت کار', href: '/dashboard/staff?tab=payroll', icon: <FileText className="size-4" /> } : null,

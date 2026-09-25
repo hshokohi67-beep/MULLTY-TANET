@@ -2,9 +2,11 @@
 
 namespace App\Modules\Insights\Support;
 
+use App\Modules\Analytics\Models\DailyMetric;
+use App\Modules\Analytics\Support\Metrics;
+use App\Modules\Analytics\Support\SalesRules;
 use App\Modules\Commerce\Enums\OrderStatus;
 use App\Modules\Commerce\Models\Order;
-use App\Modules\Commerce\Models\OrderItem;
 use App\Modules\Commerce\Models\TableSessionRequest;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Kitchen\Enums\KitchenItemStatus;
@@ -22,7 +24,8 @@ use Illuminate\Support\Collection;
  * Sales = totals of orders that were not cancelled, rejected or left unpaid online, grouped by
  * business date (tenant-local). "Today" compares against the same time of day yesterday and on the
  * same weekday last week, so a 10:00 view isn't judged against a whole finished day.
- * Phase 11 replaces the live queries with aggregates behind the same shape.
+ * Daily totals, period KPIs and top products read the Analytics aggregates (refreshed on read);
+ * today's same-time-of-day comparisons and the live board stay live queries.
  */
 final class Overview
 {
@@ -170,16 +173,13 @@ final class Overview
     public function topProducts(string $range, int $limit = 5): array
     {
         [$from, $to] = $this->window($range);
+        Metrics::refresh($from->toDateString(), $to->toDateString());
 
-        return OrderItem::query()
-            ->whereIn('order_id', $this->counted($this->orders($from, $to))->select('id'))
-            ->selectRaw('product_name as name, SUM(quantity) as quantity, SUM(line_total) as revenue')
+        return Metrics::products($from->toDateString(), $to->toDateString(), $this->branchId)
             ->groupBy('product_name')
-            ->orderByDesc('quantity')->orderByDesc('revenue')
-            ->limit($limit)
-            ->get()
-            ->map(fn ($r) => ['name' => (string) $r->getAttribute('name'), 'quantity' => (int) $r->getAttribute('quantity'), 'revenue' => (int) $r->getAttribute('revenue')])
-            ->values()->all();
+            ->map(fn ($g, $name) => ['name' => (string) $name, 'quantity' => (int) $g->sum('quantity'), 'revenue' => (int) $g->sum('revenue')])
+            ->sort(fn (array $a, array $b) => [$b['quantity'], $b['revenue']] <=> [$a['quantity'], $a['revenue']])
+            ->take($limit)->values()->all();
     }
 
     /** @return array<string, mixed> */
@@ -258,12 +258,27 @@ final class Overview
      */
     public function counted(Builder $query): Builder
     {
-        return $query->whereNotIn('status', [OrderStatus::Cancelled, OrderStatus::Rejected, OrderStatus::PendingPayment]);
+        return $query->whereNotIn('status', SalesRules::EXCLUDED);
     }
 
     /** @return array{sales: int, orders: int, average: int, discounts: int} */
     private function salesBetween(CarbonImmutable $from, CarbonImmutable $to, ?CarbonImmutable $placedBefore = null): array
     {
+        if ($placedBefore === null) {
+            Metrics::refresh($from->toDateString(), $to->toDateString());
+            $rows = Metrics::daily($from->toDateString(), $to->toDateString(), $this->branchId);
+            $orders = (int) $rows->sum('orders');
+            $sales = (int) $rows->sum('sales');
+
+            return [
+                'sales' => $sales,
+                'orders' => $orders,
+                'average' => $orders > 0 ? (int) round($sales / $orders / 10) * 10 : 0,
+                'discounts' => (int) $rows->sum('discounts'),
+            ];
+        }
+
+        // Same time of day on an earlier date: needs placed_at, so it stays a live query.
         $q = $this->counted($this->orders($from, $to))->when($placedBefore, fn ($q, $at) => $q->where('placed_at', '<=', $at));
         $orders = (clone $q)->count();
         $sales = (int) (clone $q)->sum('total');
@@ -279,11 +294,11 @@ final class Overview
     /** @return array<string, int> business date → sales */
     private function dailyTotals(CarbonImmutable $from, CarbonImmutable $to): array
     {
-        return $this->counted($this->orders($from, $to))
-            ->selectRaw('business_date, SUM(total) as sales')
-            ->groupBy('business_date')
-            ->get()
-            ->mapWithKeys(fn (Order $o) => [$o->business_date->toDateString() => (int) $o->getAttribute('sales')])
+        Metrics::refresh($from->toDateString(), $to->toDateString());
+
+        return Metrics::daily($from->toDateString(), $to->toDateString(), $this->branchId)
+            ->groupBy(fn (DailyMetric $m) => $m->business_date->toDateString())
+            ->map(fn ($g) => (int) $g->sum('sales'))
             ->all();
     }
 
