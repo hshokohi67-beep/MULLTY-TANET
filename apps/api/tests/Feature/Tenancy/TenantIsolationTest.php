@@ -196,6 +196,8 @@ final class TenantIsolationTest extends TestCase
             'report customers' => ['GET', '/api/v1/reports/customers'],
             'report inventory' => ['GET', '/api/v1/reports/inventory'],
             'report export' => ['GET', '/api/v1/reports/export'],
+            'marketplace listing' => ['GET', '/api/v1/marketplace/listing'],
+            'update marketplace listing' => ['PUT', '/api/v1/marketplace/listing'],
             'billing status' => ['GET', '/api/v1/billing/status'],
             'billing' => ['GET', '/api/v1/billing'],
             'billing plans' => ['GET', '/api/v1/billing/plans'],

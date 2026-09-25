@@ -13,6 +13,7 @@ final class FeatureLabels
         'reports' => 'گزارش‌ها',
         'stories' => 'استوری',
         'custom_domain' => 'دامنه‌ی اختصاصی',
+        'marketplace_featured' => 'ویترین ویژه در بازارگاه',
         'branches' => 'شعبه',
         'staff' => 'اعضای تیم',
         'products' => 'محصول',

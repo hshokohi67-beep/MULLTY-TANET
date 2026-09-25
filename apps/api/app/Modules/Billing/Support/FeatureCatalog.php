@@ -12,7 +12,7 @@ use App\Support\Entitlements\FeatureLabels;
 final class FeatureCatalog
 {
     /** On/off features. */
-    public const SWITCHES = ['online_payments', 'loyalty', 'inventory', 'operations', 'reports', 'stories', 'custom_domain'];
+    public const SWITCHES = ['online_payments', 'loyalty', 'inventory', 'operations', 'reports', 'stories', 'custom_domain', 'marketplace_featured'];
 
     /** Countable limits (null = unlimited). `monthly_orders` only warns; it never blocks a customer. */
     public const LIMITS = ['branches', 'staff', 'products', 'monthly_orders'];

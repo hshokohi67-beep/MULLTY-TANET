@@ -20,6 +20,7 @@ export default async function PlatformLayout({ children }: LayoutProps<'/platfor
           <nav className="ms-4 flex gap-1" aria-label="بخش‌ها">
             <Link href="/platform" className={link}>مشترکان</Link>
             <Link href="/platform/plans" className={link}>پلن‌ها</Link>
+            <Link href="/platform/marketplace" className={link}>بازارگاه</Link>
           </nav>
           <div className="ms-auto flex items-center gap-2">
             <ThemeSwitch />

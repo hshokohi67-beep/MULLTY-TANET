@@ -95,5 +95,7 @@ class DemoSeeder extends Seeder
             subdomainBase: config('tenancy.subdomain_base'),
         ));
         $second->update(['status' => TenantStatus::Active]);
+
+        $this->call(MarketplaceDemoSeeder::class);
     }
 }
