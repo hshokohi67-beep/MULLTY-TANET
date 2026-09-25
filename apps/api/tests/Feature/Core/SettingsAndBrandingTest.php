@@ -56,9 +56,9 @@ final class SettingsAndBrandingTest extends TestCase
             'logo' => UploadedFile::fake()->image('../../evil name.png', 256, 256),
         ], $this->staffHeaders($owner, $tenant))->assertOk();
 
-        $files = Storage::disk('public')->allFiles("tenants/{$tenant->id}/branding");
+        $files = Storage::disk('public')->allFiles("t/{$tenant->refresh()->media_key}/branding");
         $this->assertCount(1, $files);
-        $this->assertMatchesRegularExpression('#^tenants/'.$tenant->id.'/branding/[0-9A-Z]{26}-logo\.webp$#', $files[0]);
+        $this->assertMatchesRegularExpression('#^t/'.$tenant->media_key.'/branding/[0-9A-Z]{26}-logo\.webp$#', $files[0]);
         $this->assertStringContainsString($files[0], (string) $response->json('data.logo_url'));
     }
 
@@ -69,11 +69,11 @@ final class SettingsAndBrandingTest extends TestCase
         $headers = $this->staffHeaders($owner, $tenant);
 
         $this->post('/api/v1/tenant/branding/logo', ['logo' => UploadedFile::fake()->image('first.png', 256, 256)], $headers)->assertOk();
-        $first = Storage::disk('public')->allFiles("tenants/{$tenant->id}/branding");
+        $first = Storage::disk('public')->allFiles("t/{$tenant->refresh()->media_key}/branding");
         $this->assertCount(1, $first);
 
         $this->post('/api/v1/tenant/branding/logo', ['logo' => UploadedFile::fake()->image('second.png', 256, 256)], $headers)->assertOk();
-        $second = Storage::disk('public')->allFiles("tenants/{$tenant->id}/branding");
+        $second = Storage::disk('public')->allFiles("t/{$tenant->refresh()->media_key}/branding");
 
         // The old file is gone (re-encoding to WebP also drops any EXIF the original carried).
         $this->assertCount(1, $second);

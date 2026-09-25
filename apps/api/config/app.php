@@ -65,6 +65,9 @@ return [
     |
     */
 
+    // Proxies allowed to set X-Forwarded-* (bootstrap/app.php reads the env directly; preflight reads this).
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
     'timezone' => 'UTC',
 
     /*

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Stores images under tenants/{tenant}/products/{product}/{ulid}.{sniffed-ext}. The client filename is never used.
+ * Stores images under t/{media key}/products/{ulid}.{sniffed-ext} (no internal ids in public URLs). The client filename is never used.
  */
 final class ManageProductImages
 {
@@ -32,7 +32,7 @@ final class ManageProductImages
             }
 
             $dimensions = @getimagesize($file->getRealPath()) ?: [null, null];
-            $directory = sprintf('tenants/%s/products/%s', $this->context->require()->getKey(), $product->getKey());
+            $directory = $this->context->require()->mediaDirectory('products');
             $name = Str::ulid().'.'.($file->guessExtension() ?? 'bin');
 
             Storage::disk(config('filesystems.media_disk'))->putFileAs($directory, $file, $name, ['visibility' => 'public']);

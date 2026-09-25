@@ -3,6 +3,7 @@
 namespace App\Support\Observability;
 
 use App\Support\Backup\Console\BackupDatabaseCommand;
+use App\Support\Ops\Console\PreflightCommand;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +26,7 @@ final class ObservabilityServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([BackupDatabaseCommand::class]);
+            $this->commands([BackupDatabaseCommand::class, PreflightCommand::class]);
         }
 
         Event::listen(DiagnosingHealth::class, function (): void {

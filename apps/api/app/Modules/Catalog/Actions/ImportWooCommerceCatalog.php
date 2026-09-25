@@ -340,7 +340,7 @@ final class ImportWooCommerceCatalog
             return;
         }
 
-        $path = sprintf('tenants/%s/products/%s/%s.%s', $this->context->require()->getKey(), $product->id, Str::ulid(), $extension);
+        $path = sprintf('%s/%s.%s', $this->context->require()->mediaDirectory('products'), Str::ulid(), $extension);
         Storage::disk(config('filesystems.media_disk'))->put($path, $response->body(), ['visibility' => 'public']);
         $size = @getimagesizefromstring($response->body()) ?: [null, null];
 

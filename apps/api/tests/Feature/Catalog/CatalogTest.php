@@ -134,7 +134,8 @@ final class CatalogTest extends CatalogTestCase
 
         $files = Storage::disk('public')->allFiles();
         $this->assertCount(1, $files);
-        $this->assertStringStartsWith("tenants/{$this->tenant->id}/products/{$id}/", $files[0]);
+        $this->assertStringStartsWith("t/{$this->tenant->refresh()->media_key}/products/", $files[0]);
+        $this->assertStringNotContainsString($this->tenant->id, $files[0]); // no internal ids in public URLs
     }
 
     public function test_modifier_group_rules(): void

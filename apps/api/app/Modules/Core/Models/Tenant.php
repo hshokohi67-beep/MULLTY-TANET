@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 /**
  * A cafe/restaurant business. The root of all tenant-owned data.
@@ -25,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $locale
  * @property string $currency
  * @property CurrencyUnit $display_currency_unit
+ * @property ?string $media_key random public folder name for this tenant's media
  */
 #[Fillable(['name', 'slug', 'status', 'timezone', 'locale', 'currency', 'display_currency_unit'])]
 #[UseFactory(TenantFactory::class)]
@@ -59,6 +61,26 @@ class Tenant extends Model
     public function branding(): HasOne
     {
         return $this->hasOne(TenantBranding::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Tenant $tenant): void {
+            $tenant->media_key ??= Str::lower(Str::random(20));
+        });
+    }
+
+    /**
+     * Where this tenant's public media is stored: a random key, never the tenant id (which would
+     * then show in every public image URL).
+     */
+    public function mediaDirectory(string $sub): string
+    {
+        if ($this->media_key === null) {
+            $this->forceFill(['media_key' => Str::lower(Str::random(20))])->save();
+        }
+
+        return 't/'.$this->media_key.'/'.$sub;
     }
 
     public function canOperate(): bool

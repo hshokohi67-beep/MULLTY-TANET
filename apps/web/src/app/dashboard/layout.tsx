@@ -4,6 +4,8 @@ import { formatPhone } from '@cafe/locale';
 import { requireMembership } from '@/lib/auth';
 import { getBillingStatus } from '@/lib/billing';
 import { SCREEN_FEATURES } from '@/lib/billing-types';
+import { HelpButton } from '@/components/help/HelpButton';
+import { screenMap, visibleTopics } from '@/lib/help';
 import { AppShell, type NavGroup } from './AppShell';
 import { TimeClockButton } from './TimeClockButton';
 
@@ -64,6 +66,10 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
         ...(can('billing.manage') ? [{ href: '/dashboard/billing', label: 'اشتراک و پرداخت', icon: 'billing' }] : []),
       ],
     },
+    {
+      title: 'کمک',
+      items: [{ href: '/dashboard/help', label: 'راهنمای کامل', icon: 'help' }],
+    },
   ].filter((g) => g.items.length > 0);
 
   // Screens outside the plan stay visible with a lock and lead to the upgrade view.
@@ -86,6 +92,7 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       billing={billing ? { state: billing.state, daysLeft: billing.days_left, status: billing.status, canManage: can('billing.manage') } : null}
       isPlatformAdmin={user.is_platform_admin}
       topActions={<>
+        <HelpButton map={screenMap(visibleTopics({ can, roleKeys: (membership.roles ?? []).map((r) => r.key) }))} />
         {can('attendance.self') ? <TimeClockButton /> : null}
         {can('kds.operate') ? (
           <Link href="/kds" target="_blank" className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:text-text sm:inline-flex">

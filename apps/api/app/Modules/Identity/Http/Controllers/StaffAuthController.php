@@ -56,6 +56,8 @@ final class StaffAuthController
             ->map(fn (Tenant $tenant) => [
                 'tenant' => ['id' => $tenant->id, 'name' => $tenant->name, 'slug' => $tenant->slug],
                 'permissions' => $permissions->permissions($user, $tenant),
+                // Role names for display (e.g. the help centre's "your role"); permissions stay the authority.
+                'roles' => $this->roles($permissions, $user, $tenant),
             ])
             ->values();
 
@@ -63,5 +65,16 @@ final class StaffAuthController
             'user' => new StaffUserResource($user),
             'memberships' => $memberships,
         ]);
+    }
+
+    /** @return list<array{key: string, name: string}> */
+    private function roles(PermissionResolver $permissions, User $user, Tenant $tenant): array
+    {
+        $out = [];
+        foreach ($permissions->membership($user, $tenant)->roles ?? [] as $role) {
+            $out[] = ['key' => (string) $role->key, 'name' => (string) $role->name];
+        }
+
+        return $out;
     }
 }

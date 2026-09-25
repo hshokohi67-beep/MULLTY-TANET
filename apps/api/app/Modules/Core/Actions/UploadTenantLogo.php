@@ -23,7 +23,7 @@ final class UploadTenantLogo
     public function handle(UploadedFile $file): TenantBranding
     {
         try {
-            $stored = $this->images->store($file, sprintf('tenants/%s/branding', $this->context->require()->getKey()), [
+            $stored = $this->images->store($file, $this->context->require()->mediaDirectory('branding'), [
                 'logo' => ['fit' => 512, 'quality' => 85],
             ]);
         } catch (RuntimeException) {

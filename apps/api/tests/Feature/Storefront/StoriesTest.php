@@ -43,7 +43,7 @@ final class StoriesTest extends CommerceTestCase
         $model = $this->inTenant($this->tenant, fn () => Story::query()->findOrFail($story['id']));
         $disk = Storage::disk('public');
         $this->assertStringEndsWith('.webp', $model->image_path);
-        $this->assertStringStartsWith("tenants/{$this->tenant->id}/stories/", $model->image_path);
+        $this->assertStringStartsWith("t/{$this->tenant->refresh()->media_key}/stories/", $model->image_path);
         $this->assertSame('image/webp', getimagesizefromstring((string) $disk->get($model->image_path))['mime']);
         $thumb = getimagesizefromstring((string) $disk->get($model->thumb_path));
         $this->assertSame([240, 240], [$thumb[0], $thumb[1]]);

@@ -23,7 +23,7 @@ final class UploadTenantCover
     public function handle(UploadedFile $file): TenantBranding
     {
         try {
-            $stored = $this->images->store($file, sprintf('tenants/%s/branding', $this->context->require()->getKey()), [
+            $stored = $this->images->store($file, $this->context->require()->mediaDirectory('branding'), [
                 'cover' => ['fit' => 1920, 'quality' => 80],
             ]);
         } catch (RuntimeException) {

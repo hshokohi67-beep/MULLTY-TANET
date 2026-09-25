@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Commerce;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Testing\TestResponse;
 
 final class OrderHistoryTest extends CommerceTestCase
@@ -34,6 +35,8 @@ final class OrderHistoryTest extends CommerceTestCase
 
     public function test_history_filters_search_and_summary(): void
     {
+        // Mid-day, so "+10 minutes" never crosses midnight into another business date.
+        $this->travelTo(CarbonImmutable::parse('2026-09-26 12:00', 'Asia/Tehran'));
         $done = $this->quickQrOrder()->json('data.id');           // #1, 650,000
         $this->setStatus($done, ['accepted', 'preparing', 'ready', 'completed']);
         $cancelled = $this->quickQrOrder()->json('data.id');      // #2

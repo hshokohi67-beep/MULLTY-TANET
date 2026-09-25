@@ -17,6 +17,8 @@ export interface StaffUser {
 export interface Membership {
   tenant: { id: string; name: string; slug: string };
   permissions: string[];
+  /** Display only (help centre); permissions are the authority. */
+  roles?: { key: string; name: string }[];
 }
 
 export interface MeResponse {

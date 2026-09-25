@@ -100,7 +100,7 @@ final class ManageStories
     private function process(UploadedFile $image): array
     {
         try {
-            return $this->images->store($image, sprintf('tenants/%s/stories', $this->context->require()->getKey()), [
+            return $this->images->store($image, $this->context->require()->mediaDirectory('stories'), [
                 'full' => ['fit' => 1600, 'quality' => 80],
                 'thumb' => ['fit' => 240, 'square' => true, 'quality' => 78],
             ]);

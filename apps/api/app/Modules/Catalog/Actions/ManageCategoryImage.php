@@ -26,7 +26,7 @@ final class ManageCategoryImage
     public function upload(Category $category, UploadedFile $file): Category
     {
         try {
-            $stored = $this->images->store($file, sprintf('tenants/%s/categories', $this->context->require()->getKey()), [
+            $stored = $this->images->store($file, $this->context->require()->mediaDirectory('categories'), [
                 'square' => ['fit' => 320, 'square' => true, 'quality' => 82],
             ]);
         } catch (RuntimeException) {
