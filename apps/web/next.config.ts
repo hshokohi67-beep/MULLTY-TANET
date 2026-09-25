@@ -1,10 +1,28 @@
 import type { NextConfig } from 'next';
 
+// Scripts and styles need 'unsafe-inline' for the theme-flash-prevention snippet, the per-page
+// JSON-LD blocks and Tailwind's own inline styles; there is no per-request nonce plumbing yet
+// (proxy.ts only runs on a subset of routes). Images are 'https:' broadly because the media disk
+// (local storage or S3-compatible object storage) is a deployment choice, not a fixed host.
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+  { key: 'Content-Security-Policy', value: csp },
 ];
 
 const nextConfig: NextConfig = {

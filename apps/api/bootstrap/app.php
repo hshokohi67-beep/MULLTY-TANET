@@ -5,6 +5,7 @@ use App\Modules\Identity\Http\Middleware\RequireActor;
 use App\Support\Entitlements\RequireFeature;
 use App\Support\Http\ApiExceptionRenderer;
 use App\Support\Http\DomainException;
+use App\Support\Http\Middleware\RequestId;
 use App\Support\Http\Middleware\SecurityHeaders;
 use App\Support\Tenancy\ResolveTenant;
 use App\Support\Tenancy\TenantNotResolvedException;
@@ -45,7 +46,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Plan features are checked after membership (a stranger gets 403, not an upsell).
         $middleware->appendToPriorityList(EnsureTenantMember::class, RequireFeature::class);
 
-        $middleware->api(append: [SecurityHeaders::class]);
+        // First so every log line for this request, including ones from middleware below, carries it.
+        $middleware->api(prepend: [RequestId::class], append: [SecurityHeaders::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -58,8 +58,27 @@ final class SettingsAndBrandingTest extends TestCase
 
         $files = Storage::disk('public')->allFiles("tenants/{$tenant->id}/branding");
         $this->assertCount(1, $files);
-        $this->assertMatchesRegularExpression('#^tenants/'.$tenant->id.'/branding/[0-9A-Z]{26}\.png$#', $files[0]);
+        $this->assertMatchesRegularExpression('#^tenants/'.$tenant->id.'/branding/[0-9A-Z]{26}-logo\.webp$#', $files[0]);
         $this->assertStringContainsString($files[0], (string) $response->json('data.logo_url'));
+    }
+
+    public function test_logo_replace_deletes_the_previous_file_and_strips_metadata(): void
+    {
+        Storage::fake('public');
+        ['tenant' => $tenant, 'owner' => $owner] = $this->createTenantWithOwner('cafe-a');
+        $headers = $this->staffHeaders($owner, $tenant);
+
+        $this->post('/api/v1/tenant/branding/logo', ['logo' => UploadedFile::fake()->image('first.png', 256, 256)], $headers)->assertOk();
+        $first = Storage::disk('public')->allFiles("tenants/{$tenant->id}/branding");
+        $this->assertCount(1, $first);
+
+        $this->post('/api/v1/tenant/branding/logo', ['logo' => UploadedFile::fake()->image('second.png', 256, 256)], $headers)->assertOk();
+        $second = Storage::disk('public')->allFiles("tenants/{$tenant->id}/branding");
+
+        // The old file is gone (re-encoding to WebP also drops any EXIF the original carried).
+        $this->assertCount(1, $second);
+        $this->assertNotSame($first[0], $second[0]);
+        $this->assertStringEndsWith('.webp', $second[0]);
     }
 
     public function test_svg_and_disguised_files_are_rejected(): void

@@ -30,6 +30,8 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: cp .env.example .env && php artisan key:generate
+      - name: Dependency audit
+        run: composer audit
       - name: Code style
         run: vendor/bin/pint --test
       - name: Static analysis
@@ -56,6 +58,8 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - name: Dependency audit
+        run: npm audit --workspaces --audit-level=high
       - run: npm run test --workspace @cafe/locale
       - run: npm run typecheck --workspaces --if-present
       - run: npm run lint --workspace web

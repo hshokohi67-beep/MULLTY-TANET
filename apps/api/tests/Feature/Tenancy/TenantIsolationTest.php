@@ -234,6 +234,8 @@ final class TenantIsolationTest extends TestCase
             'reorder stories' => ['PUT', '/api/v1/stories/order'],
             'upload cover' => ['POST', '/api/v1/tenant/branding/cover'],
             'delete cover' => ['DELETE', '/api/v1/tenant/branding/cover'],
+            'upload logo' => ['POST', '/api/v1/tenant/branding/logo'],
+            'permissions' => ['GET', '/api/v1/permissions'],
             'update tenant' => ['PATCH', '/api/v1/tenant'],
             'branding' => ['GET', '/api/v1/tenant/branding'],
             'update branding' => ['PATCH', '/api/v1/tenant/branding'],
@@ -532,6 +534,44 @@ final class TenantIsolationTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->postJson('/api/v1/public/cart/reorder', ['order_id' => $this->commerceB['order']], [...$a, 'X-Cart-Token' => $cart, 'Authorization' => 'Bearer '.$customerA->createToken('t', ['customer'])->plainTextToken])
             ->assertNotFound();
+    }
+
+    public function test_kds_me_and_pairing_are_tenant_bound(): void
+    {
+        // Staff of A cannot open B's KDS "who am I" screen either.
+        $this->getJson('/api/v1/kds/me', $this->staffHeaders($this->ownerA, $this->b))->assertForbidden();
+
+        // A fresh, unpaired code minted for B means nothing at A, but still works at B.
+        $code = $this->inTenant($this->b, fn () => app(KitchenDevices::class)->create(['branch_id' => $this->branchB->id, 'name' => 'تبلت ب ۲'])['code']);
+        $this->postJson('/api/v1/public/kds/pair', ['code' => $code], ['X-Tenant' => $this->a->slug, 'Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'kitchen_pairing_invalid');
+        $this->postJson('/api/v1/public/kds/pair', ['code' => $code], ['X-Tenant' => $this->b->slug, 'Accept' => 'application/json'])->assertOk();
+    }
+
+    public function test_customer_self_service_and_club_endpoints_reject_cross_tenant_tokens(): void
+    {
+        $customerB = $this->inTenant($this->b, fn () => Customer::query()->findOrFail($this->commerceB['customer']));
+        $tokenB = $customerB->createToken('t', ['customer'])->plainTextToken;
+        $a = ['X-Tenant' => $this->a->slug, 'Accept' => 'application/json', 'Authorization' => 'Bearer '.$tokenB];
+
+        foreach ([
+            ['GET', '/api/v1/customer/addresses'],
+            ['POST', '/api/v1/customer/addresses'],
+            ['GET', '/api/v1/customer/orders'],
+            ['GET', '/api/v1/customer/profile'],
+            ['PATCH', '/api/v1/customer/profile'],
+            ['GET', '/api/v1/customer/club'],
+            ['GET', '/api/v1/customer/wallet/transactions'],
+            ['GET', '/api/v1/customer/points/transactions'],
+            ['POST', '/api/v1/customer/points/redeem'],
+            ['POST', '/api/v1/customer/referral'],
+            ['POST', "/api/v1/customer/orders/{$this->commerceB['order']}/wallet-payment"],
+        ] as [$method, $uri]) {
+            $this->json($method, $uri, [], $a)->assertStatus(401);
+        }
+
+        $this->app['auth']->forgetGuards();
     }
 
     public function test_global_search_never_crosses_tenants(): void

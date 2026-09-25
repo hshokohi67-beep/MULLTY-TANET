@@ -12,7 +12,7 @@ use App\Modules\Payments\Support\Gateways\GatewayResult;
  */
 final class PaymentLog
 {
-    private const SECRET_KEYS = ['merchant_id', 'merchant', 'api_key', 'token', 'access_token', 'password', 'card_hash'];
+    private const SECRET_KEYS = ['merchant_id', 'merchant', 'api_key', 'token', 'access_token', 'password', 'card_hash', 'card_pan', 'cardpan'];
 
     public function write(Payment $payment, string $action, GatewayResult $result): PaymentTransaction
     {

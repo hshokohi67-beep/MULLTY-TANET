@@ -15,3 +15,4 @@ Schedule::command('insights:daily-report')->hourly()->withoutOverlapping()->onOn
 Schedule::command('analytics:rollup')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 Schedule::command('billing:renewals')->dailyAt('09:00')->timezone('Asia/Tehran')->withoutOverlapping()->onOneServer();
 Schedule::command('marketplace:refresh')->hourly()->withoutOverlapping()->onOneServer();
+Schedule::command('backup:run')->dailyAt('03:30')->timezone('Asia/Tehran')->withoutOverlapping()->onOneServer();

@@ -18,12 +18,14 @@ use App\Modules\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Payments\Providers\PaymentsServiceProvider;
 use App\Modules\Storefront\Providers\StorefrontServiceProvider;
 use App\Providers\AppServiceProvider;
+use App\Support\Observability\ObservabilityServiceProvider;
 use App\Support\Sms\SmsServiceProvider;
 use App\Support\Tenancy\TenancyServiceProvider;
 
 return [
     AppServiceProvider::class,
     TenancyServiceProvider::class,
+    ObservabilityServiceProvider::class,
     SmsServiceProvider::class,
     CoreServiceProvider::class,
     IdentityServiceProvider::class,
