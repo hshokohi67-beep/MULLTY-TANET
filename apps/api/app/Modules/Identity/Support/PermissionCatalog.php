@@ -71,6 +71,12 @@ final class PermissionCatalog
 
     public const STOREFRONT_MANAGE = 'storefront.manage';
 
+    public const INVENTORY_VIEW = 'inventory.view';
+
+    public const INVENTORY_MANAGE = 'inventory.manage';
+
+    public const PURCHASING_MANAGE = 'purchasing.manage';
+
     /**
      * key => [group, Persian label]
      *
@@ -110,6 +116,9 @@ final class PermissionCatalog
             self::KDS_OPERATE => ['group' => 'kitchen', 'label' => 'کار با نمایشگر آشپزخانه'],
             self::KDS_MANAGE => ['group' => 'kitchen', 'label' => 'مدیریت ایستگاه‌ها و دستگاه‌های آشپزخانه'],
             self::STOREFRONT_MANAGE => ['group' => 'tenant', 'label' => 'مدیریت استوری‌ها و ظاهر فروشگاه آنلاین'],
+            self::INVENTORY_VIEW => ['group' => 'inventory', 'label' => 'مشاهده‌ی انبار، موجودی و دستور پخت'],
+            self::INVENTORY_MANAGE => ['group' => 'inventory', 'label' => 'مدیریت مواد اولیه، دستور پخت، ضایعات و انبارگردانی'],
+            self::PURCHASING_MANAGE => ['group' => 'inventory', 'label' => 'خرید از تأمین‌کننده و پرداخت به او'],
         ];
     }
 

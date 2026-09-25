@@ -30,6 +30,9 @@ use App\Modules\Identity\Models\Role;
 use App\Modules\Identity\Models\TenantUser;
 use App\Modules\Identity\Models\User;
 use App\Modules\Insights\Models\ShiftNote;
+use App\Modules\Inventory\Models\Ingredient;
+use App\Modules\Inventory\Models\PurchaseOrder;
+use App\Modules\Inventory\Models\Supplier;
 use App\Modules\Kitchen\Actions\KitchenDevices;
 use App\Modules\Kitchen\Actions\RouteOrderToKitchen;
 use App\Modules\Kitchen\Models\KitchenItem;
@@ -124,6 +127,10 @@ final class TenantIsolationTest extends TestCase
             ['device' => $device, 'code' => $pairingCode] = app(KitchenDevices::class)->create(['branch_id' => $this->branchB->id, 'name' => 'تبلت ب']);
             $deviceToken = app(KitchenDevices::class)->pair($pairingCode)['token'];
             $note = ShiftNote::query()->create(['body' => 'یادداشت ب', 'author_id' => $this->ownerB->id]);
+            $ingredient = Ingredient::query()->create(['name' => 'قهوه ب', 'unit' => 'g', 'avg_cost' => 1000]);
+            $supplier = Supplier::query()->create(['name' => 'تأمین‌کننده ب']);
+            $purchase = PurchaseOrder::query()->create(['supplier_id' => $supplier->id, 'branch_id' => $this->branchB->id, 'number' => 1, 'status' => 'ordered', 'total' => 5000]);
+            $purchase->items()->create(['ingredient_id' => $ingredient->id, 'quantity' => 1000, 'unit_price' => 5000, 'line_total' => 5000]);
             $story = Story::query()->create(['image_path' => 'b/s.webp', 'thumb_path' => 'b/t.webp', 'width' => 900, 'height' => 1600, 'caption' => 'استوری ب', 'starts_at' => now()->subHour(), 'ends_at' => now()->addDay()]);
             $payment = Payment::query()->create(['order_id' => $order->id, 'method' => PaymentMethod::Online, 'gateway' => 'fake', 'status' => PaymentAttemptStatus::Pending, 'amount' => $order->total, 'authority' => 'FAKEBONLY']);
 
@@ -133,6 +140,7 @@ final class TenantIsolationTest extends TestCase
                 'tracking' => $order->trackingToken(), 'payment' => $payment->id,
                 'customer' => $customer->id, 'tier' => $tier->id, 'rule' => $rule->id,
                 'station' => $station->id, 'kitchen_item' => (string) $kitchenItem, 'device' => $device->id, 'device_token' => $deviceToken, 'note' => $note->id, 'story' => $story->id,
+                'ingredient' => $ingredient->id, 'supplier' => $supplier->id, 'purchase' => $purchase->id,
             ];
         });
     }
@@ -146,6 +154,15 @@ final class TenantIsolationTest extends TestCase
         return [
             'tenant profile' => ['GET', '/api/v1/tenant'],
             'stories' => ['GET', '/api/v1/stories'],
+            'ingredients' => ['GET', '/api/v1/inventory/ingredients'],
+            'create ingredient' => ['POST', '/api/v1/inventory/ingredients'],
+            'stock movements' => ['GET', '/api/v1/inventory/movements'],
+            'stock adjustment' => ['POST', '/api/v1/inventory/adjustments'],
+            'stock count' => ['POST', '/api/v1/inventory/counts'],
+            'suppliers' => ['GET', '/api/v1/inventory/suppliers'],
+            'create supplier' => ['POST', '/api/v1/inventory/suppliers'],
+            'purchases' => ['GET', '/api/v1/inventory/purchases'],
+            'create purchase' => ['POST', '/api/v1/inventory/purchases'],
             'dashboard search' => ['GET', '/api/v1/dashboard/search?q=x'],
             'dashboard alerts' => ['GET', '/api/v1/dashboard/alerts'],
             'dashboard setup' => ['GET', '/api/v1/dashboard/setup'],
@@ -274,6 +291,17 @@ final class TenantIsolationTest extends TestCase
             'category image' => ['POST', '/api/v1/catalog/categories/{category}/image'],
             'delete category image' => ['DELETE', '/api/v1/catalog/categories/{category}/image'],
             'update story' => ['POST', '/api/v1/stories/{story}'],
+            'update ingredient' => ['PUT', '/api/v1/inventory/ingredients/{ingredient}'],
+            'delete ingredient' => ['DELETE', '/api/v1/inventory/ingredients/{ingredient}'],
+            'update supplier' => ['PUT', '/api/v1/inventory/suppliers/{supplier}'],
+            'show purchase' => ['GET', '/api/v1/inventory/purchases/{purchase}'],
+            'update purchase' => ['PUT', '/api/v1/inventory/purchases/{purchase}'],
+            'order purchase' => ['POST', '/api/v1/inventory/purchases/{purchase}/order'],
+            'receive purchase' => ['POST', '/api/v1/inventory/purchases/{purchase}/receive'],
+            'cancel purchase' => ['POST', '/api/v1/inventory/purchases/{purchase}/cancel'],
+            'pay purchase' => ['POST', '/api/v1/inventory/purchases/{purchase}/payments'],
+            'product recipe' => ['GET', '/api/v1/catalog/products/{product}/recipe'],
+            'save recipe' => ['PUT', '/api/v1/catalog/products/{product}/recipe'],
             'delete story' => ['DELETE', '/api/v1/stories/{story}'],
         ];
     }
@@ -282,9 +310,9 @@ final class TenantIsolationTest extends TestCase
     public function test_foreign_record_ids_do_not_exist_inside_own_tenant(string $method, string $uri): void
     {
         $uri = str_replace(
-            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}'],
+            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}'],
             [$this->branchB->id, $this->memberB->id, $this->catalogB['category'], $this->catalogB['product'], $this->catalogB['group'], $this->catalogB['image'],
-                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story']],
+                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase']],
             $uri,
         );
 
@@ -314,6 +342,9 @@ final class TenantIsolationTest extends TestCase
             $this->assertSame('بار ب', KitchenStation::query()->findOrFail($this->commerceB['station'])->name);
             $this->assertTrue(ShiftNote::query()->whereKey($this->commerceB['note'])->exists());
             $this->assertSame('استوری ب', Story::query()->findOrFail($this->commerceB['story'])->caption);
+            $this->assertSame('قهوه ب', Ingredient::query()->findOrFail($this->commerceB['ingredient'])->name);
+            $this->assertSame('ordered', PurchaseOrder::query()->findOrFail($this->commerceB['purchase'])->status);
+            $this->assertSame(0, PurchaseOrder::query()->findOrFail($this->commerceB['purchase'])->paid_total);
         });
     }
 
@@ -448,6 +479,23 @@ final class TenantIsolationTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('branch_id');
         $this->putJson("/api/v1/catalog/products/{$productA}/branch-prices", ['branch_id' => $this->branchB->id, 'prices' => [['variant_id' => 'x', 'amount' => 1]]], $headers)
             ->assertUnprocessable()->assertJsonValidationErrors('branch_id');
+    }
+
+    public function test_foreign_inventory_ids_inside_payloads_are_rejected(): void
+    {
+        $headers = $this->staffHeaders($this->ownerA, $this->a);
+        $branchA = $this->inTenant($this->a, fn () => Branch::query()->firstOrFail());
+
+        $this->postJson('/api/v1/inventory/adjustments', ['ingredient_id' => $this->commerceB['ingredient'], 'branch_id' => $branchA->id, 'type' => 'waste', 'quantity' => 1], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('ingredient_id');
+        $this->postJson('/api/v1/inventory/purchases', ['supplier_id' => $this->commerceB['supplier'], 'branch_id' => $branchA->id, 'items' => [['ingredient_id' => $this->commerceB['ingredient'], 'quantity' => 1, 'unit_price' => 1]]], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors(['supplier_id', 'items.0.ingredient_id']);
+
+        $productA = $this->postJson('/api/v1/catalog/products/quick', ['name' => 'آیتم الف', 'price' => 1000], $headers)->assertCreated()->json('data');
+        $variantA = $this->getJson("/api/v1/catalog/products/{$productA['id']}", $headers)->json('data.variants.0.id');
+        $this->putJson("/api/v1/catalog/products/{$productA['id']}/recipe", ['variants' => [['variant_id' => $variantA, 'items' => [['ingredient_id' => $this->commerceB['ingredient'], 'quantity' => 5]]]]], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('variants.0.items.0.ingredient_id');
+        $this->assertSame([], $this->getJson('/api/v1/inventory/ingredients', $headers)->assertOk()->json('data'));
     }
 
     public function test_foreign_role_ids_cannot_be_assigned(): void

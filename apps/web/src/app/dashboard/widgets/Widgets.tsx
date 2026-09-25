@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
-  Aperture, Armchair, Bell, Cake, ChefHat, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
+  Aperture, Armchair, Bell, Boxes, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
 } from 'lucide-react';
 import { Badge, Card, CardHeader, EmptyState, StatTile } from '@cafe/ui';
 import { formatMoney, formatMoneyCompact, formatNumber, formatPercent, JALALI_MONTHS, toPersianDigits } from '@cafe/locale';
@@ -444,6 +444,67 @@ export function StoriesWidget({ data }: { data: { live: number; stories: StoryRo
               <span className="min-w-0 flex-1 truncate text-sm">{s.caption ?? 'بدون متن'}</span>
               <span className="tabular text-xs text-text-muted">{formatNumber(s.views)} بازدید</span>
               <span className="tabular w-16 text-end text-xs font-semibold">{s.views ? formatPercent(s.clicks / s.views) : '—'}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Shell>
+  );
+}
+
+interface FoodCostRow { name: string; quantity: number; revenue: number; cost: number; margin: number; ratio: number | null }
+
+export function FoodCostWidget({ data, ctx }: { data: { revenue: number; cost: number; gross_margin: number; food_cost_ratio: number | null; coverage: number | null; top: FoodCostRow[]; heavy: FoodCostRow[] }; ctx: WidgetContext }) {
+  const ratio = data.food_cost_ratio;
+
+  return (
+    <Shell icon={<CookingPot />} title="بهای تمام‌شده و سود ناخالص" description={`${ctx.rangeLabel} • بر اساس دستور پخت و قیمت خرید`}>
+      {data.coverage === null ? <Empty text="در این بازه فروشی ثبت نشده است." /> : data.coverage === 0 ? (
+        <Empty text="برای آیتم‌های فروخته‌شده دستور پخت ثبت نشده؛ در صفحه‌ی هر محصول، «دستور پخت» را پر کنید." />
+      ) : (
+        <div className="flex flex-col gap-4 px-5 pb-5">
+          <div className="grid grid-cols-3 gap-3">
+            <div><p className="text-xs text-text-muted">فروش</p><p className="tabular font-bold">{formatMoneyCompact(data.revenue)}</p></div>
+            <div><p className="text-xs text-text-muted">بهای مواد</p><p className="tabular font-bold">{formatMoneyCompact(data.cost)}</p></div>
+            <div><p className="text-xs text-text-muted">سود ناخالص</p><p className="tabular font-bold text-success">{formatMoneyCompact(data.gross_margin)}</p></div>
+          </div>
+          {ratio !== null ? (
+            <div>
+              <p className="flex justify-between text-xs"><span className="text-text-muted">فود کاست</span><span className={`tabular font-semibold ${ratio > 0.35 ? 'text-warning' : ''}`}>{formatPercent(ratio)}</span></p>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-muted"><div className={`h-full rounded-full ${ratio > 0.35 ? 'bg-warning' : 'bg-brand'}`} style={{ width: `${Math.min(100, ratio * 100)}%` }} /></div>
+            </div>
+          ) : null}
+          {data.top.length ? (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-text-muted">سودآورترین‌ها</p>
+              <ul className="flex flex-col gap-1.5 text-sm">
+                {data.top.map((r) => <li key={r.name} className="flex justify-between gap-2"><span className="truncate">{r.name}</span><span className="tabular text-text-muted">{formatMoneyCompact(r.margin)} • {r.ratio !== null ? formatPercent(r.ratio) : '—'}</span></li>)}
+              </ul>
+            </div>
+          ) : null}
+          {data.coverage < 1 ? <p className="text-[11px] text-text-subtle">{formatPercent(data.coverage)} از اقلام فروخته‌شده دستور پخت دارند؛ ارقام بقیه در این حساب نیست.</p> : null}
+        </div>
+      )}
+    </Shell>
+  );
+}
+
+export function StockAlertsWidget({ data }: { data: { items: { id: string; name: string; unit: 'g' | 'ml' | 'pcs'; quantity: number; threshold: number; branch: string; negative: boolean }[] } }) {
+  const fmt = (q: number, unit: 'g' | 'ml' | 'pcs') => {
+    const fa = (n: number) => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(n);
+    return unit === 'pcs' ? `${fa(q)} عدد` : Math.abs(q) >= 1000 ? `${fa(q / 1000)} ${unit === 'g' ? 'کیلو' : 'لیتر'}` : `${fa(q)} ${unit === 'g' ? 'گرم' : 'میلی‌لیتر'}`;
+  };
+
+  return (
+    <Shell icon={<Boxes />} title="هشدار موجودی" description="رو به اتمام یا منفی"
+      actions={<Link href="/dashboard/inventory?low=1" className="text-xs font-medium text-brand hover:underline">انبار</Link>}>
+      {data.items.length === 0 ? <Empty text="همه‌ی مواد اولیه بالای حد هشدارند." /> : (
+        <ul className="divide-y divide-border px-5 pb-3">
+          {data.items.map((i) => (
+            <li key={`${i.id}-${i.branch}`} className="flex items-center gap-3 py-2.5">
+              <span className={`size-2 shrink-0 rounded-full ${i.negative ? 'bg-danger' : 'bg-warning'}`} aria-hidden="true" />
+              <Link href={`/dashboard/inventory/${i.id}`} className="min-w-0 flex-1 truncate text-sm hover:underline">{i.name}</Link>
+              <span className={`tabular text-sm font-semibold ${i.negative ? 'text-danger' : 'text-warning'}`}>{fmt(i.quantity, i.unit)}</span>
             </li>
           ))}
         </ul>

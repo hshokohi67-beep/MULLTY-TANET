@@ -25,9 +25,10 @@ final class DefaultRoles
                 P::PAYMENTS_VIEW, P::PAYMENTS_RECORD, P::PAYMENTS_REFUND,
                 P::CUSTOMERS_VIEW, P::CUSTOMERS_MANAGE, P::CUSTOMERS_EXPORT, P::WALLET_ADJUST, P::LOYALTY_MANAGE,
                 P::KDS_OPERATE, P::KDS_MANAGE, P::STOREFRONT_MANAGE,
+                P::INVENTORY_VIEW, P::INVENTORY_MANAGE, P::PURCHASING_MANAGE,
             ]],
             'cashier' => ['name' => 'صندوق‌دار', 'permissions' => [P::TENANT_VIEW, P::BRANCHES_VIEW, P::CATALOG_VIEW, P::AVAILABILITY_MANAGE, P::ORDERS_VIEW, P::ORDERS_MANAGE, P::ORDERS_CREATE, P::PAYMENTS_VIEW, P::PAYMENTS_RECORD, P::CUSTOMERS_VIEW, P::KDS_OPERATE]],
-            'kitchen' => ['name' => 'آشپزخانه', 'permissions' => [P::TENANT_VIEW, P::BRANCHES_VIEW, P::CATALOG_VIEW, P::AVAILABILITY_MANAGE, P::ORDERS_VIEW, P::ORDERS_MANAGE, P::KDS_OPERATE]],
+            'kitchen' => ['name' => 'آشپزخانه', 'permissions' => [P::TENANT_VIEW, P::BRANCHES_VIEW, P::CATALOG_VIEW, P::AVAILABILITY_MANAGE, P::ORDERS_VIEW, P::ORDERS_MANAGE, P::KDS_OPERATE, P::INVENTORY_VIEW]],
             'waiter' => ['name' => 'سالن‌دار', 'permissions' => [P::TENANT_VIEW, P::BRANCHES_VIEW, P::CATALOG_VIEW, P::ORDERS_VIEW, P::ORDERS_MANAGE, P::ORDERS_CREATE, P::KDS_OPERATE]],
         ];
     }

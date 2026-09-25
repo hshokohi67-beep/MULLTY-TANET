@@ -5,6 +5,7 @@ namespace App\Modules\Insights\Support;
 use App\Modules\Commerce\Enums\OrderStatus;
 use App\Modules\Commerce\Enums\OrderType;
 use App\Modules\Commerce\Models\Order;
+use App\Modules\Commerce\Models\OrderItem;
 use App\Modules\Commerce\Models\OrderSession;
 use App\Modules\Commerce\Models\RestaurantTable;
 use App\Modules\Core\Models\Branch;
@@ -12,6 +13,8 @@ use App\Modules\Core\Support\TenantSettings;
 use App\Modules\Discounts\Models\Discount;
 use App\Modules\Discounts\Models\DiscountUsage;
 use App\Modules\Insights\Models\ShiftNote;
+use App\Modules\Inventory\Models\IngredientStock;
+use App\Modules\Inventory\Models\OrderItemCost;
 use App\Modules\Kitchen\Models\KitchenItem;
 use App\Modules\Kitchen\Models\KitchenStation;
 use App\Modules\Loyalty\Enums\WalletTransactionType;
@@ -58,6 +61,8 @@ final class WidgetData
             'discounts' => $this->discounts($range),
             'shift_notes' => $this->shiftNotes(),
             'stories' => $this->stories(),
+            'food_cost' => $this->foodCost($range),
+            'stock_alerts' => $this->stockAlerts(),
             default => [],
         };
     }
@@ -365,6 +370,67 @@ final class WidgetData
                 'ends_at' => $s->ends_at->toIso8601String(),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Cost of goods sold (frozen at sale time) against item revenue in the range, plus the items
+     * that earn the most and the ones whose ingredients eat the most of their price.
+     *
+     * @return array{revenue: int, cost: int, gross_margin: int, food_cost_ratio: ?float, coverage: ?float, top: list<array<string, mixed>>, heavy: list<array<string, mixed>>}
+     */
+    public function foodCost(string $range): array
+    {
+        [$from, $to] = $this->overview->window($range);
+        $orderIds = $this->overview->counted($this->overview->orders($from, $to))->select('id');
+        $items = OrderItem::query()->whereIn('order_id', $orderIds)->get(['id', 'product_name', 'quantity', 'line_total']);
+        $costs = OrderItemCost::query()->whereIn('order_item_id', $items->pluck('id'))->pluck('cost', 'order_item_id');
+
+        $costed = $items->filter(fn (OrderItem $i) => $costs->has($i->id));
+        $revenue = (int) $costed->sum('line_total');
+        $cost = (int) $costed->sum(fn (OrderItem $i) => (int) $costs[$i->id]);
+
+        $byProduct = $costed->groupBy('product_name')->map(fn ($rows, $name) => [
+            'name' => $name,
+            'quantity' => (int) $rows->sum('quantity'),
+            'revenue' => (int) $rows->sum('line_total'),
+            'cost' => (int) $rows->sum(fn (OrderItem $i) => (int) $costs[$i->id]),
+        ])->map(fn (array $r) => $r + ['margin' => $r['revenue'] - $r['cost'], 'ratio' => $r['revenue'] > 0 ? round($r['cost'] / $r['revenue'], 4) : null])->values();
+
+        return [
+            'revenue' => $revenue,
+            'cost' => $cost,
+            'gross_margin' => $revenue - $cost,
+            'food_cost_ratio' => $revenue > 0 ? round($cost / $revenue, 4) : null,
+            // Share of sold lines that had a recipe: below 1 means the figures are partial.
+            'coverage' => $items->count() > 0 ? round($costed->count() / $items->count(), 4) : null,
+            'top' => $byProduct->sortByDesc('margin')->take(5)->values()->all(),
+            'heavy' => $byProduct->filter(fn (array $r) => $r['ratio'] !== null)->sortByDesc('ratio')->take(3)->values()->all(),
+        ];
+    }
+
+    /** @return array{items: list<array{id: string, name: string, unit: string, quantity: float, threshold: float, branch: string, negative: bool}>} */
+    public function stockAlerts(): array
+    {
+        $branches = Branch::query()->pluck('name', 'id');
+        $rows = IngredientStock::query()
+            ->join('ingredients', fn ($j) => $j->on('ingredients.id', '=', 'ingredient_stocks.ingredient_id')->on('ingredients.tenant_id', '=', 'ingredient_stocks.tenant_id'))
+            ->where('ingredients.is_active', true)
+            ->where(fn ($q) => $q->where('ingredient_stocks.quantity', '<', 0)
+                ->orWhere(fn ($w) => $w->where('ingredients.low_stock_threshold', '>', 0)->whereColumn('ingredient_stocks.quantity', '<=', 'ingredients.low_stock_threshold')))
+            ->when($this->branchId, fn ($q, $id) => $q->where('ingredient_stocks.branch_id', $id))
+            ->orderBy('ingredient_stocks.quantity')
+            ->limit(8)
+            ->get(['ingredients.id', 'ingredients.name', 'ingredients.unit', 'ingredients.low_stock_threshold', 'ingredient_stocks.quantity', 'ingredient_stocks.branch_id']);
+
+        return ['items' => $rows->map(fn ($r) => [
+            'id' => (string) $r->getAttribute('id'),
+            'name' => (string) $r->getAttribute('name'),
+            'unit' => (string) $r->getAttribute('unit'),
+            'quantity' => (float) $r->getAttribute('quantity'),
+            'threshold' => (float) $r->getAttribute('low_stock_threshold'),
+            'branch' => (string) ($branches[$r->getAttribute('branch_id')] ?? ''),
+            'negative' => (float) $r->getAttribute('quantity') < 0,
+        ])->values()->all()];
     }
 
     /** @return array{notes: list<array{id: string, body: string, author: string, author_id: string, created_at: string}>} */

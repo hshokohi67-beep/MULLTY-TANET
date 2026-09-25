@@ -79,6 +79,7 @@ class DemoSeeder extends Seeder
             $this->call(LoyaltyDemoSeeder::class);
             $this->call(KitchenDemoSeeder::class);
             $this->call(StorefrontDemoSeeder::class);
+            $this->call(InventoryDemoSeeder::class);
         });
 
         $second = $createTenant->handle(new CreateTenantData(

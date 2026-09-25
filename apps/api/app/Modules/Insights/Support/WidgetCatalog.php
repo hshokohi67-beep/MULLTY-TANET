@@ -39,6 +39,8 @@ final class WidgetCatalog
             'club_liability' => $w('بدهی باشگاه', 'موجودی کیف پول و امتیاز مشتریان، کش‌بک داده‌شده', P::CUSTOMERS_VIEW, ['sm', 'md'], 'sm'),
             'discounts' => $w('عملکرد تخفیف‌ها', 'دفعات استفاده، مبلغ تخفیف و فروش هر تخفیف', P::DISCOUNTS_MANAGE, ['sm', 'md'], 'md'),
             'shift_notes' => $w('یادداشت شیفت', 'پیام شیفت قبل برای شیفت بعد', P::TENANT_VIEW, ['sm', 'md'], 'sm'),
+            'food_cost' => $w('بهای تمام‌شده و سود ناخالص', 'هزینه‌ی مواد اولیه‌ی فروش، درصد فود کاست و سودآورترین آیتم‌ها', P::INVENTORY_VIEW, ['md', 'lg'], 'md'),
+            'stock_alerts' => $w('هشدار موجودی', 'مواد اولیه‌ی رو به اتمام یا منفی', P::INVENTORY_VIEW, ['sm', 'md'], 'sm'),
             'stories' => $w('استوری‌ها', 'استوری‌های در حال نمایش، بازدید و کلیک هر کدام', P::STOREFRONT_MANAGE, ['sm', 'md'], 'sm'),
         ];
     }

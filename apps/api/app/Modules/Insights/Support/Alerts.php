@@ -7,6 +7,7 @@ use App\Modules\Catalog\Models\ProductAvailability;
 use App\Modules\Commerce\Enums\OrderStatus;
 use App\Modules\Commerce\Models\Order;
 use App\Modules\Commerce\Models\TableSessionRequest;
+use App\Modules\Inventory\Models\IngredientStock;
 use App\Modules\Kitchen\Models\KitchenDevice;
 use App\Modules\Loyalty\Models\Wallet;
 use App\Support\Localization\PersianNumber;
@@ -63,6 +64,20 @@ final class Alerts
                 ->distinct()->count('product_id');
             if ($soldOut > 0) {
                 $alerts[] = ['type' => 'sold_out', 'severity' => 'warning', 'title' => "{$n($soldOut)} محصول «تمام شد» خورده است", 'count' => $soldOut, 'href' => '/dashboard/menu?availability=sold_out'];
+            }
+        }
+
+        if ($can('inventory.view')) {
+            // At or below the ingredient's threshold in a branch (the roadmap's «۳ محصول رو به اتمام است»).
+            $low = IngredientStock::query()
+                ->join('ingredients', fn ($j) => $j->on('ingredients.id', '=', 'ingredient_stocks.ingredient_id')->on('ingredients.tenant_id', '=', 'ingredient_stocks.tenant_id'))
+                ->where('ingredients.is_active', true)
+                ->where('ingredients.low_stock_threshold', '>', 0)
+                ->whereColumn('ingredient_stocks.quantity', '<=', 'ingredients.low_stock_threshold')
+                ->when($branchId, fn ($q, $id) => $q->where('ingredient_stocks.branch_id', $id))
+                ->distinct()->count('ingredient_stocks.ingredient_id');
+            if ($low > 0) {
+                $alerts[] = ['type' => 'low_stock', 'severity' => 'warning', 'title' => "{$n($low)} ماده‌ی اولیه رو به اتمام است", 'count' => $low, 'href' => '/dashboard/inventory?low=1'];
             }
         }
 

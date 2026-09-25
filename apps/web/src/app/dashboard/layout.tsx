@@ -27,6 +27,13 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       ],
     },
     {
+      title: 'انبار و خرید',
+      items: [
+        ...(can('inventory.view') ? [{ href: '/dashboard/inventory', label: 'انبار', icon: 'inventory' }] : []),
+        ...(can('purchasing.manage') ? [{ href: '/dashboard/purchases', label: 'خرید', icon: 'purchases' }] : []),
+      ],
+    },
+    {
       title: 'مشتریان و مالی',
       items: [
         ...(can('customers.view') ? [{ href: '/dashboard/customers', label: 'مشتریان', icon: 'customers' }] : []),

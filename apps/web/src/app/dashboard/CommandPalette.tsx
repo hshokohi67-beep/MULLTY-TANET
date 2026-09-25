@@ -45,6 +45,8 @@ const PAGE_KEYWORDS: Record<string, string> = {
   '/dashboard/payments': 'پرداخت تراکنش',
   '/dashboard/delivery': 'پیک ارسال محدوده',
   '/dashboard/team': 'کارمند همکار نقش دسترسی',
+  '/dashboard/inventory': 'انبار موجودی مواد اولیه ضایعات انبارگردانی',
+  '/dashboard/purchases': 'خرید تامین کننده فروشنده بدهی فاکتور خرید',
 };
 
 const normalize = (s: string) => toLatinDigits(s).replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/‌/g, ' ').toLowerCase().trim();
@@ -135,6 +137,8 @@ export function CommandPalette({ groups, permissions, storefrontUrl, open, onOpe
       can('catalog.manage') ? { id: 'act:product', group: 'کارها', title: 'افزودن آیتم به منو', keywords: 'جدید محصول', href: '/dashboard/menu#quick-add', icon: <Plus className="size-4" /> } : null,
       can('storefront.manage') ? { id: 'act:story', group: 'کارها', title: 'استوری جدید', keywords: 'story', href: '/dashboard/stories?new=1', icon: <Aperture className="size-4" /> } : null,
       can('discounts.manage') ? { id: 'act:discount', group: 'کارها', title: 'کد تخفیف جدید', keywords: 'کوپن', href: '/dashboard/discounts', icon: <Tags className="size-4" /> } : null,
+      can('purchasing.manage') ? { id: 'act:purchase', group: 'کارها', title: 'ثبت سفارش خرید', keywords: 'خرید تامین کننده مواد', href: '/dashboard/purchases/new', icon: <Plus className="size-4" /> } : null,
+      can('inventory.manage') ? { id: 'act:count', group: 'کارها', title: 'انبارگردانی', keywords: 'شمارش موجودی انبار', href: '/dashboard/inventory/count', icon: <FileText className="size-4" /> } : null,
       can('orders.view') ? { id: 'act:history', group: 'کارها', title: 'تاریخچه‌ی سفارش‌ها', keywords: 'گزارش فروش امروز دیروز', href: '/dashboard/orders/history', icon: <FileText className="size-4" /> } : null,
       { id: 'act:store', group: 'کارها', title: 'دیدن منوی آنلاین', keywords: 'فروشگاه سایت مشتری', href: storefrontUrl, external: true, icon: <ExternalLink className="size-4" /> },
       { id: 'act:theme', group: 'کارها', title: 'تغییر پوسته‌ی روشن / تیره', keywords: 'تم دارک شب', icon: <Moon className="size-4" />, run: () => {

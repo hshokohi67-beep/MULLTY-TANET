@@ -7,6 +7,7 @@ use App\Modules\Customers\Providers\CustomersServiceProvider;
 use App\Modules\Discounts\Providers\DiscountsServiceProvider;
 use App\Modules\Identity\Providers\IdentityServiceProvider;
 use App\Modules\Insights\Providers\InsightsServiceProvider;
+use App\Modules\Inventory\Providers\InventoryServiceProvider;
 use App\Modules\Kitchen\Providers\KitchenServiceProvider;
 use App\Modules\Loyalty\Providers\LoyaltyServiceProvider;
 use App\Modules\Payments\Providers\PaymentsServiceProvider;
@@ -29,5 +30,6 @@ return [
     LoyaltyServiceProvider::class,
     KitchenServiceProvider::class,
     StorefrontServiceProvider::class,
+    InventoryServiceProvider::class,
     InsightsServiceProvider::class,
 ];
