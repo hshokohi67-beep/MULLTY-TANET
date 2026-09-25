@@ -6,6 +6,7 @@ use App\Modules\Commerce\Enums\OrderStatus;
 use App\Modules\Commerce\Events\OrderPlaced;
 use App\Modules\Commerce\Events\OrderStatusChanged;
 use App\Modules\Inventory\Actions\ConsumeOrderStock;
+use App\Support\Entitlements\EntitlementGate;
 use Throwable;
 
 /**
@@ -16,6 +17,11 @@ final class InventoryOrderListener
 {
     public function placed(OrderPlaced $event): void
     {
+        // Without the inventory feature nothing is booked (restores still undo earlier bookings).
+        if (! app(EntitlementGate::class)->enabled('inventory')) {
+            return;
+        }
+
         try {
             app(ConsumeOrderStock::class)->consume($event->order);
         } catch (Throwable $e) {

@@ -8,6 +8,7 @@ use App\Modules\Payments\Exceptions\PaymentException;
 use App\Modules\Payments\Support\Gateways\FakeGateway;
 use App\Modules\Payments\Support\Gateways\PaymentGateway;
 use App\Modules\Payments\Support\Gateways\ZarinpalGateway;
+use App\Support\Entitlements\EntitlementGate;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use LogicException;
 
@@ -34,7 +35,7 @@ final class GatewayFactory implements OnlinePaymentGate
     /** Whether the current tenant can take online payments right now. */
     public function onlineAvailable(): bool
     {
-        if (! TenantSettings::get('payments.online.enabled')) {
+        if (! TenantSettings::get('payments.online.enabled') || ! app(EntitlementGate::class)->enabled('online_payments')) {
             return false;
         }
 

@@ -4,6 +4,7 @@ import { Card, CardHeader } from '@cafe/ui';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { Category, LoyaltyProgram } from '@/lib/types';
 import { CashbackRuleEditor, ProgramForm, TierEditor } from './ClubForms';
 
@@ -15,6 +16,7 @@ export default async function ClubPage() {
   if (!can('loyalty.manage')) {
     redirect('/dashboard');
   }
+  await requireFeature('loyalty');
 
   const [{ data: program }, { data: categories }] = await Promise.all([
     api<{ data: LoyaltyProgram }>('/loyalty/program'),

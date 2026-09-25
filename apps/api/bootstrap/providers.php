@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Analytics\Providers\AnalyticsServiceProvider;
+use App\Modules\Billing\Providers\BillingServiceProvider;
 use App\Modules\Catalog\Providers\CatalogServiceProvider;
 use App\Modules\Commerce\Providers\CommerceServiceProvider;
 use App\Modules\Core\Providers\CoreServiceProvider;
@@ -35,5 +36,6 @@ return [
     InventoryServiceProvider::class,
     OperationsServiceProvider::class,
     AnalyticsServiceProvider::class,
+    BillingServiceProvider::class,
     InsightsServiceProvider::class,
 ];

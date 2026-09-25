@@ -16,6 +16,7 @@ use App\Modules\Payments\Enums\PaymentMethod;
 use App\Modules\Payments\Enums\RefundMethod;
 use App\Modules\Payments\Events\PaymentRefunded;
 use App\Modules\Payments\Models\Payment;
+use App\Support\Entitlements\EntitlementGate;
 use App\Support\Localization\PersianNumber;
 use Throwable;
 
@@ -30,6 +31,10 @@ final class ClubOrderListener
 {
     public function completed(OrderCompleted $event): void
     {
+        // New rewards need the club feature; reversals of earlier rewards always run.
+        if (! app(EntitlementGate::class)->enabled('loyalty')) {
+            return;
+        }
         app(SettleOrderRewards::class)->handle($event->order);
         app(Referrals::class)->rewardOnFirstOrder($event->order);
     }

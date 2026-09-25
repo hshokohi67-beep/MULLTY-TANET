@@ -2,6 +2,7 @@
 
 use App\Modules\Identity\Http\Middleware\EnsureTenantMember;
 use App\Modules\Identity\Http\Middleware\RequireActor;
+use App\Support\Entitlements\RequireFeature;
 use App\Support\Http\ApiExceptionRenderer;
 use App\Support\Http\DomainException;
 use App\Support\Http\Middleware\SecurityHeaders;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => ResolveTenant::class,
             'actor' => RequireActor::class,
             'tenant.member' => EnsureTenantMember::class,
+            'feature' => RequireFeature::class,
         ]);
 
         // The tenant must be known before tokens are resolved (customer tokens are tenant-bound).
@@ -40,6 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Actor + membership checks run before route-model binding, so non-members can't probe which IDs exist.
         $middleware->appendToPriorityList(AuthenticatesRequests::class, RequireActor::class);
         $middleware->appendToPriorityList(RequireActor::class, EnsureTenantMember::class);
+        // Plan features are checked after membership (a stranger gets 403, not an upsell).
+        $middleware->appendToPriorityList(EnsureTenantMember::class, RequireFeature::class);
 
         $middleware->api(append: [SecurityHeaders::class]);
     })

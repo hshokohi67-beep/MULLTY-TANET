@@ -13,7 +13,7 @@ Route::middleware(['tenant'])->prefix('public')->name('public.')->group(function
 });
 
 // Dashboard. Updates are POST because they carry an optional multipart image.
-Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member', 'can:'.P::STOREFRONT_MANAGE])->name('stories.')->group(function () {
+Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member', 'can:'.P::STOREFRONT_MANAGE, 'feature:stories'])->name('stories.')->group(function () {
     Route::get('stories', [StoryController::class, 'index'])->name('index');
     Route::post('stories', [StoryController::class, 'store'])->middleware('throttle:uploads')->name('store');
     Route::put('stories/order', [StoryController::class, 'reorder'])->name('reorder');

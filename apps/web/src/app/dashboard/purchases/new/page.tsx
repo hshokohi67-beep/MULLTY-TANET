@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { Ingredient, Supplier } from '@/lib/inventory-types';
 import type { Branch } from '@/lib/types';
 import { PurchaseEditor } from '../PurchaseEditor';
@@ -14,6 +15,7 @@ export const metadata: Metadata = { title: 'سفارش خرید جدید' };
 export default async function NewPurchasePage() {
   const { can } = await requireMembership();
   if (!can('purchasing.manage')) redirect('/dashboard');
+  await requireFeature('inventory');
 
   const [{ data: suppliers }, { data: branches }, { data: ingredients }] = await Promise.all([
     api<{ data: Supplier[] }>('/inventory/suppliers'),

@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { Ingredient } from '@/lib/inventory-types';
 import type { Branch } from '@/lib/types';
 import { StockCount } from './StockCount';
@@ -14,6 +15,7 @@ export const metadata: Metadata = { title: 'انبارگردانی' };
 export default async function CountPage() {
   const { can } = await requireMembership();
   if (!can('inventory.manage')) redirect('/dashboard/inventory');
+  await requireFeature('inventory');
 
   const [{ data: ingredients }, { data: branches }] = await Promise.all([
     api<{ data: Ingredient[] }>('/inventory/ingredients?active=1'),

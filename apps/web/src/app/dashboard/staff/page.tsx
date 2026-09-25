@@ -8,6 +8,7 @@ import { addDays, formatMoney, formatNumber, gregorianToJalali, JALALI_MONTHS, j
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import { formatHours, formatMinutes, type AttendanceRecord, type Employee, type Payroll, type Shift } from '@/lib/operations-types';
 import type { Branch, TeamMember, Tenant } from '@/lib/types';
 import { AttendanceBoard } from './AttendanceBoard';
@@ -44,6 +45,7 @@ const shortDate = (date: string) => {
 export default async function StaffPage({ searchParams }: PageProps<'/dashboard/staff'>) {
   const { can } = await requireMembership();
   if (!can('staff.manage')) redirect('/dashboard');
+  await requireFeature('operations');
   const params = await searchParams;
   const tab: Tab = TABS.some((t) => t.key === params.tab) ? (params.tab as Tab) : 'schedule';
 

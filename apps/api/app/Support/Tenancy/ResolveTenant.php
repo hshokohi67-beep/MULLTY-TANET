@@ -4,6 +4,7 @@ namespace App\Support\Tenancy;
 
 use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Models\TenantDomain;
+use App\Support\Entitlements\EntitlementGate;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,6 +30,9 @@ final class ResolveTenant
         app()->setLocale($tenant->locale);
 
         try {
+            // An expired subscription keeps reads (and paying) but refuses writes.
+            app(EntitlementGate::class)->assertWritable($request);
+
             return $next($request);
         } finally {
             $this->context->forget();

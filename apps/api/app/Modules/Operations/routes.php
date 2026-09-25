@@ -6,7 +6,7 @@ use App\Modules\Operations\Http\Controllers\StaffController;
 use App\Modules\Operations\Http\Controllers\TimeClockController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->group(function () {
+Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member', 'feature:operations'])->group(function () {
     Route::middleware('can:'.P::EXPENSES_MANAGE)->group(function () {
         Route::get('expense-categories', [ExpenseController::class, 'categories'])->name('expense-categories.index');
         Route::post('expense-categories', [ExpenseController::class, 'storeCategory'])->name('expense-categories.store');

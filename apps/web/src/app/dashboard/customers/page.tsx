@@ -6,6 +6,7 @@ import { formatJalaliDate, formatMoney, formatNumber, formatPhone, JALALI_MONTHS
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { hasFeature } from '@/lib/billing';
 import type { CustomerRow, LoyaltyProgram } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'مشتریان' };
@@ -25,7 +26,7 @@ export default async function CustomersPage({ searchParams }: PageProps<'/dashbo
 
   const [{ data: customers }, tiers] = await Promise.all([
     api<{ data: CustomerRow[] }>(`/customers${query.size ? `?${query}` : ''}`),
-    can('loyalty.manage') ? api<{ data: LoyaltyProgram }>('/loyalty/program').then((r) => r.data.tiers) : Promise.resolve([]),
+    can('loyalty.manage') && await hasFeature('loyalty') ? api<{ data: LoyaltyProgram }>('/loyalty/program').then((r) => r.data.tiers) : Promise.resolve([]),
   ]);
   const filtered = query.size > 0;
 

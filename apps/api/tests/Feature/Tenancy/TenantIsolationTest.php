@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Tenancy;
 
+use App\Modules\Billing\Models\BillingInvoice;
+use App\Modules\Billing\Models\BillingPayment;
+use App\Modules\Billing\Models\Plan;
 use App\Modules\Catalog\Actions\SaveCategory;
 use App\Modules\Catalog\Actions\SaveModifierGroup;
 use App\Modules\Catalog\Actions\SaveProduct;
@@ -141,6 +144,10 @@ final class TenantIsolationTest extends TestCase
             $attendance = AttendanceRecord::query()->create(['employee_id' => $employee->id, 'branch_id' => $this->branchB->id, 'clock_in_at' => now()->subHour(), 'source' => 'self']);
             $expenseCategory = ExpenseCategory::query()->create(['name' => 'دسته ب']);
             $expense = Expense::query()->create(['branch_id' => $this->branchB->id, 'category_id' => $expenseCategory->id, 'amount' => 5000, 'spent_on' => now()->toDateString(), 'method' => 'cash']);
+            $invoice = BillingInvoice::query()->create([
+                'number' => '1405-900001', 'kind' => 'checkout', 'status' => 'open', 'plan_id' => Plan::query()->where('key', 'pro')->value('id'), 'cycle' => 'monthly',
+                'addons' => [], 'mode' => 'pay_now', 'lines' => [], 'subtotal' => 1000, 'credit' => 0, 'vat_rate' => 10, 'vat' => 100, 'total' => 1100,
+            ]);
             $story = Story::query()->create(['image_path' => 'b/s.webp', 'thumb_path' => 'b/t.webp', 'width' => 900, 'height' => 1600, 'caption' => 'استوری ب', 'starts_at' => now()->subHour(), 'ends_at' => now()->addDay()]);
             $payment = Payment::query()->create(['order_id' => $order->id, 'method' => PaymentMethod::Online, 'gateway' => 'fake', 'status' => PaymentAttemptStatus::Pending, 'amount' => $order->total, 'authority' => 'FAKEBONLY']);
 
@@ -151,7 +158,7 @@ final class TenantIsolationTest extends TestCase
                 'customer' => $customer->id, 'tier' => $tier->id, 'rule' => $rule->id,
                 'station' => $station->id, 'kitchen_item' => (string) $kitchenItem, 'device' => $device->id, 'device_token' => $deviceToken, 'note' => $note->id, 'story' => $story->id,
                 'ingredient' => $ingredient->id, 'supplier' => $supplier->id, 'purchase' => $purchase->id,
-                'employee' => $employee->id, 'shift' => $shift->id, 'attendance' => $attendance->id, 'expense_category' => $expenseCategory->id, 'expense' => $expense->id,
+                'invoice' => $invoice->id, 'employee' => $employee->id, 'shift' => $shift->id, 'attendance' => $attendance->id, 'expense_category' => $expenseCategory->id, 'expense' => $expense->id,
             ];
         });
     }
@@ -189,6 +196,14 @@ final class TenantIsolationTest extends TestCase
             'report customers' => ['GET', '/api/v1/reports/customers'],
             'report inventory' => ['GET', '/api/v1/reports/inventory'],
             'report export' => ['GET', '/api/v1/reports/export'],
+            'billing status' => ['GET', '/api/v1/billing/status'],
+            'billing' => ['GET', '/api/v1/billing'],
+            'billing plans' => ['GET', '/api/v1/billing/plans'],
+            'billing quote' => ['POST', '/api/v1/billing/quote'],
+            'billing checkout' => ['POST', '/api/v1/billing/checkout'],
+            'billing invoices' => ['GET', '/api/v1/billing/invoices'],
+            'billing cancel' => ['POST', '/api/v1/billing/cancel'],
+            'billing resume' => ['POST', '/api/v1/billing/resume'],
             'create ingredient' => ['POST', '/api/v1/inventory/ingredients'],
             'stock movements' => ['GET', '/api/v1/inventory/movements'],
             'stock adjustment' => ['POST', '/api/v1/inventory/adjustments'],
@@ -326,6 +341,9 @@ final class TenantIsolationTest extends TestCase
             'delete category image' => ['DELETE', '/api/v1/catalog/categories/{category}/image'],
             'update story' => ['POST', '/api/v1/stories/{story}'],
             'update ingredient' => ['PUT', '/api/v1/inventory/ingredients/{ingredient}'],
+            'show invoice' => ['GET', '/api/v1/billing/invoices/{invoice}'],
+            'pay invoice' => ['POST', '/api/v1/billing/invoices/{invoice}/pay'],
+            'verify invoice' => ['POST', '/api/v1/billing/invoices/{invoice}/verify'],
             'update expense category' => ['PUT', '/api/v1/expense-categories/{expenseCategory}'],
             'delete expense category' => ['DELETE', '/api/v1/expense-categories/{expenseCategory}'],
             'update expense' => ['PUT', '/api/v1/expenses/{expense}'],
@@ -353,9 +371,9 @@ final class TenantIsolationTest extends TestCase
     public function test_foreign_record_ids_do_not_exist_inside_own_tenant(string $method, string $uri): void
     {
         $uri = str_replace(
-            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}', '{employee}', '{shift}', '{attendance}', '{expenseCategory}', '{expense}'],
+            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}', '{invoice}', '{employee}', '{shift}', '{attendance}', '{expenseCategory}', '{expense}'],
             [$this->branchB->id, $this->memberB->id, $this->catalogB['category'], $this->catalogB['product'], $this->catalogB['group'], $this->catalogB['image'],
-                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase'], $this->commerceB['employee'], $this->commerceB['shift'], $this->commerceB['attendance'], $this->commerceB['expense_category'], $this->commerceB['expense']],
+                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase'], $this->commerceB['invoice'], $this->commerceB['employee'], $this->commerceB['shift'], $this->commerceB['attendance'], $this->commerceB['expense_category'], $this->commerceB['expense']],
             $uri,
         );
 
@@ -389,6 +407,8 @@ final class TenantIsolationTest extends TestCase
             $this->assertSame('ordered', PurchaseOrder::query()->findOrFail($this->commerceB['purchase'])->status);
             $this->assertSame(0, PurchaseOrder::query()->findOrFail($this->commerceB['purchase'])->paid_total);
             $this->assertSame('کارمند ب', Employee::query()->findOrFail($this->commerceB['employee'])->name);
+            $this->assertSame('open', BillingInvoice::query()->findOrFail($this->commerceB['invoice'])->status);
+            $this->assertSame(0, BillingPayment::query()->count());
             $this->assertTrue(Shift::query()->whereKey($this->commerceB['shift'])->exists());
             $this->assertNull(AttendanceRecord::query()->findOrFail($this->commerceB['attendance'])->clock_out_at);
             $this->assertSame(5000, Expense::query()->findOrFail($this->commerceB['expense'])->amount);

@@ -39,7 +39,7 @@ final class DashboardController
             'widgets' => $saved ? WidgetCatalog::visible($saved->widgets, $can) : WidgetCatalog::defaultFor($this->roleKeys($user), $can),
             'is_default' => $saved === null,
             'catalog' => collect(WidgetCatalog::all())
-                ->filter(fn (array $w) => $can($w['permission']))
+                ->filter(fn (array $w, string $key) => $can($w['permission']) && WidgetCatalog::inPlan($key))
                 ->map(fn (array $w, string $key) => ['key' => $key, 'title' => $w['title'], 'description' => $w['description'], 'sizes' => $w['sizes'], 'default_size' => $w['default_size']])
                 ->values(),
         ]]);
@@ -76,6 +76,7 @@ final class DashboardController
         $key = $widget;
         $def = WidgetCatalog::all()[$key] ?? throw new NotFoundHttpException;
         abort_unless(Gate::allows($def['permission']), 403);
+        abort_unless(WidgetCatalog::inPlan($key), 404);
 
         $v = $request->validate([
             'range' => ['nullable', Rule::in(Overview::RANGES)],

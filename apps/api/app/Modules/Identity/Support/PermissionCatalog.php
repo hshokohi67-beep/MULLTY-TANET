@@ -85,6 +85,8 @@ final class PermissionCatalog
 
     public const REPORTS_VIEW = 'reports.view';
 
+    public const BILLING_MANAGE = 'billing.manage';
+
     /**
      * key => [group, Persian label]
      *
@@ -131,6 +133,7 @@ final class PermissionCatalog
             self::STAFF_MANAGE => ['group' => 'operations', 'label' => 'کارکنان، برنامه‌ی شیفت، حضور و غیاب و حقوق'],
             self::ATTENDANCE_SELF => ['group' => 'operations', 'label' => 'ثبت ورود و خروج خود'],
             self::REPORTS_VIEW => ['group' => 'reports', 'label' => 'گزارش‌های فروش، محصولات، شعبه‌ها و سود و زیان'],
+            self::BILLING_MANAGE => ['group' => 'billing', 'label' => 'اشتراک، تغییر پلن و پرداخت صورت‌حساب‌ها'],
         ];
     }
 

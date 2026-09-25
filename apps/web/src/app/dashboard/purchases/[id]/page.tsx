@@ -7,6 +7,7 @@ import { formatJalaliDate, formatJalaliDateTime, formatMoney, formatNumber } fro
 import { PageHeader } from '@/components/PageHeader';
 import { api, ApiError } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import { formatQty, type Ingredient, type PurchaseOrder, type Supplier } from '@/lib/inventory-types';
 import type { Branch } from '@/lib/types';
 import { STATUS_TONE } from '../status';
@@ -18,6 +19,7 @@ export const metadata: Metadata = { title: 'سفارش خرید' };
 export default async function PurchasePage({ params }: PageProps<'/dashboard/purchases/[id]'>) {
   const { can } = await requireMembership();
   if (!can('purchasing.manage')) redirect('/dashboard');
+  await requireFeature('inventory');
   const { id } = await params;
 
   let po: PurchaseOrder;

@@ -6,6 +6,7 @@ use App\Modules\Identity\Exceptions\TeamRuleException;
 use App\Modules\Identity\Models\TenantUser;
 use App\Modules\Identity\Models\User;
 use App\Support\Audit\AuditLogger;
+use App\Support\Entitlements\EntitlementGate;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,6 +25,8 @@ final class AddTeamMember
      */
     public function handle(User $actor, string $name, string $phoneE164, ?string $initialPassword, array $roleIds): TenantUser
     {
+        app(EntitlementGate::class)->ensureCanAdd('staff', TenantUser::query()->where('status', TenantUser::STATUS_ACTIVE)->count());
+
         return DB::transaction(function () use ($actor, $name, $phoneE164, $initialPassword, $roleIds): TenantUser {
             $user = User::query()->where('phone_e164', $phoneE164)->first()
                 ?? User::query()->create([

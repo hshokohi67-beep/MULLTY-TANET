@@ -2,11 +2,14 @@ import Link from 'next/link';
 import { ChefHat } from 'lucide-react';
 import { formatPhone } from '@cafe/locale';
 import { requireMembership } from '@/lib/auth';
+import { getBillingStatus } from '@/lib/billing';
+import { SCREEN_FEATURES } from '@/lib/billing-types';
 import { AppShell, type NavGroup } from './AppShell';
 import { TimeClockButton } from './TimeClockButton';
 
 export default async function DashboardLayout({ children }: LayoutProps<'/dashboard'>) {
   const { user, membership, memberships, can } = await requireMembership();
+  const billing = await getBillingStatus();
 
   const groups: NavGroup[] = [
     {
@@ -56,9 +59,18 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
         ...(can('branches.view') ? [{ href: '/dashboard/branches', label: 'شعبه‌ها و ساعات کاری', icon: 'branches' }] : []),
         ...(can('team.view') ? [{ href: '/dashboard/team', label: 'تیم و دسترسی‌ها', icon: 'team' }] : []),
         ...(can('settings.view') || can('tenant.view') ? [{ href: '/dashboard/settings', label: 'تنظیمات', icon: 'settings' }] : []),
+        ...(can('billing.manage') ? [{ href: '/dashboard/billing', label: 'اشتراک و پرداخت', icon: 'billing' }] : []),
       ],
     },
   ].filter((g) => g.items.length > 0);
+
+  // Screens outside the plan stay visible with a lock and lead to the upgrade view.
+  for (const group of groups) {
+    for (const item of group.items) {
+      const feature = SCREEN_FEATURES[item.href];
+      if (feature && billing?.features[feature] === false) item.locked = true;
+    }
+  }
 
   return (
     <AppShell
@@ -69,6 +81,8 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       canSwitchTenant={memberships.length > 1}
       permissions={membership.permissions}
       storefrontUrl={`/s/${membership.tenant.slug}`}
+      billing={billing ? { state: billing.state, daysLeft: billing.days_left, status: billing.status, canManage: can('billing.manage') } : null}
+      isPlatformAdmin={user.is_platform_admin}
       topActions={<>
         {can('attendance.self') ? <TimeClockButton /> : null}
         {can('kds.operate') ? (

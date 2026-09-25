@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { api, ApiError } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { hasFeature } from '@/lib/billing';
 import type { Ingredient, Recipe } from '@/lib/inventory-types';
 import type { Branch, Category, ModifierGroup, Product } from '@/lib/types';
 import { BranchPricesForm, DeleteProductButton, ImagesManager, ModifierGroupsForm, ProductDetailsForm, VariantsForm } from './ProductEditor';
@@ -32,7 +33,7 @@ export default async function ProductPage({ params }: PageProps<'/dashboard/menu
   const canManage = can('catalog.manage');
   const canPrice = can('prices.manage');
   // Recipe and cost (Phase 9): only for staff who may see the stock side.
-  const [recipe, ingredients] = can('inventory.view')
+  const [recipe, ingredients] = can('inventory.view') && await hasFeature('inventory')
     ? await Promise.all([
       api<{ data: Recipe }>(`/catalog/products/${product.id}/recipe`).then((r) => r.data),
       api<{ data: Ingredient[] }>('/inventory/ingredients?active=1').then((r) => r.data),

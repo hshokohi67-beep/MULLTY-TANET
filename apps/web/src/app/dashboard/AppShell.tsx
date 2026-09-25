@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
-  Aperture, Armchair, BarChart3, Boxes, ChefHat, CalendarClock, Receipt, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
+  Aperture, Armchair, BarChart3, Boxes, CreditCard, Lock, ShieldCheck, ChefHat, CalendarClock, Receipt, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
   Search, Settings, ShoppingCart, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
@@ -15,10 +15,12 @@ import { NotificationBell } from './NotificationBell';
 
 const ICONS: Record<string, LucideIcon> = {
   overview: LayoutDashboard, reports: BarChart3, orders: ReceiptText, kitchen: ChefHat, tables: Armchair, menu: UtensilsCrossed,
-  discounts: Tags, stories: Aperture, inventory: Boxes, purchases: ShoppingCart, staff: CalendarClock, expenses: Receipt, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
+  billing: CreditCard, discounts: Tags, stories: Aperture, inventory: Boxes, purchases: ShoppingCart, staff: CalendarClock, expenses: Receipt, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
 };
 
-export interface NavLink { href: string; label: string; icon: keyof typeof ICONS | string; external?: boolean }
+export interface NavLink { href: string; label: string; icon: keyof typeof ICONS | string; external?: boolean; locked?: boolean }
+
+export interface ShellBilling { state: 'trial' | 'active' | 'grace' | 'read_only'; daysLeft: number | null; status: string; canManage: boolean }
 export interface NavGroup { title: string; items: NavLink[] }
 
 function initials(name: string): string {
@@ -53,7 +55,8 @@ function Nav({ groups, collapsed, onNavigate }: { groups: NavGroup[]; collapsed:
               >
                 {active ? <span className="absolute inset-y-2 start-0 w-0.5 rounded-full bg-brand" aria-hidden="true" /> : null}
                 <Icon className={cx('size-[18px] shrink-0', active ? 'text-brand' : 'text-text-subtle group-hover:text-text-muted')} aria-hidden="true" />
-                {collapsed ? <span className="sr-only">{item.label}</span> : <span className="truncate">{item.label}</span>}
+                {collapsed ? <span className="sr-only">{item.label}{item.locked ? ' (در پلن شما نیست)' : ''}</span> : <span className="truncate">{item.label}</span>}
+                {item.locked && !collapsed ? <Lock className="ms-auto size-3.5 shrink-0 text-text-subtle" aria-label="در پلن شما نیست" /> : null}
               </Link>
             );
           })}
@@ -68,8 +71,10 @@ function Nav({ groups, collapsed, onNavigate }: { groups: NavGroup[]; collapsed:
  * phones), a quiet top bar with theme and account, and the page. The collapsed state is
  * remembered per browser.
  */
-export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTenant, topActions, permissions, storefrontUrl, children }: {
+export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTenant, topActions, permissions, storefrontUrl, billing = null, isPlatformAdmin = false, children }: {
   groups: NavGroup[];
+  billing?: ShellBilling | null;
+  isPlatformAdmin?: boolean;
   permissions: string[];
   storefrontUrl: string;
   tenantName: string;
@@ -180,6 +185,7 @@ export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTen
                   <p className="text-sm font-semibold">{userName}</p>
                   {userPhone ? <p className="text-xs text-text-muted" dir="ltr" style={{ textAlign: 'end' }}>{userPhone}</p> : null}
                 </div>
+                {isPlatformAdmin ? <Link href="/platform" className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-muted"><ShieldCheck className="size-4 text-text-subtle" />مدیریت پلتفرم</Link> : null}
                 {canSwitchTenant ? <Link href="/select-tenant" className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-muted"><Store className="size-4 text-text-subtle" />تغییر کسب‌وکار</Link> : null}
                 <form action={logout}>
                   <button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-danger hover:bg-danger-soft"><LogOut className="size-4" />خروج</button>
@@ -189,10 +195,42 @@ export function AppShell({ groups, tenantName, userName, userPhone, canSwitchTen
           </div>
         </header>
         <CommandPalette groups={groups} permissions={permissions} storefrontUrl={storefrontUrl} open={paletteOpen} onOpenChange={setPaletteOpen} />
+        {billing ? <BillingBanner billing={billing} /> : null}
         <main id="main" key={pathname} className="page-in mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
           {children}
         </main>
       </div>
+    </div>
+  );
+}
+
+/** Trial ending, grace or read-only: one calm line above the page, with the way out. */
+function BillingBanner({ billing }: { billing: ShellBilling }) {
+  const days = billing.daysLeft ?? 0;
+  const fa = (n: number) => new Intl.NumberFormat('fa-IR').format(n);
+  let tone: 'danger' | 'warning' | null = null;
+  let text = '';
+
+  if (billing.state === 'read_only') {
+    tone = 'danger';
+    text = billing.canManage ? 'اشتراک تمام شده و پنل فقط‌خواندنی است؛ اطلاعات سر جایش است و با تمدید همه‌چیز برمی‌گردد.' : 'اشتراک این کافه تمام شده و پنل فقط‌خواندنی است؛ به مالک اطلاع دهید.';
+  } else if (billing.state === 'grace') {
+    tone = 'danger';
+    text = `مهلت پرداخت اشتراک: ${fa(days)} روز دیگر پنل فقط‌خواندنی می‌شود.`;
+  } else if (billing.canManage && billing.state === 'trial' && days <= 5) {
+    tone = 'warning';
+    text = `${fa(days)} روز از دوره‌ی آزمایشی مانده؛ برای ادامه‌ی بی‌وقفه پلن را انتخاب کنید.`;
+  } else if (billing.canManage && billing.state === 'active' && billing.status === 'active' && days <= 3) {
+    tone = 'warning';
+    text = `اشتراک ${fa(days)} روز دیگر تمام می‌شود.`;
+  }
+  if (!tone) return null;
+
+  return (
+    <div role="status" className={cx('flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 text-sm sm:px-6', tone === 'danger' ? 'border-danger/30 bg-danger-soft text-danger' : 'border-warning/30 bg-warning-soft text-warning')}>
+      <CreditCard className="size-4 shrink-0" aria-hidden="true" />
+      <span className="flex-1 font-medium">{text}</span>
+      {billing.canManage ? <Link href="/dashboard/billing" className="rounded-md bg-surface/70 px-2.5 py-1 text-xs font-semibold text-text hover:bg-surface">{billing.state === 'trial' ? 'انتخاب پلن' : 'تمدید اشتراک'}</Link> : null}
     </div>
   );
 }

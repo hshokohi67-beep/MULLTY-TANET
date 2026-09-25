@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use App\Modules\Billing\Models\Plan;
+use App\Modules\Billing\Models\Subscription;
 use App\Modules\Core\Actions\CreateTenant;
 use App\Modules\Core\Data\CreateTenantData;
 use App\Modules\Core\Enums\TenantStatus;
@@ -48,6 +50,13 @@ abstract class TestCase extends BaseTestCase
             subdomainBase: 'menu.test',
         ));
         $tenant->update(['status' => TenantStatus::Active]);
+        // Tests run with everything enabled unless they set up a plan themselves (see BillingTest).
+        $this->inTenant($tenant, fn () => Subscription::query()->firstOrFail()->update([
+            'plan_id' => Plan::query()->where('key', 'chain')->value('id'),
+            'status' => 'active',
+            'current_period_start' => now()->subDay(),
+            'current_period_end' => now()->addYears(10),
+        ]));
 
         return ['tenant' => $tenant, 'owner' => User::query()->where('phone_e164', $ownerPhone)->firstOrFail()];
     }

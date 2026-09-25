@@ -7,6 +7,7 @@ import { formatJalaliDate, formatMoney, formatNumber } from '@cafe/locale';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { PurchaseOrder, Supplier } from '@/lib/inventory-types';
 import { STATUS_TONE } from './status';
 import { SupplierList } from './SupplierList';
@@ -24,6 +25,7 @@ const TABS = [
 export default async function PurchasesPage({ searchParams }: PageProps<'/dashboard/purchases'>) {
   const { can } = await requireMembership();
   if (!can('purchasing.manage')) redirect('/dashboard');
+  await requireFeature('inventory');
   const status = (await searchParams).status;
   const tab = typeof status === 'string' && TABS.some((t) => t.key === status) ? status : 'open';
 

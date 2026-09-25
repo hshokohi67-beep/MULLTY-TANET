@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Button, Card, CardHeader, EmptyState } from '@cafe/ui';
 import { chooseTenant, logout } from '@/app/actions/auth';
@@ -31,6 +32,11 @@ export default async function SelectTenantPage() {
             ))}
           </ul>
         )}
+        {me.user.is_platform_admin ? (
+          <div className="border-t border-border px-5 py-3">
+            <Link href="/platform" className="text-sm font-medium text-brand hover:underline">مدیریت پلتفرم (مشترکان و پلن‌ها)</Link>
+          </div>
+        ) : null}
       </Card>
     </main>
   );

@@ -6,6 +6,7 @@ use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Core\Models\Branch;
 use App\Modules\Storefront\Models\Story;
+use App\Support\Entitlements\EntitlementGate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,6 +22,10 @@ final class PublicStoryController
 {
     public function index(Request $request): JsonResponse
     {
+        // Stories are a plan feature: without it the storefront simply shows none.
+        if (! app(EntitlementGate::class)->enabled('stories')) {
+            return response()->json(['data' => []]);
+        }
         $slug = $request->validate(['branch' => ['nullable', 'string', 'max:64']])['branch'] ?? null;
         $branchId = $slug ? Branch::query()->where('slug', $slug)->where('is_active', true)->value('id') : null;
 

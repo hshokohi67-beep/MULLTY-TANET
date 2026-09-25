@@ -22,6 +22,7 @@ use App\Modules\Catalog\Support\CatalogVersion;
 use App\Modules\Core\Models\Branch;
 use App\Modules\Identity\Support\PermissionCatalog;
 use App\Support\Audit\AuditLogger;
+use App\Support\Entitlements\EntitlementGate;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -59,6 +60,7 @@ final class ProductController
 
     public function store(ProductRequest $request, SaveProduct $save): JsonResponse
     {
+        app(EntitlementGate::class)->ensureCanAdd('products', Product::query()->count());
         $product = $save->handle($request->toData(), null, $request->variants(), $request->user()?->getAuthIdentifier());
 
         return (new ProductResource($product->load(self::DETAIL_RELATIONS)))->response()->setStatusCode(201);
@@ -67,6 +69,7 @@ final class ProductController
     /** Quick Add: name + price (+ optional category) and the item is on the menu. */
     public function quickAdd(QuickAddProductRequest $request, SaveProduct $save): JsonResponse
     {
+        app(EntitlementGate::class)->ensureCanAdd('products', Product::query()->count());
         $v = $request->validated();
         $product = $save->handle(
             new ProductData(name: $v['name'], categoryIds: isset($v['category_id']) ? [$v['category_id']] : []),

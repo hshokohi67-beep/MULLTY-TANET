@@ -9,6 +9,7 @@ use App\Modules\Core\Http\Requests\OpeningHoursRequest;
 use App\Modules\Core\Http\Resources\BranchResource;
 use App\Modules\Core\Models\Branch;
 use App\Modules\Core\Support\OpeningHoursEvaluator;
+use App\Support\Entitlements\EntitlementGate;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,6 +23,8 @@ final class BranchController
 
     public function store(BranchRequest $request, SaveBranch $save): JsonResponse
     {
+        app(EntitlementGate::class)->ensureCanAdd('branches', Branch::query()->count());
+
         return (new BranchResource($save->handle($request->toData())->load('openingHours')))
             ->response()->setStatusCode(201);
     }

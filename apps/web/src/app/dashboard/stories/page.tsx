@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { Branch, Category, Product, Tenant } from '@/lib/types';
 import { StoriesManager, type StaffStory } from './StoriesManager';
 
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: 'استوری‌ها' };
 export default async function StoriesPage({ searchParams }: PageProps<'/dashboard/stories'>) {
   const { can } = await requireMembership();
   if (!can('storefront.manage')) redirect('/dashboard');
+  await requireFeature('stories');
 
   const [{ data: stories }, { data: products }, { data: categories }, branches, { data: tenant }] = await Promise.all([
     api<{ data: StaffStory[] }>('/stories'),

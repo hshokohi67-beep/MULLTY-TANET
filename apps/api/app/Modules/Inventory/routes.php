@@ -7,7 +7,7 @@ use App\Modules\Inventory\Http\Controllers\RecipeController;
 use App\Modules\Inventory\Http\Controllers\StockController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->group(function () {
+Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member', 'feature:inventory'])->group(function () {
     $view = 'can:'.P::INVENTORY_VIEW;
     $manage = 'can:'.P::INVENTORY_MANAGE;
     $purchasing = 'can:'.P::PURCHASING_MANAGE;

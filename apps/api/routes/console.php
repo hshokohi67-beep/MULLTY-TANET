@@ -13,3 +13,4 @@ Schedule::command('kitchen:release-preorders')->everyMinute()->withoutOverlappin
 Schedule::command('loyalty:birthdays')->hourly()->withoutOverlapping()->onOneServer();
 Schedule::command('insights:daily-report')->hourly()->withoutOverlapping()->onOneServer();
 Schedule::command('analytics:rollup')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
+Schedule::command('billing:renewals')->dailyAt('09:00')->timezone('Asia/Tehran')->withoutOverlapping()->onOneServer();

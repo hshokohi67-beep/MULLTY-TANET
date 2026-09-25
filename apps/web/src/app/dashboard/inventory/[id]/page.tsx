@@ -7,6 +7,7 @@ import { formatJalaliDateTime, formatMoney } from '@cafe/locale';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import { formatQty, type Ingredient, type StockMovement } from '@/lib/inventory-types';
 import type { Branch } from '@/lib/types';
 
@@ -18,6 +19,7 @@ const TONE: Record<StockMovement['type'], Tone> = { purchase: 'success', sale: '
 export default async function IngredientHistoryPage({ params }: PageProps<'/dashboard/inventory/[id]'>) {
   const { can } = await requireMembership();
   if (!can('inventory.view')) redirect('/dashboard');
+  await requireFeature('inventory');
   const { id } = await params;
 
   const [{ data: ingredients }, { data: movements }, { data: branches }] = await Promise.all([

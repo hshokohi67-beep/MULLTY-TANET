@@ -30,7 +30,7 @@ Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->g
 
     Route::post('orders/{order}/wallet-payment', [StaffWalletPaymentController::class, 'store'])->middleware('can:'.P::PAYMENTS_RECORD)->name('orders.wallet-payment');
 
-    Route::middleware('can:'.P::LOYALTY_MANAGE)->prefix('loyalty')->name('loyalty.')->group(function () {
+    Route::middleware(['can:'.P::LOYALTY_MANAGE, 'feature:loyalty'])->prefix('loyalty')->name('loyalty.')->group(function () {
         Route::get('program', [LoyaltyProgramController::class, 'show'])->name('program.show');
         Route::put('program', [LoyaltyProgramController::class, 'update'])->name('program.update');
         Route::post('tiers', [LoyaltyProgramController::class, 'storeTier'])->name('tiers.store');

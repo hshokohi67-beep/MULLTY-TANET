@@ -7,6 +7,7 @@ import { addDays, todayIn } from '@cafe/locale';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import { jalaliShort, presets, type BranchRow, type CustomersReport, type HoursReport, type InventoryReport, type ProductsReport, type Summary } from '@/lib/report-types';
 import type { Branch, Tenant } from '@/lib/types';
 import { ExportMenu } from './ExportMenu';
@@ -32,6 +33,7 @@ const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : u
 export default async function ReportsPage({ searchParams }: PageProps<'/dashboard/reports'>) {
   const { can } = await requireMembership();
   if (!can('reports.view')) redirect('/dashboard');
+  await requireFeature('reports');
   const params = await searchParams;
 
   const tenant = (await api<{ data: Tenant }>('/tenant')).data;

@@ -7,6 +7,7 @@ import { formatMoney, formatNumber } from '@cafe/locale';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { Ingredient } from '@/lib/inventory-types';
 import type { Branch } from '@/lib/types';
 import { InventoryManager } from './InventoryManager';
@@ -17,6 +18,7 @@ export const metadata: Metadata = { title: 'انبار' };
 export default async function InventoryPage({ searchParams }: PageProps<'/dashboard/inventory'>) {
   const { can } = await requireMembership();
   if (!can('inventory.view')) redirect('/dashboard');
+  await requireFeature('inventory');
   const params = await searchParams;
 
   const [{ data: ingredients }, { data: branches }] = await Promise.all([

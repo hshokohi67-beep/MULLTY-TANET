@@ -2,7 +2,7 @@
 
 namespace App\Modules\Insights\Support;
 
-use App\Modules\Catalog\Enums\AvailabilityStatus;
+use App\Modules\Billing\Support\SubscriptionAlert;
 use App\Modules\Catalog\Models\ProductAvailability;
 use App\Modules\Commerce\Enums\OrderStatus;
 use App\Modules\Commerce\Models\Order;
@@ -11,6 +11,7 @@ use App\Modules\Inventory\Models\IngredientStock;
 use App\Modules\Kitchen\Models\KitchenDevice;
 use App\Modules\Loyalty\Models\Wallet;
 use App\Modules\Operations\Models\AttendanceRecord;
+use App\Support\Entitlements\EntitlementGate;
 use App\Support\Localization\PersianNumber;
 use Closure;
 
@@ -28,6 +29,7 @@ final class Alerts
     {
         $alerts = [];
         $n = fn (int $count) => PersianNumber::toPersian((string) $count);
+        $gate = app(EntitlementGate::class);
         $orders = fn () => Order::query()->when($branchId, fn ($q, $id) => $q->where('branch_id', $id));
 
         if ($can('orders.view')) {
@@ -68,7 +70,7 @@ final class Alerts
             }
         }
 
-        if ($can('inventory.view')) {
+        if ($can('inventory.view') && $gate->enabled('inventory')) {
             // At or below the ingredient's threshold in a branch (the roadmap's «۳ محصول رو به اتمام است»).
             $low = IngredientStock::query()
                 ->join('ingredients', fn ($j) => $j->on('ingredients.id', '=', 'ingredient_stocks.ingredient_id')->on('ingredients.tenant_id', '=', 'ingredient_stocks.tenant_id'))
@@ -82,7 +84,7 @@ final class Alerts
             }
         }
 
-        if ($can('staff.manage')) {
+        if ($can('staff.manage') && $gate->enabled('operations')) {
             // Someone forgot to clock out: their hours (and cost) keep growing until fixed.
             $forgotten = AttendanceRecord::query()->whereNull('clock_out_at')->where('clock_in_at', '<', now()->subHours(16))
                 ->when($branchId, fn ($q, $id) => $q->where('branch_id', $id))->count();
@@ -100,16 +102,6 @@ final class Alerts
             }
         }
 
-        if ($can('catalog.view')) {
-            $soldOut = ProductAvailability::query()->where('status', AvailabilityStatus::SoldOut)
-                ->when($branchId, fn ($q, $id) => $q->where('branch_id', $id))
-                ->where(fn ($q) => $q->whereNull('sold_out_until')->orWhere('sold_out_until', '>', now()))
-                ->distinct()->count('product_id');
-            if ($soldOut > 0) {
-                $alerts[] = ['type' => 'sold_out', 'severity' => 'warning', 'title' => "{$n($soldOut)} آیتم منو «تمام شد» است", 'count' => $soldOut, 'href' => '/dashboard/menu'];
-            }
-        }
-
         if ($can('kds.manage')) {
             $offline = KitchenDevice::query()->whereNull('revoked_at')->whereNotNull('paired_at')
                 ->when($branchId, fn ($q, $id) => $q->where('branch_id', $id))
@@ -124,6 +116,10 @@ final class Alerts
             if ($negative > 0) {
                 $alerts[] = ['type' => 'negative_wallets', 'severity' => 'info', 'title' => "کیف پول {$n($negative)} مشتری پس از برگشت کش‌بک منفی است", 'count' => $negative, 'href' => '/dashboard/customers'];
             }
+        }
+
+        if ($can('billing.manage') && ($billing = app(SubscriptionAlert::class)->current()) !== null) {
+            $alerts[] = $billing;
         }
 
         $rank = ['danger' => 0, 'warning' => 1, 'info' => 2];

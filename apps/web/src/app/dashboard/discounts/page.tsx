@@ -4,6 +4,7 @@ import { Card, EmptyState } from '@cafe/ui';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { hasFeature } from '@/lib/billing';
 import type { Discount, LoyaltyProgram } from '@/lib/types';
 import { DiscountEditor } from './DiscountEditor';
 
@@ -18,7 +19,7 @@ export default async function DiscountsPage() {
 
   const [{ data: discounts }, tiers] = await Promise.all([
     api<{ data: Discount[] }>('/discounts'),
-    can('loyalty.manage') ? api<{ data: LoyaltyProgram }>('/loyalty/program').then((r) => r.data.tiers.map((t) => ({ id: t.id, name: t.name }))) : Promise.resolve([]),
+    can('loyalty.manage') && await hasFeature('loyalty') ? api<{ data: LoyaltyProgram }>('/loyalty/program').then((r) => r.data.tiers.map((t) => ({ id: t.id, name: t.name }))) : Promise.resolve([]),
   ]);
 
   return (

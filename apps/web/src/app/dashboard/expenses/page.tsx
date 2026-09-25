@@ -8,6 +8,7 @@ import { MoneyShareBar } from '@/components/MoneyCharts';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import type { Expense, ExpenseCategory, ExpenseSummary } from '@/lib/operations-types';
 import type { Branch, Tenant } from '@/lib/types';
 import { CategoryManager, ExpenseList } from './ExpenseManager';
@@ -36,6 +37,7 @@ const label = (m: Month) => `${JALALI_MONTHS[m.month - 1]} ${toPersianDigits(m.y
 export default async function ExpensesPage({ searchParams }: PageProps<'/dashboard/expenses'>) {
   const { can } = await requireMembership();
   if (!can('expenses.manage')) redirect('/dashboard');
+  await requireFeature('operations');
   const params = await searchParams;
 
   const tenant = (await api<{ data: Tenant }>('/tenant')).data;

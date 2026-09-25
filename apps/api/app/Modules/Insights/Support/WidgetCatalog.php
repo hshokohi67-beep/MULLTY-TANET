@@ -3,6 +3,7 @@
 namespace App\Modules\Insights\Support;
 
 use App\Modules\Identity\Support\PermissionCatalog as P;
+use App\Support\Entitlements\EntitlementGate;
 use Closure;
 
 /**
@@ -12,6 +13,18 @@ use Closure;
 final class WidgetCatalog
 {
     public const SIZES = ['sm', 'md', 'lg'];
+
+    /** Widgets that belong to a plan feature: hidden (not deleted from layouts) while it is off. */
+    public const FEATURES = [
+        'profit' => 'operations', 'labour' => 'operations', 'expenses' => 'operations',
+        'food_cost' => 'inventory', 'stock_alerts' => 'inventory',
+        'stories' => 'stories', 'club_liability' => 'loyalty', 'payment_health' => 'online_payments',
+    ];
+
+    public static function inPlan(string $key): bool
+    {
+        return ! isset(self::FEATURES[$key]) || app(EntitlementGate::class)->enabled(self::FEATURES[$key]);
+    }
 
     /**
      * @return array<string, array{title: string, description: string, permission: string, sizes: list<string>, default_size: string}>
@@ -86,7 +99,7 @@ final class WidgetCatalog
 
         foreach ($widgets as $widget) {
             $def = $all[$widget['key']] ?? null;
-            if ($def === null || ! $can($def['permission']) || isset($out[$widget['key']])) {
+            if ($def === null || ! $can($def['permission']) || ! self::inPlan($widget['key']) || isset($out[$widget['key']])) {
                 continue;
             }
 

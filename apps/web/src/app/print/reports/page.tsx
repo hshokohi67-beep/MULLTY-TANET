@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { formatJalaliDateTime, todayIn, addDays } from '@cafe/locale';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
+import { requireFeature } from '@/lib/billing';
 import { jalaliShort, type BranchRow, type ProductsReport, type Summary } from '@/lib/report-types';
 import type { Tenant } from '@/lib/types';
 import { BranchesSection, ProductsSection, SummarySection } from '@/app/dashboard/reports/sections';
@@ -16,6 +17,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export default async function PrintReportPage({ searchParams }: PageProps<'/print/reports'>) {
   const { can, membership } = await requireMembership();
   if (!can('reports.view')) redirect('/dashboard');
+  await requireFeature('reports');
   const params = await searchParams;
   const tenant = (await api<{ data: Tenant }>('/tenant')).data;
   const today = todayIn(tenant.timezone);
