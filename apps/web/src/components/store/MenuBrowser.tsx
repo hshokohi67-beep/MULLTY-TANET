@@ -8,6 +8,7 @@ import { addToCart } from '@/app/actions/storefront';
 import type { Menu, MenuProduct, Mood, PublicStory } from '@/lib/storefront-types';
 import { ProductDetails } from './ProductDetails';
 import { hasPhoto, illustrationFor, MoodChip, ProductPhoto } from './ProductVisuals';
+import { variantOf } from './StoreArt';
 import { StoriesBar } from './Stories';
 import { useStore } from './StoreProvider';
 
@@ -233,9 +234,20 @@ export function MenuBrowser({ menu, stories }: { menu: Menu; stories: PublicStor
             <EmptyState title="منو هنوز آماده نیست" description="کافه به‌زودی آیتم‌هایش را اینجا می‌گذارد." />
           ) : sections.map((s) => (
             <section key={s.id} id={`cat-${s.id}`} data-menu-section aria-labelledby={`h-${s.id}`} className="mt-8 scroll-mt-36">
-              <h2 id={`h-${s.id}`} className="mb-3 flex items-baseline gap-2 text-lg font-bold">
+              <h2 id={`h-${s.id}`} data-mood={s.mood ?? undefined} className="mb-3 flex items-center gap-3 text-lg font-black">
+                <span aria-hidden="true" className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-[var(--shadow-sm)]">
+                  {s.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- tenant media, small square
+                    <img src={s.image} alt="" width={44} height={44} loading="lazy" className="size-full object-cover" />
+                  ) : (
+                    <span data-v={variantOf(s.id, 3)} className="photo-fallback flex size-full items-center justify-center">
+                      {createElement(illustrationFor(s.name, s.mood), { className: 'size-5', strokeWidth: 1.75 })}
+                    </span>
+                  )}
+                </span>
                 {s.name}
-                <span className="text-xs font-normal text-text-subtle">{formatNumber(s.products.length)} مورد</span>
+                <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">{formatNumber(s.products.length)} مورد</span>
+                <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-l from-border to-transparent" />
               </h2>
               <ul className="grid gap-3 md:grid-cols-2">{s.products.map(card)}</ul>
             </section>

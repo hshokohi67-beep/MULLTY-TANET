@@ -26,4 +26,7 @@ Route::middleware(['auth:sanctum', 'actor:platform'])->prefix('platform/marketpl
     Route::post('{tenant}/hide', [PlatformMarketplaceController::class, 'hide'])->name('hide');
     Route::post('{tenant}/unhide', [PlatformMarketplaceController::class, 'unhide'])->name('unhide');
     Route::post('{tenant}/feature', [PlatformMarketplaceController::class, 'feature'])->name('feature');
+    Route::get('places', [PlatformMarketplaceController::class, 'places'])->name('places');
+    Route::post('places/image', [PlatformMarketplaceController::class, 'uploadPlaceImage'])->middleware('throttle:uploads')->name('places.image');
+    Route::delete('places/image', [PlatformMarketplaceController::class, 'removePlaceImage'])->name('places.image.destroy');
 });

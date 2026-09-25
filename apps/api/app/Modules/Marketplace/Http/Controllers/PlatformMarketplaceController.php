@@ -3,15 +3,18 @@
 namespace App\Modules\Marketplace\Http\Controllers;
 
 use App\Modules\Core\Models\Tenant;
+use App\Modules\Marketplace\Actions\ManagePlaceImages;
 use App\Modules\Marketplace\Actions\ProjectStore;
 use App\Modules\Marketplace\Models\MarketplaceListing;
+use App\Modules\Marketplace\Models\MarketplacePlaceImage;
 use App\Modules\Marketplace\Models\MarketplaceStore;
 use App\Support\Audit\AuditLogger;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
-/** Platform moderation of the marketplace: hide/unhide a café, feature it until a date. */
+/** Platform moderation of the marketplace: hide/unhide a café, feature it until a date, city tile photos. */
 final class PlatformMarketplaceController
 {
     public function index(TenantContext $context): JsonResponse
@@ -55,6 +58,51 @@ final class PlatformMarketplaceController
         $until = $request->validate(['until' => ['present', 'nullable', 'date', 'after:now']])['until'];
 
         return $this->update($tenant, $context, $audit, ['featured_until' => $until], 'platform.marketplace_featured');
+    }
+
+    /** Cities that have stores, with the tile photo the platform designed for each. */
+    public function places(): JsonResponse
+    {
+        $images = MarketplacePlaceImage::query()->get()->keyBy('city');
+        $data = MarketplaceStore::query()->selectRaw('city, province, COUNT(DISTINCT store_slug) as n')->groupBy('city', 'province')->orderByDesc('n')->get()
+            ->map(function (MarketplaceStore $row) use ($images): array {
+                $image = $images->get($row->city);
+
+                return ['city' => $row->city, 'province' => $row->province, 'stores' => (int) $row->getAttribute('n'), 'image_url' => $image?->url(), 'image_wide_url' => $image?->wideUrl()];
+            });
+
+        return response()->json(['data' => $data->values()]);
+    }
+
+    public function uploadPlaceImage(Request $request, ManagePlaceImages $manage): JsonResponse
+    {
+        $v = $request->validate([
+            'city' => ['required', 'string', 'max:60'],
+            'image' => ['required', 'file', 'image', 'mimes:jpeg,png,webp', 'max:6144', 'dimensions:min_width=480,min_height=320'],
+        ]);
+        $city = $this->knownCity((string) $v['city']);
+        $image = $manage->upload($city, $request->file('image'));
+
+        return response()->json(['data' => ['city' => $image->city, 'image_url' => $image->url(), 'image_wide_url' => $image->wideUrl()]]);
+    }
+
+    public function removePlaceImage(Request $request, ManagePlaceImages $manage): JsonResponse
+    {
+        $city = (string) $request->validate(['city' => ['required', 'string', 'max:60']])['city'];
+        $manage->remove(trim($city));
+
+        return response()->json(['data' => ['city' => trim($city), 'image_url' => null]]);
+    }
+
+    /** Only cities that actually have stores in the marketplace can get a photo. */
+    private function knownCity(string $city): string
+    {
+        $city = trim($city);
+        if (! MarketplaceStore::query()->where('city', $city)->exists()) {
+            throw ValidationException::withMessages(['city' => 'این شهر هنوز فروشگاهی در خوراک‌گردی ندارد.']);
+        }
+
+        return $city;
     }
 
     /** @param  array<string, mixed>  $changes */

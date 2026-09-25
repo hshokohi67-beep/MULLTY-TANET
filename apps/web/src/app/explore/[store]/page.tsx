@@ -51,7 +51,7 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
           <CoverArt store={s.store} name={s.name} category={s.categories[0]?.key} size="lg" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-scrim/60 via-transparent to-scrim/20" aria-hidden="true" />
-        <Link href="/explore" className="glass absolute start-4 top-4 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium"><ArrowRight className="size-4" aria-hidden="true" />کافه‌گردی</Link>
+        <Link href="/explore" className="glass absolute start-4 top-4 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium"><ArrowRight className="size-4" aria-hidden="true" />خوراک‌گردی</Link>
       </div>
 
       <div className="mx-auto -mt-14 flex max-w-5xl flex-col gap-8 px-4 sm:px-6">

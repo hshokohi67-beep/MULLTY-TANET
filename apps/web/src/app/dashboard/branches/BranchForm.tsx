@@ -40,7 +40,7 @@ export function BranchForm({ branch, readOnly = false }: { branch?: Branch; read
           <TextField label="استان" name="province" defaultValue={branch?.province ?? ''} error={e.province} placeholder="تهران" />
           <TextField label="شهر" name="city" defaultValue={branch?.city ?? ''} error={e.city} placeholder="تهران" />
           <TextField label="محله / منطقه" name="district" defaultValue={branch?.district ?? ''} error={e.district} placeholder="مثلاً ونک یا منطقه‌ی ۳"
-            hint="در «کافه‌گردی» مشتری‌ها با انتخاب محله پیدایتان می‌کنند." />
+            hint="در «خوراک‌گردی» مشتری‌ها با انتخاب محله پیدایتان می‌کنند." />
           <div className="sm:col-span-2">
             <TextAreaField label="آدرس" name="address" defaultValue={branch?.address ?? ''} error={e.address} placeholder="خیابان، کوچه، پلاک" />
           </div>
@@ -63,7 +63,7 @@ export function BranchForm({ branch, readOnly = false }: { branch?: Branch; read
             )}
             <p className="flex items-start gap-1.5 text-xs text-text-muted">
               <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-              برای محدوده‌ی ارسال، مسیریابی مشتری و «نزدیک من» در کافه‌گردی لازم است.
+              برای محدوده‌ی ارسال، مسیریابی مشتری و «نزدیک من» در خوراک‌گردی لازم است.
             </p>
             {e.latitude || e.longitude ? <p className="text-sm text-danger">{e.latitude ?? e.longitude}</p> : null}
             <input type="hidden" name="latitude" value={point ? point.lat.toFixed(7) : ''} />

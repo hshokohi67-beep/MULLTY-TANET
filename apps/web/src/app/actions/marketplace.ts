@@ -55,3 +55,38 @@ export async function moderate(tenantId: string, action: 'hide' | 'unhide' | 'fe
 
   return { ok: true };
 }
+
+/** City tile photos in «خوراک‌گردی» (platform only). `formData` carries `city` and `image`. */
+export async function uploadPlaceImage(formData: FormData): Promise<Result> {
+  const me = await requireStaff();
+  const city = String(formData.get('city') ?? '').trim().slice(0, 60);
+  const image = formData.get('image');
+  if (!me.user.is_platform_admin) return { ok: false, message: 'دسترسی ندارید.' };
+  if (!city || !(image instanceof File) || image.size === 0) return { ok: false, message: 'تصویری انتخاب نشده است.' };
+  const body = new FormData();
+  body.append('city', city);
+  body.append('image', image);
+  try {
+    await api('/platform/marketplace/places/image', { method: 'POST', formData: body, tenant: false });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath('/platform/marketplace');
+  revalidatePath('/explore');
+
+  return { ok: true };
+}
+
+export async function removePlaceImage(city: string): Promise<Result> {
+  const me = await requireStaff();
+  if (!me.user.is_platform_admin) return { ok: false, message: 'دسترسی ندارید.' };
+  try {
+    await api(`/platform/marketplace/places/image?city=${encodeURIComponent(city.trim().slice(0, 60))}`, { method: 'DELETE', tenant: false });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath('/platform/marketplace');
+  revalidatePath('/explore');
+
+  return { ok: true };
+}

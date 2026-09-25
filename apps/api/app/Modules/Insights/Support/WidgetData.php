@@ -504,7 +504,7 @@ final class WidgetData
     }
 
     /**
-     * The café's ads in «کافه‌گردی»: last 7 days' impressions and clicks, and what is running or waiting.
+     * The café's ads in «خوراک‌گردی»: last 7 days' impressions and clicks, and what is running or waiting.
      *
      * @return array{impressions: int, clicks: int, ctr: ?float, live: int, awaiting: int, series: list<array{date: string, impressions: int, clicks: int}>, campaigns: list<array{id: string, name: string, status: string, phase: ?string, ends_at: string}>}
      */

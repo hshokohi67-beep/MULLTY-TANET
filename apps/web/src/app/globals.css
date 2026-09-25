@@ -274,6 +274,18 @@ body {
   color: var(--mood-ink, var(--color-brand));
 }
 
+/* Two more placements of the glow, so neighbouring photo-less items don't look identical. */
+.photo-fallback[data-v='1'] {
+  background:
+    radial-gradient(80% 80% at 20% 85%, color-mix(in srgb, var(--glow, var(--color-brand)) 24%, transparent), transparent 70%),
+    linear-gradient(25deg, var(--mood-soft, var(--color-brand-soft)), color-mix(in srgb, var(--mood-soft, var(--color-brand-soft)) 55%, var(--color-surface)));
+}
+.photo-fallback[data-v='2'] {
+  background:
+    radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--glow, var(--color-brand)) 26%, transparent), transparent 70%),
+    linear-gradient(200deg, var(--mood-soft, var(--color-brand-soft)), color-mix(in srgb, var(--mood-soft, var(--color-brand-soft)) 50%, var(--color-surface)));
+}
+
 /* Hero without a cover photo: the café's colour with a quiet dotted pattern. */
 .hero-fallback {
   background:

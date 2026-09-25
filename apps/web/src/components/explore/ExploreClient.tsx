@@ -222,7 +222,7 @@ export function SearchBox({ q }: { q: string }) {
       <label className="relative flex-1">
         <span className="sr-only">نام کافه، غذا، نوشیدنی یا محله</span>
         <Search className="pointer-events-none absolute start-3 top-1/2 size-5 -translate-y-1/2 text-text-subtle" aria-hidden="true" />
-        <input value={text} maxLength={80} autoComplete="off" placeholder="کافه، «کاپوچینو»، «صبحانه»، محله…"
+        <input value={text} maxLength={80} autoComplete="off" placeholder="نام فروشگاه، «کاپوچینو»، «پیتزا»، محله…"
           role="combobox" aria-expanded={open && items.length > 0} aria-controls={listId} aria-autocomplete="list"
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
           onChange={(e) => { setText(e.target.value); setOpen(true); }}

@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Paid placements in «کافه‌گردی». Sits above Marketplace and Billing: it answers Marketplace's
+ * Paid placements in «خوراک‌گردی». Sits above Marketplace and Billing: it answers Marketplace's
  * SponsoredContent contract and fulfils Billing invoices of kind `ad`.
  */
 final class AdvertisingServiceProvider extends ServiceProvider

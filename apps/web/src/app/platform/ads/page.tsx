@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'تبلیغات' };
 
 const FILTERS = ['pending', 'issues', 'paid', 'approved', 'rejected', 'suspended', 'cancelled'] as const;
 
-/** Review queue for ads in «کافه‌گردی», every campaign, and the placement prices. */
+/** Review queue for ads in «خوراک‌گردی», every campaign, and the placement prices. */
 export default async function PlatformAdsPage({ searchParams }: PageProps<'/platform/ads'>) {
   const raw = (await searchParams).status;
   const status = FILTERS.find((f) => f === raw) ?? null;

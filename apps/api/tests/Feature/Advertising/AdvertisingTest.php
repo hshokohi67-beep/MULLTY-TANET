@@ -23,7 +23,7 @@ use Illuminate\Testing\TestResponse;
 use Tests\Feature\Payments\PaymentsTestCase;
 
 /**
- * cafe-a (Tehran) advertises in «کافه‌گردی». Saturday 2026-09-26, 10:00 Tehran; campaigns start
+ * cafe-a (Tehran) advertises in «خوراک‌گردی». Saturday 2026-09-26, 10:00 Tehran; campaigns start
  * on Sunday the 27th by default.
  */
 final class AdvertisingTest extends PaymentsTestCase

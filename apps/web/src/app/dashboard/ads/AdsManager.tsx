@@ -29,12 +29,12 @@ export function AdsManager({ data, store, listed, preview, payment }: { data: Ad
   return (
     <div data-brand={store.slug} className="flex flex-col gap-6">
       <BrandStyles stores={[{ store: store.slug, primary_color: store.primary_color }]} />
-      {payment === 'ok' ? <Alert tone="success" title="پرداخت انجام شد">کمپین در روز شروع خودش در کافه‌گردی نمایش داده می‌شود.</Alert> : null}
+      {payment === 'ok' ? <Alert tone="success" title="پرداخت انجام شد">کمپین در روز شروع خودش در خوراک‌گردی نمایش داده می‌شود.</Alert> : null}
       {payment === 'failed' ? <Alert tone="danger" title="پرداخت انجام نشد">اگر مبلغی از حساب شما کم شده، طی ۷۲ ساعت برمی‌گردد. می‌توانید دوباره پرداخت کنید.</Alert> : null}
       {payment === 'cancelled' ? <Alert tone="warning">پرداخت لغو شد؛ کمپین هنوز منتظر پرداخت است.</Alert> : null}
       {!listed ? (
-        <Alert tone="warning" title="کافه‌تان هنوز در کافه‌گردی نیست" action={<Link href="/dashboard/marketplace" className="text-sm font-semibold underline">تکمیل بازارگاه</Link>}>
-          تبلیغ فقط برای کافه‌هایی نمایش داده می‌شود که در کافه‌گردی دیده می‌شوند.
+        <Alert tone="warning" title="کافه‌تان هنوز در خوراک‌گردی نیست" action={<Link href="/dashboard/marketplace" className="text-sm font-semibold underline">تکمیل بازارگاه</Link>}>
+          تبلیغ فقط برای کافه‌هایی نمایش داده می‌شود که در خوراک‌گردی دیده می‌شوند.
         </Alert>
       ) : null}
 
@@ -211,7 +211,7 @@ function Builder({ data, store, preview, initial, onClose }: { data: AdsOverview
 
   return (
     <Dialog open onClose={onClose} variant="sheet" size="lg" title={initial ? `ویرایش «${initial.name}»` : 'کمپین تازه'}
-      description={initial?.status === 'approved' ? 'تغییر کمپین تأییدشده، آن را دوباره به صف بررسی می‌فرستد.' : 'پیش از نمایش، کمپین توسط کافه‌گردی بررسی می‌شود.'}
+      description={initial?.status === 'approved' ? 'تغییر کمپین تأییدشده، آن را دوباره به صف بررسی می‌فرستد.' : 'پیش از نمایش، کمپین توسط خوراک‌گردی بررسی می‌شود.'}
       footer={(
         <div className="flex flex-wrap items-center gap-2">
           {!campaign || campaign.status === 'draft' || campaign.status === 'rejected'

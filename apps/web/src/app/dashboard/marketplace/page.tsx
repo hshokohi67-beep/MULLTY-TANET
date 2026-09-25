@@ -21,7 +21,7 @@ interface Payload {
   catalog: { categories: { key: string; label: string }[]; amenities: { key: string; label: string }[]; price_levels: { key: number; label: string }[]; max_categories: number };
 }
 
-/** The café's entry in «کافه‌گردی»: what customers see, and what's still missing to appear. */
+/** The café's entry in «خوراک‌گردی»: what customers see, and what's still missing to appear. */
 export default async function MarketplacePage() {
   const { can } = await requireMembership();
   if (!can('marketplace.manage')) redirect('/dashboard');
@@ -29,7 +29,7 @@ export default async function MarketplacePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="بازارگاه" description="کافه‌تان را در «کافه‌گردی» معرفی کنید؛ مشتری‌های تازه با جست‌وجوی شهر، نوع کافه و امکانات پیدایتان می‌کنند."
+      <PageHeader title="بازارگاه" description="کافه‌تان را در «خوراک‌گردی» معرفی کنید؛ مشتری‌های تازه با جست‌وجوی شهر، نوع کافه و امکانات پیدایتان می‌کنند."
         actions={data.public_path ? (
           <Link href={data.public_path} target="_blank" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-3.5 text-sm font-medium hover:bg-surface-muted">
             <ExternalLink className="size-4" aria-hidden="true" />دیدن صفحه‌ی عمومی
@@ -41,7 +41,7 @@ export default async function MarketplacePage() {
 
         <div className="flex flex-col gap-6">
           <Card>
-            <CardHeader title={data.eligible ? 'در کافه‌گردی نمایش داده می‌شود' : 'هنوز نمایش داده نمی‌شود'}
+            <CardHeader title={data.eligible ? 'در خوراک‌گردی نمایش داده می‌شود' : 'هنوز نمایش داده نمی‌شود'}
               description={data.eligible ? 'مشتری‌ها همین حالا می‌توانند کافه‌تان را پیدا کنند.' : 'موارد ضروری را کامل کنید.'} />
             <ul className="flex flex-col gap-2.5 p-5 text-sm">
               {data.checks.map((c) => (

@@ -3,6 +3,7 @@
 namespace App\Modules\Marketplace\Http\Controllers;
 
 use App\Modules\Marketplace\Contracts\SponsoredContent;
+use App\Modules\Marketplace\Models\MarketplacePlaceImage;
 use App\Modules\Marketplace\Models\MarketplaceStore;
 use App\Modules\Marketplace\Support\MarketplaceCatalog;
 use App\Modules\Marketplace\Support\SearchText;
@@ -269,10 +270,11 @@ final class PublicMarketplaceController
      * Province → city → district, with café counts, only where cafés exist.
      *
      * @param  Collection<int, MarketplaceStore>  $rows
-     * @return list<array{province: string, count: int, cities: list<array{city: string, count: int, districts: list<array{district: string, count: int}>}>}>
+     * @return list<array{province: string, count: int, cities: list<array{city: string, count: int, districts: list<array{district: string, count: int}>, image_url: ?string}>}>
      */
     private function places(Collection $rows): array
     {
+        $images = MarketplacePlaceImage::urls();
         $out = [];
         foreach ($rows->groupBy(fn (MarketplaceStore $s) => $s->province ?: $s->city) as $province => $inProvince) {
             $cities = [];
@@ -282,7 +284,7 @@ final class PublicMarketplaceController
                     $districts[] = ['district' => (string) $district, 'count' => $inDistrict->pluck('store_slug')->unique()->count()];
                 }
                 usort($districts, fn (array $a, array $b) => $b['count'] <=> $a['count']);
-                $cities[] = ['city' => (string) $city, 'count' => $inCity->pluck('store_slug')->unique()->count(), 'districts' => $districts];
+                $cities[] = ['city' => (string) $city, 'count' => $inCity->pluck('store_slug')->unique()->count(), 'districts' => $districts, 'image_url' => $images[(string) $city] ?? null];
             }
             usort($cities, fn (array $a, array $b) => $b['count'] <=> $a['count']);
             $out[] = ['province' => (string) $province, 'count' => $inProvince->pluck('store_slug')->unique()->count(), 'cities' => $cities];

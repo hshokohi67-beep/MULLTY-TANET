@@ -458,7 +458,7 @@ export function AdsWidget({ data }: { data: { impressions: number; clicks: numbe
   const label = (c: AdsRow) => (c.status === 'paid' ? (c.phase === 'running' ? 'در حال نمایش' : 'زمان‌بندی‌شده') : c.status === 'approved' ? 'آماده‌ی پرداخت' : c.status === 'rejected' ? 'نیاز به اصلاح' : 'در انتظار بررسی');
 
   return (
-    <Shell icon={<Megaphone />} title="تبلیغات در کافه‌گردی" description={data.live ? `${formatNumber(data.live)} کمپین در حال نمایش` : 'کمپین فعالی نیست'}
+    <Shell icon={<Megaphone />} title="تبلیغات در خوراک‌گردی" description={data.live ? `${formatNumber(data.live)} کمپین در حال نمایش` : 'کمپین فعالی نیست'}
       actions={<Link href="/dashboard/ads" className="text-xs font-medium text-brand hover:underline">مدیریت</Link>}>
       <div className="grid grid-cols-3 gap-2 px-5 pb-3 text-center">
         <p className="rounded-lg bg-surface-muted p-2"><span className="block text-lg font-bold">{formatNumber(data.impressions)}</span><span className="text-xs text-text-muted">نمایش ۷ روز</span></p>

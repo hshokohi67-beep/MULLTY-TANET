@@ -16,7 +16,7 @@ import type { StoreCard as Card } from '@/lib/marketplace-types';
 import { ExploreFilters } from './ExploreControls';
 import { HeroCollage } from './HeroCollage';
 
-export const metadata: Metadata = { title: 'کافه‌گردی: کافه‌ها و شیرینی‌فروشی‌های نزدیک' };
+export const metadata: Metadata = { title: 'خوراک‌گردی: کافه‌ها، رستوران‌ها و شیرینی‌فروشی‌های نزدیک' };
 
 const LOCATION = ['province', 'city', 'district'] as const;
 const SINGLE = ['q', ...LOCATION, 'category', 'price', 'open_now', 'sort', 'lat', 'lng', 'page',
@@ -128,12 +128,12 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
           <div className="flex min-w-0 flex-col gap-5">
             <p className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface/80 px-3 py-1.5 text-xs font-semibold text-text-muted shadow-[var(--shadow-sm)] backdrop-blur-sm">
               <span className="flex size-5 items-center justify-center rounded-full bg-brand text-on-brand"><Compass className="size-3" aria-hidden="true" /></span>
-              {formatNumber(home.total)} کافه و شیرینی‌فروشی در {toPersianDigits(cityCount)} شهر
+              {formatNumber(home.total)} کافه، رستوران و شیرینی‌فروشی در {toPersianDigits(cityCount)} شهر
             </p>
             <h1 className="text-[2rem] font-black leading-[1.25] [text-wrap:balance] sm:text-5xl sm:leading-[1.2]">
-              {where ? <>کافه‌های <Accent>{where}</Accent></> : <>کافه‌ی بعدی‌تان را <Accent>پیدا کنید</Accent></>}
+              {where ? <>خوراک‌گردی در <Accent>{where}</Accent></> : <>جای خوشمزه‌ی بعدی را <Accent>پیدا کنید</Accent></>}
             </h1>
-            <p className="max-w-xl text-text-muted sm:text-lg">منو، ساعت کاری، تخفیف‌ها و سفارش آنلاین؛ از قهوه‌ی تخصصی تا بستنی سنتی.</p>
+            <p className="max-w-xl text-text-muted sm:text-lg">منو، ساعت کاری، تخفیف‌ها و سفارش آنلاین؛ از قهوه‌ی تخصصی و صبحانه تا غذای گرم، شیرینی و بستنی سنتی.</p>
             <Suspense>
               <SearchBox q={query.get('q') ?? ''} />
             </Suspense>
@@ -144,7 +144,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
               <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-text-muted" aria-label="در یک نگاه">
                 <li className="inline-flex items-center gap-2">
                   <span className="relative flex size-2.5" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-50" /><span className="relative inline-flex size-2.5 rounded-full bg-success" /></span>
-                  <span><b className="text-text">{toPersianDigits(home.open_now)}</b> کافه همین حالا باز است</span>
+                  <span><b className="text-text">{toPersianDigits(home.open_now)}</b> مکان همین حالا باز است</span>
                 </li>
                 <li className="inline-flex items-center gap-2"><Sparkles className="size-4 text-accent" aria-hidden="true" />سفارش آنلاین، بدون واسطه</li>
               </ul>
@@ -188,7 +188,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
           <section aria-labelledby="results" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <h2 id="results" className="text-xl font-black sm:text-2xl">
-                {fav ? 'علاقه‌مندی‌های شما' : `${formatNumber(results.meta.total)} کافه`}
+                {fav ? 'علاقه‌مندی‌های شما' : `${formatNumber(results.meta.total)} مکان`}
                 {where ? <span className="text-base font-normal text-text-muted"> در {where}</span> : null}
               </h2>
               <div className="flex items-center gap-3">
@@ -234,7 +234,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
           <>
             {home.featured.length ? (
               <section aria-labelledby="featured" className="flex flex-col gap-5">
-                <SectionHead id="featured" title="ویژه‌های کافه‌گردی" subtitle="کافه‌هایی که این روزها باید دید" icon={Sparkles} tone="accent" />
+                <SectionHead id="featured" title="ویژه‌های خوراک‌گردی" subtitle="جاهایی که این روزها باید سر زد" icon={Sparkles} tone="accent" />
                 {home.featured.length <= 3 ? (
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{home.featured.map((s, i) => <SpotlightCard key={s.store} s={s} priority={i < 2} />)}</div>
                 ) : (
@@ -256,7 +256,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
 
             {home.popular.length >= 3 && !located ? (
               <section aria-labelledby="top" className="flex flex-col gap-5 rounded-3xl border border-border bg-surface p-4 shadow-[var(--shadow-sm)] sm:p-6">
-                <SectionHead id="top" title="برترین‌های کافه‌گردی" subtitle="محبوب‌ترین‌ها بر اساس سفارش‌ها و بازدیدها" icon={Trophy} tone="warning" />
+                <SectionHead id="top" title="برترین‌های خوراک‌گردی" subtitle="محبوب‌ترین‌ها بر اساس سفارش‌ها و بازدیدها" icon={Trophy} tone="warning" />
                 <ol className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
                   {home.popular.slice(0, 8).map((s, i) => <li key={s.store}><RankItem s={s} rank={i + 1} /></li>)}
                 </ol>
@@ -265,10 +265,10 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
 
             {home.places.length && !located ? (
               <section aria-labelledby="cities" className="flex flex-col gap-5">
-                <SectionHead id="cities" title="کافه‌گردی در شهرها" subtitle="شهرتان را انتخاب کنید" icon={Compass} tone="info" />
+                <SectionHead id="cities" title="خوراک‌گردی در شهرها" subtitle="شهرتان را انتخاب کنید" icon={Compass} tone="info" />
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   {home.places.flatMap((p) => p.cities.map((c) => ({ ...c, province: p.province }))).map((c, i) => (
-                    <CityTile key={`${c.province}-${c.city}`} city={c.city} count={c.count} districts={c.districts.length} index={i}
+                    <CityTile key={`${c.province}-${c.city}`} city={c.city} count={c.count} districts={c.districts.length} index={i} imageUrl={c.image_url}
                       href={`/explore?province=${encodeURIComponent(c.province)}&city=${encodeURIComponent(c.city)}`} />
                   ))}
                 </div>
@@ -277,7 +277,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
 
             {home.total > 8 && home.newest.length && !located ? (
               <section aria-labelledby="newest" className="flex flex-col gap-5">
-                <SectionHead id="newest" title="تازه به کافه‌گردی پیوسته‌اند" icon={Compass} tone="brand" />
+                <SectionHead id="newest" title="تازه به خوراک‌گردی پیوسته‌اند" icon={Compass} tone="brand" />
                 <Rail label="تازه‌ها">{home.newest.map((s) => <StoreCard key={s.store} s={s} />)}</Rail>
               </section>
             ) : null}
@@ -285,8 +285,8 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
             {home.total === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border bg-surface px-6 py-16 text-center">
                 <span className="flex size-16 items-center justify-center rounded-3xl bg-brand-soft text-brand"><Compass className="size-8" aria-hidden="true" /></span>
-                <p className="text-lg font-semibold">به‌زودی کافه‌ها اینجا معرفی می‌شوند</p>
-                <p className="max-w-sm text-sm text-text-muted">کافه‌داران می‌توانند از پنل، بخش «بازارگاه»، کافه‌شان را معرفی کنند.</p>
+                <p className="text-lg font-semibold">به‌زودی فروشگاه‌ها اینجا معرفی می‌شوند</p>
+                <p className="max-w-sm text-sm text-text-muted">صاحبان کسب‌وکار می‌توانند از پنل، بخش «بازارگاه»، فروشگاهشان را معرفی کنند.</p>
               </div>
             ) : !located ? (
               <OwnerBand />
@@ -337,8 +337,8 @@ function OwnerBand() {
       <HeroPattern className="text-on-brand opacity-[0.1]" />
       <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-black">کافه دارید؟</h2>
-          <p className="mt-1 max-w-lg opacity-85">منوی آنلاین، سفارش از میز و پیک، باشگاه مشتریان و جایی در کافه‌گردی؛ همه در کافه‌یار.</p>
+          <h2 className="text-2xl font-black">کافه، رستوران یا شیرینی‌فروشی دارید؟</h2>
+          <p className="mt-1 max-w-lg opacity-85">منوی آنلاین، سفارش از میز و پیک، باشگاه مشتریان و جایی در خوراک‌گردی؛ همه در کافه‌یار.</p>
         </div>
         <Link href="/login" className="inline-flex h-12 shrink-0 items-center gap-2 rounded-xl bg-on-brand px-6 font-bold text-brand-strong shadow-[var(--shadow-md)] hover:opacity-90">
           ورود به پنل کافه‌یار<ArrowLeft className="size-4" aria-hidden="true" />

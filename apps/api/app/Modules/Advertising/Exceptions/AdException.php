@@ -38,7 +38,7 @@ final class AdException extends DomainException
 
     public static function notListed(): self
     {
-        return new self('کافه‌ی شما هنوز در کافه‌گردی نمایش داده نمی‌شود؛ اول از بخش «بازارگاه» معرفی‌اش را کامل کنید.', 'ad_store_not_listed');
+        return new self('کافه‌ی شما هنوز در خوراک‌گردی نمایش داده نمی‌شود؛ اول از بخش «بازارگاه» معرفی‌اش را کامل کنید.', 'ad_store_not_listed');
     }
 
     public static function unknownCity(): self

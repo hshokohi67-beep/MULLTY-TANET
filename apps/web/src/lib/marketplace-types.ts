@@ -56,7 +56,7 @@ export const PRICE_LABELS: Record<number, string> = { 1: 'اقتصادی', 2: '�
 
 export interface Place {
   province: string; count: number;
-  cities: { city: string; count: number; districts: { district: string; count: number }[] }[];
+  cities: { city: string; count: number; districts: { district: string; count: number }[]; image_url: string | null }[];
 }
 
 export interface Suggestions {

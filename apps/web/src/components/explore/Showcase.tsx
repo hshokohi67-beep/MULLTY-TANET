@@ -90,9 +90,9 @@ function HouseSlide() {
       <HeroPattern className="text-on-brand opacity-[0.12]" />
       <div className="absolute -end-16 -top-20 size-80 rounded-full bg-on-brand/10 blur-3xl" aria-hidden="true" />
       <div className="relative flex h-full flex-col justify-end gap-3 p-5 sm:max-w-[62%] sm:justify-center sm:p-10">
-        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-on-brand/15 px-2.5 py-1 text-[11px] font-semibold"><Store className="size-3" aria-hidden="true" />برای کافه‌داران</span>
-        <h3 className="text-2xl font-black leading-tight [text-wrap:balance] sm:text-4xl">کافه‌تان را به مشتری‌های تازه معرفی کنید</h3>
-        <p className="text-sm opacity-85 sm:text-lg">منوی آنلاین، سفارش بدون واسطه و جایی در کافه‌گردی؛ همه از یک پنل.</p>
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-on-brand/15 px-2.5 py-1 text-[11px] font-semibold"><Store className="size-3" aria-hidden="true" />برای کسب‌وکارها</span>
+        <h3 className="text-2xl font-black leading-tight [text-wrap:balance] sm:text-4xl">کسب‌وکارتان را به مشتری‌های تازه معرفی کنید</h3>
+        <p className="text-sm opacity-85 sm:text-lg">منوی آنلاین، سفارش بدون واسطه و جایی در خوراک‌گردی؛ همه از یک پنل.</p>
         <Link href="/login" className="mt-1 inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-on-brand px-5 text-sm font-bold text-brand-strong shadow-[var(--shadow-lg)] hover:opacity-90">
           ورود به پنل کافه‌یار<ArrowLeft className="size-4" aria-hidden="true" />
         </Link>
@@ -147,7 +147,7 @@ export function BannerCarousel({ banners, house = banners.length < 2 }: { banner
   const arrow = 'glass-light absolute bottom-3 z-10 hidden size-10 items-center justify-center rounded-full text-on-media transition-opacity hover:opacity-90 sm:flex';
 
   return (
-    <section aria-roledescription="carousel" aria-label="پیشنهادهای ویژه‌ی کافه‌ها" className="relative"
+    <section aria-roledescription="carousel" aria-label="پیشنهادهای ویژه" className="relative"
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
       <div ref={track} className="relative flex h-[clamp(240px,62vw,380px)] snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-3xl bg-surface-muted shadow-[var(--shadow-lg)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {banners.map((b, i) => <BannerSlide key={b.token} b={b} index={i} total={total} eager={i === 0} />)}

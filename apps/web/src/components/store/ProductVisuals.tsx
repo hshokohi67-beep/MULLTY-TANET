@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { CakeSlice, Coffee, CupSoda, EggFried, Flame, Salad, Sandwich, Snowflake, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import type { MenuProduct, Mood } from '@/lib/storefront-types';
+import { TilePattern, variantOf } from './StoreArt';
 
 export const MOOD_LABEL: Record<Mood, string> = { hot: 'گرم', cold: 'سرد' };
 
@@ -64,8 +65,9 @@ export function ProductPhoto({ product, className, sizes = 'thumb', priority = f
         <img src={image.url} alt={image.alt ?? product.name} width={image.width ?? undefined} height={image.height ?? undefined}
           loading={priority ? 'eager' : 'lazy'} decoding="async" className="size-full object-cover object-top" />
       ) : (
-        <span aria-hidden="true" className="photo-fallback flex size-full items-center justify-center">
-          {createElement(illustration(product), { className: cx('opacity-80', sizes === 'thumb' ? 'size-10' : 'size-20'), strokeWidth: 1.25 })}
+        <span aria-hidden="true" data-v={variantOf(product.id, 3)} className="photo-fallback relative flex size-full items-center justify-center">
+          <TilePattern icon={illustration(product)} seed={product.id} />
+          {createElement(illustration(product), { className: cx('relative opacity-85 drop-shadow-sm', sizes === 'thumb' ? 'size-10' : 'size-20'), strokeWidth: 1.25 })}
         </span>
       )}
     </div>

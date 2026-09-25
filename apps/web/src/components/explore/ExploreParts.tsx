@@ -172,21 +172,35 @@ export function CategoryTile({ category, label, count, href, active }: { categor
         {Icon ? <Icon className="size-7" strokeWidth={1.6} aria-hidden="true" /> : null}
       </span>
       <span className={cx('text-xs leading-tight', active ? 'font-bold text-brand' : 'font-semibold')}>{label}</span>
-      <span className="text-[10px] text-text-subtle">{toPersianDigits(count)} کافه</span>
+      <span className="text-[10px] text-text-subtle">{toPersianDigits(count)} مکان</span>
     </Link>
   );
 }
 
-/** A city as an art tile (tinted, with a big faint landmark icon). */
-export function CityTile({ city, count, districts, href, index }: { city: string; count: number; districts: number; href: string; index: number }) {
+/** A city tile: the photo the platform designed for it, or an art tile (tinted, big faint landmark icon). */
+export function CityTile({ city, count, districts, href, index, imageUrl }: { city: string; count: number; districts: number; href: string; index: number; imageUrl?: string | null }) {
   const { icon: Icon, tone } = cityArt(city, index);
+
+  if (imageUrl) {
+    return (
+      <Link href={href} className="group relative flex h-28 overflow-hidden rounded-2xl p-4 text-on-media shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)] focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none sm:h-32">
+        {/* eslint-disable-next-line @next/next/no-img-element -- platform media from object storage */}
+        <img src={imageUrl} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <span className="absolute inset-0 bg-gradient-to-t from-scrim via-scrim/30 to-transparent" aria-hidden="true" />
+        <span className="relative mt-auto">
+          <span className="block text-xl font-black">{city}</span>
+          <span className="text-xs text-on-media-muted">{toPersianDigits(count)} مکان{districts ? ` • ${toPersianDigits(districts)} محله` : ''}</span>
+        </span>
+      </Link>
+    );
+  }
 
   return (
     <Link href={href} className={cx('group relative flex h-28 overflow-hidden rounded-2xl p-4 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)] focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none sm:h-32', TONES[tone])}>
       <Icon className="absolute -bottom-4 -end-3 size-28 opacity-20 transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110" strokeWidth={1.2} aria-hidden="true" />
       <span className="relative mt-auto">
         <span className="block text-xl font-black">{city}</span>
-        <span className="text-xs opacity-80">{toPersianDigits(count)} کافه{districts ? ` • ${toPersianDigits(districts)} محله` : ''}</span>
+        <span className="text-xs opacity-80">{toPersianDigits(count)} مکان{districts ? ` • ${toPersianDigits(districts)} محله` : ''}</span>
       </span>
     </Link>
   );

@@ -41,10 +41,10 @@ export function ListingEditor({ listing, catalog }: { listing: ListingData; cata
         {listing.hidden_reason ? <Alert tone="danger" title="نمایش توسط پلتفرم متوقف شده">{listing.hidden_reason}</Alert> : null}
         <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-muted p-4">
           <div>
-            <p className="font-semibold">نمایش در کافه‌گردی</p>
+            <p className="font-semibold">نمایش در خوراک‌گردی</p>
             <p className="text-sm text-text-muted">هر وقت بخواهید خاموشش کنید؛ صفحه‌ی منوی خودتان تغییری نمی‌کند.</p>
           </div>
-          <button type="button" role="switch" aria-checked={form.is_listed} aria-label="نمایش در کافه‌گردی" onClick={() => set('is_listed', !form.is_listed)}
+          <button type="button" role="switch" aria-checked={form.is_listed} aria-label="نمایش در خوراک‌گردی" onClick={() => set('is_listed', !form.is_listed)}
             className={cx('relative h-7 w-12 shrink-0 rounded-full transition-colors', form.is_listed ? 'bg-brand' : 'bg-border-strong')}>
             <span className={cx('absolute top-0.5 size-6 rounded-full bg-surface shadow transition-all', form.is_listed ? 'start-[22px]' : 'start-0.5')} />
           </button>

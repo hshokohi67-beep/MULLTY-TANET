@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation';
 import { Bike, Clock, MapPin, Store } from 'lucide-react';
 import { Alert, cx } from '@cafe/ui';
 import { formatClock, formatJalaliDate, formatJalaliDateTime, formatTime } from '@cafe/locale';
+import { initialOf } from '@/components/explore/Art';
 import { MenuBrowser } from '@/components/store/MenuBrowser';
+import { StoreHeroArt } from '@/components/store/StoreArt';
 import { getMenu, getStorefront, getStories, storeUrl } from '@/lib/storefront';
 import type { StoreBranch } from '@/lib/storefront-types';
 
@@ -90,15 +92,21 @@ export default async function StorefrontHome({ params, searchParams }: PageProps
           {store.branding?.cover_url ? (
             // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
             <img src={store.branding.cover_url} alt="" fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover" />
-          ) : <div aria-hidden="true" className="hero-fallback absolute inset-0 -z-10" />}
-          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/75 via-black/30 to-black/5" />
+          ) : <StoreHeroArt name={store.name} />}
+          <div aria-hidden="true" className={cx('absolute inset-0 -z-10 bg-gradient-to-t', store.branding?.cover_url ? 'from-scrim via-scrim/40 to-scrim/5' : 'from-scrim/55 via-transparent to-transparent')} />
 
-          <div className="flex min-h-48 flex-col justify-end gap-3 p-5 pt-16 text-white sm:min-h-60 sm:p-7">
+          <div className="flex min-h-52 flex-col justify-end gap-3 p-5 pt-10 text-on-media sm:min-h-64 sm:p-7">
+            {store.branding?.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
+              <img src={store.branding.logo_url} alt="" className="size-16 rounded-2xl bg-surface object-contain p-1 shadow-[var(--shadow-lg)] ring-2 ring-on-media/40 sm:size-20" />
+            ) : (
+              <span aria-hidden="true" className="glass-light flex size-16 items-center justify-center rounded-2xl text-3xl font-black shadow-[var(--shadow-lg)] sm:size-20 sm:text-4xl">{initialOf(store.name)}</span>
+            )}
             <h1 className="text-3xl font-black leading-tight [text-shadow:0_2px_12px_rgb(0_0_0/0.35)] sm:text-4xl">{store.name}</h1>
-            {store.branding?.seo_description ? <p className="line-clamp-2 max-w-xl text-sm leading-6 text-white/85">{store.branding.seo_description}</p> : null}
+            {store.branding?.seo_description ? <p className="line-clamp-2 max-w-xl text-sm leading-6 text-on-media-muted">{store.branding.seo_description}</p> : null}
             {branch ? (
               <ul className="flex flex-wrap gap-2 text-xs font-medium">
-                <li className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[#1d1c1a]">
+                <li className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-text shadow-[var(--shadow-sm)]">
                   <span aria-hidden="true" className={cx('size-2 rounded-full', branch.is_open ? 'bg-success' : 'bg-warning')} />
                   {openLabel(branch, store.timezone)}
                 </li>
