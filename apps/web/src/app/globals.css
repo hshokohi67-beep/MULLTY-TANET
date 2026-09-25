@@ -11,6 +11,9 @@
   --color-brand-soft: var(--color-brand-soft);
   --color-on-brand: var(--color-on-brand);
   --color-on-danger: var(--color-on-danger);
+  --color-on-media: var(--color-on-media);
+  --color-on-media-muted: var(--color-on-media-muted);
+  --color-scrim: var(--color-scrim);
   --color-accent: var(--color-accent);
   --color-accent-soft: var(--color-accent-soft);
   --color-surface-raised: var(--color-surface-raised);
@@ -334,3 +337,11 @@ body {
 
 /* Featured cafés stand out on the explore map. */
 .map-pin-featured span { background: var(--color-danger); }
+
+/* Gentle float for decorative hero cards (the global reduced-motion rule stops it). Uses the
+   individual `translate` property so it never fights a card's `rotate`. */
+@keyframes float-y {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+.float-y { animation: float-y 7s ease-in-out infinite; }

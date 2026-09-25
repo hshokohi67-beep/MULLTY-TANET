@@ -21,7 +21,8 @@ use Illuminate\Http\Request;
 final class Entitlements implements EntitlementGate
 {
     /** Routes that keep working while read-only (besides reads): paying and leaving. */
-    private const WRITABLE_WHEN_READ_ONLY = ['api.billing.', 'api.staff.logout', 'api.auth.'];
+    // A payment already made at the gateway must always be confirmable (ads verify included).
+    private const WRITABLE_WHEN_READ_ONLY = ['api.billing.', 'api.ads.invoices.verify', 'api.staff.logout', 'api.auth.'];
 
     /** @var array<string, array{subscription: Subscription, features: array<string, bool|int|null>}> */
     private array $memo = [];

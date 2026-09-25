@@ -53,3 +53,18 @@ export async function updatePlan(planId: string, data: { name: string; tagline: 
 
   return run(`/platform/plans/${planId}`, 'PUT', data);
 }
+
+/** Ad review: approve, reject or suspend (with a reason shown to the café), resume. */
+export async function reviewAd(campaignId: string, action: 'approve' | 'reject' | 'suspend' | 'resume', reason: string | null): Promise<Result> {
+  if (!ULID.test(campaignId)) return { ok: false, message: 'کمپین نامعتبر است.' };
+  if ((action === 'reject' || action === 'suspend') && !reason?.trim()) return { ok: false, message: 'دلیل را بنویسید.' };
+
+  return run(`/platform/ads/${campaignId}/${action}`, 'POST', reason ? { reason: reason.trim().slice(0, 200) } : undefined);
+}
+
+/** Placement price (rial per day), capacity and on/off. */
+export async function updateAdPlacement(key: string, dailyPrice: number, capacity: number, isActive: boolean): Promise<Result> {
+  if (!/^[a-z_]{3,24}$/.test(key) || !Number.isSafeInteger(dailyPrice) || !Number.isInteger(capacity)) return { ok: false, message: 'مقدار نامعتبر است.' };
+
+  return run(`/platform/ads/placements/${key}`, 'PUT', { daily_price: dailyPrice, capacity, is_active: isActive });
+}

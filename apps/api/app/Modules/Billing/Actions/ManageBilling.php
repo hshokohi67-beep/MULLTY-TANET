@@ -9,6 +9,7 @@ use App\Modules\Billing\Models\Plan;
 use App\Modules\Billing\Models\Subscription;
 use App\Modules\Billing\Support\BillingGateway;
 use App\Modules\Billing\Support\Entitlements;
+use App\Modules\Billing\Support\InvoiceFulfillers;
 use App\Modules\Billing\Support\InvoiceNumbers;
 use App\Modules\Billing\Support\QuoteBuilder;
 use App\Modules\Payments\Support\Gateways\GatewayResult;
@@ -20,8 +21,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Checkout, gateway payment and verification for subscription invoices. Gateway calls always
- * happen outside database transactions and every request/response is kept on the payment row.
+ * Checkout, gateway payment and verification for platform invoices (the subscription, and
+ * purchases such as ads). Gateway calls always happen outside database transactions and every
+ * request/response is kept on the payment row.
  */
 final class ManageBilling
 {
@@ -29,6 +31,7 @@ final class ManageBilling
         private readonly BillingGateway $gateways,
         private readonly ApplyPaidInvoice $apply,
         private readonly AuditLogger $audit,
+        private readonly InvoiceFulfillers $fulfillers,
     ) {}
 
     /**
@@ -93,17 +96,50 @@ final class ManageBilling
         ]);
     }
 
+    /**
+     * An invoice for something other than the subscription (e.g. an ad campaign): the lines are
+     * priced by the selling module, VAT is added here. Fulfilled by the kind's InvoiceFulfiller.
+     *
+     * @param  list<array{label: string, amount: int}>  $lines
+     */
+    public function createPurchase(string $kind, string $subjectId, array $lines, ?string $userId): BillingInvoice
+    {
+        $subtotal = array_sum(array_column($lines, 'amount'));
+        $rate = (int) config('billing.vat_rate', 10);
+        $vat = (int) round($subtotal * $rate / 100 / 10) * 10;
+
+        $invoice = BillingInvoice::query()->create([
+            'number' => InvoiceNumbers::next(),
+            'kind' => $kind,
+            'subject_id' => $subjectId,
+            'status' => 'open',
+            'addons' => [],
+            'lines' => $lines,
+            'subtotal' => $subtotal,
+            'credit' => 0,
+            'vat_rate' => $rate,
+            'vat' => $vat,
+            'total' => $subtotal + $vat,
+            'due_at' => now()->addDay(),
+            'created_by' => $userId,
+        ]);
+        $this->audit->record('billing.invoice_created', $invoice, ['number' => $invoice->number, 'kind' => $kind, 'total' => $invoice->total]);
+
+        return $invoice;
+    }
+
     /** Opens a gateway session for an open invoice and returns where to send the owner. */
-    public function startPayment(BillingInvoice $invoice): string
+    public function startPayment(BillingInvoice $invoice, string $returnPath = '/billing/return'): string
     {
         if ($invoice->status !== 'open' || $invoice->total <= 0) {
             throw BillingException::invoiceNotPayable();
         }
         $gateway = $this->gateways->make();
         $tenant = app(TenantContext::class)->require();
-        $callback = config('payments.storefront_url').'/billing/return?invoice='.$invoice->id;
+        $callback = config('payments.storefront_url').$returnPath.'?invoice='.$invoice->id;
+        $subject = $invoice->isSubscription() ? "اشتراک {$tenant->name}" : ($invoice->lines[0]['label'] ?? $tenant->name);
 
-        $result = $gateway->request($invoice->total, $callback, "اشتراک {$tenant->name} • صورت‌حساب {$invoice->number}");
+        $result = $gateway->request($invoice->total, $callback, "{$subject} • صورت‌حساب {$invoice->number}");
         $payment = BillingPayment::query()->create([
             'invoice_id' => $invoice->id,
             'gateway' => $gateway->name(),
@@ -163,9 +199,14 @@ final class ManageBilling
                 return;
             }
             $locked->update(['status' => 'paid', 'paid_at' => now(), 'paid_via' => $via, 'reference' => $reference]);
-            $this->apply->handle($locked);
-            // Any other open invoice was priced against the old subscription: paying it too would charge twice.
-            BillingInvoice::query()->where('status', 'open')->whereKeyNot($locked->id)->update(['status' => 'void']);
+            if ($locked->isSubscription()) {
+                $this->apply->handle($locked);
+                // Any other open subscription invoice was priced against the old subscription: paying it too would charge twice.
+                // (Purchases such as ads are priced on their own and stay payable.)
+                BillingInvoice::query()->where('status', 'open')->whereIn('kind', BillingInvoice::SUBSCRIPTION_KINDS)->whereKeyNot($locked->id)->update(['status' => 'void']);
+            } else {
+                $this->fulfillers->for($locked->kind)->fulfil($locked);
+            }
             $this->audit->record('billing.invoice_paid', $locked, ['number' => $locked->number, 'total' => $locked->total, 'via' => $via]);
         });
         $invoice->refresh();

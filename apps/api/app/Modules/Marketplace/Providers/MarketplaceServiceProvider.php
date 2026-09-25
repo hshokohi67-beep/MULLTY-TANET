@@ -15,8 +15,10 @@ use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Models\TenantBranding;
 use App\Modules\Discounts\Models\Discount;
 use App\Modules\Marketplace\Console\RefreshCommand;
+use App\Modules\Marketplace\Contracts\SponsoredContent;
 use App\Modules\Marketplace\Models\MarketplaceListing;
 use App\Modules\Marketplace\Support\MarketplaceSync;
+use App\Modules\Marketplace\Support\NoSponsoredContent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +32,8 @@ final class MarketplaceServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(MarketplaceSync::class);
+        // Nothing is sponsored unless an advertising module binds its own implementation.
+        $this->app->bindIf(SponsoredContent::class, NoSponsoredContent::class);
     }
 
     public function boot(): void

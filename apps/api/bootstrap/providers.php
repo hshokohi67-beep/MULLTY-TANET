@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Advertising\Providers\AdvertisingServiceProvider;
 use App\Modules\Analytics\Providers\AnalyticsServiceProvider;
 use App\Modules\Billing\Providers\BillingServiceProvider;
 use App\Modules\Catalog\Providers\CatalogServiceProvider;
@@ -39,5 +40,6 @@ return [
     AnalyticsServiceProvider::class,
     BillingServiceProvider::class,
     MarketplaceServiceProvider::class,
+    AdvertisingServiceProvider::class,
     InsightsServiceProvider::class,
 ];

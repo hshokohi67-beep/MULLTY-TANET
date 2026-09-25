@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   Aperture, Armchair, BarChart3, Boxes, Compass, CreditCard, Lock, ShieldCheck, ChefHat, CalendarClock, Receipt, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
-  Search, Settings, ShoppingCart, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
+  Megaphone, Search, Settings, ShoppingCart, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { logout } from '@/app/actions/auth';
@@ -14,7 +14,7 @@ import { CommandPalette } from './CommandPalette';
 import { NotificationBell } from './NotificationBell';
 
 const ICONS: Record<string, LucideIcon> = {
-  overview: LayoutDashboard, reports: BarChart3, marketplace: Compass, orders: ReceiptText, kitchen: ChefHat, tables: Armchair, menu: UtensilsCrossed,
+  overview: LayoutDashboard, reports: BarChart3, marketplace: Compass, ads: Megaphone, orders: ReceiptText, kitchen: ChefHat, tables: Armchair, menu: UtensilsCrossed,
   billing: CreditCard, discounts: Tags, stories: Aperture, inventory: Boxes, purchases: ShoppingCart, staff: CalendarClock, expenses: Receipt, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
 };
 

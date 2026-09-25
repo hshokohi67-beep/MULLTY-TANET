@@ -2,6 +2,7 @@
 
 namespace App\Modules\Marketplace\Http\Controllers;
 
+use App\Modules\Marketplace\Contracts\SponsoredContent;
 use App\Modules\Marketplace\Models\MarketplaceStore;
 use App\Modules\Marketplace\Support\MarketplaceCatalog;
 use App\Modules\Marketplace\Support\SearchText;
@@ -30,7 +31,7 @@ final class PublicMarketplaceController
         'outdoor' => ['فضای باز', 'میز زیر آسمان', ['amenities' => ['outdoor']]],
     ];
 
-    public function home(): JsonResponse
+    public function home(SponsoredContent $sponsored): JsonResponse
     {
         $rows = MarketplaceStore::query()->orderByDesc('popularity')->get();
         // One card per café: its most popular branch.
@@ -50,16 +51,22 @@ final class PublicMarketplaceController
         $cities = $rows->groupBy('city')->map(fn (Collection $g, string $city) => ['city' => $city, 'count' => $g->pluck('store_slug')->unique()->count()])
             ->sortByDesc('count')->values()->take(24)->all();
 
+        $featured = $stores->filter(fn (MarketplaceStore $s) => $s->isFeatured())->take(8);
+        // A row must bring at least one café the visitor hasn't just seen, or it's noise.
+        $shown = $featured->keys()->flip()->all();
         $collections = [];
         foreach (self::COLLECTIONS as $key => [$title, $subtitle, $filter]) {
             $matching = $stores->filter(fn (MarketplaceStore $s) => $this->matches($s, $filter))->take(8);
-            if ($matching->count() >= 2) {
+            if ($matching->count() >= 2 && $matching->keys()->contains(fn (string $slug) => ! isset($shown[$slug]))) {
                 $collections[] = ['key' => $key, 'title' => $title, 'subtitle' => $subtitle, 'filter' => $filter, 'stores' => $matching->map(fn ($s) => StorePresenter::card($s))->values()->all()];
+                $shown += $matching->keys()->flip()->all();
             }
         }
+        $openNow = $stores->filter(fn (MarketplaceStore $s) => StorePresenter::openStatus($s)['is_open'])->count();
 
         return $this->cached([
-            'featured' => $stores->filter(fn (MarketplaceStore $s) => $s->isFeatured())->take(8)->map(fn ($s) => StorePresenter::card($s))->values()->all(),
+            'banners' => $sponsored->banners(null),
+            'featured' => $featured->map(fn ($s) => StorePresenter::card($s))->values()->all(),
             'popular' => $stores->take(8)->map(fn ($s) => StorePresenter::card($s))->values()->all(),
             'newest' => $stores->sortByDesc(fn (MarketplaceStore $s) => $s->listed_at?->getTimestamp() ?? 0)->take(8)->map(fn ($s) => StorePresenter::card($s))->values()->all(),
             'collections' => $collections,
@@ -69,10 +76,11 @@ final class PublicMarketplaceController
             'amenities' => MarketplaceCatalog::labelled(array_keys(MarketplaceCatalog::AMENITIES), MarketplaceCatalog::AMENITIES),
             'dietary' => MarketplaceCatalog::labelled(array_keys(MarketplaceCatalog::DIETARY), MarketplaceCatalog::DIETARY),
             'total' => $stores->count(),
+            'open_now' => $openNow,
         ]);
     }
 
-    public function stores(Request $request): JsonResponse
+    public function stores(Request $request, SponsoredContent $sponsored): JsonResponse
     {
         $v = $request->validate([
             'q' => ['nullable', 'string', 'max:80'],
@@ -165,11 +173,32 @@ final class PublicMarketplaceController
 
         $per = (int) ($v['per_page'] ?? self::PER_PAGE);
         $page = (int) ($v['page'] ?? 1);
+        $city = isset($v['city']) ? trim((string) $v['city']) : null;
+
+        // Paid placements: only among cafés that already match (so an ad is always relevant),
+        // labelled, and taken out of the organic list so nothing shows twice. Not on favourites.
+        $ads = [];
+        $banners = [];
+        if (! isset($v['stores'])) {
+            $ads = $sponsored->sponsored($rows->map(fn (array $r) => $r['row']->store_slug)->unique()->values()->all(), $city, 2);
+            $banners = $page === 1 && $city ? $sponsored->banners($city) : [];
+        }
+        $adStores = array_column($ads, 'ad', 'store');
+        $sponsoredCards = [];
+        foreach ($ads as $ad) {
+            $first = $rows->first(fn (array $r) => $r['row']->store_slug === $ad['store']);
+            if ($first !== null) {
+                $sponsoredCards[] = StorePresenter::card($first['row'], $first['distance']) + ['ad' => $ad['ad']];
+            }
+        }
+        $rows = $rows->reject(fn (array $r) => isset($adStores[$r['row']->store_slug]))->values();
         $total = $rows->count();
 
         return $this->cached([
             'data' => $rows->slice(($page - 1) * $per, $per)->map(fn (array $r) => StorePresenter::card($r['row'], $r['distance']))->values()->all(),
-            'meta' => ['page' => $page, 'per_page' => $per, 'total' => $total, 'last_page' => max(1, (int) ceil($total / $per))],
+            'sponsored' => $page === 1 ? $sponsoredCards : [],
+            'banners' => $banners,
+            'meta' => ['page' => $page, 'per_page' => $per, 'total' => $total + count($sponsoredCards), 'last_page' => max(1, (int) ceil($total / $per))],
         ], wrap: false);
     }
 
@@ -210,7 +239,30 @@ final class PublicMarketplaceController
             throw new NotFoundHttpException;
         }
 
-        return $this->cached(StorePresenter::profile($rows->toBase()));
+        return $this->cached(StorePresenter::profile($rows->toBase()) + ['similar' => $this->similar($rows->first())]);
+    }
+
+    /**
+     * Other cafés sharing a category, same city first, then by popularity.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function similar(MarketplaceStore $of): array
+    {
+        $like = fn (string $s) => '%'.addcslashes($s, '%_\\').'%';
+        $rows = MarketplaceStore::query()->where('store_slug', '!=', $of->store_slug)
+            ->where(function ($q) use ($of, $like): void {
+                foreach ($of->categories as $category) {
+                    $q->orWhere('category_keys', 'like', $like("|{$category}|"));
+                }
+            })
+            ->orderByDesc('popularity')->limit(60)->get();
+        $first = [];
+        foreach ($rows->sortBy(fn (MarketplaceStore $s) => $s->city === $of->city ? 0 : 1) as $row) {
+            $first[$row->store_slug] ??= $row;
+        }
+
+        return array_values(array_map(fn (MarketplaceStore $s) => StorePresenter::card($s), array_slice($first, 0, 6)));
     }
 
     /**

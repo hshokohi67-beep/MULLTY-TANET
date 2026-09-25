@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
-  Aperture, Armchair, Bell, Boxes, Receipt, Scale, UserCheck, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
+  Aperture, Armchair, Bell, Megaphone, Boxes, Receipt, Scale, UserCheck, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
 } from 'lucide-react';
 import { Badge, Card, CardHeader, EmptyState, StatTile } from '@cafe/ui';
 import { formatMoney, formatMoneyCompact, formatNumber, formatPercent, formatTime, JALALI_MONTHS, toPersianDigits } from '@cafe/locale';
@@ -444,6 +444,33 @@ export function StoriesWidget({ data }: { data: { live: number; stories: StoryRo
               <span className="min-w-0 flex-1 truncate text-sm">{s.caption ?? 'بدون متن'}</span>
               <span className="tabular text-xs text-text-muted">{formatNumber(s.views)} بازدید</span>
               <span className="tabular w-16 text-end text-xs font-semibold">{s.views ? formatPercent(s.clicks / s.views) : '—'}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Shell>
+  );
+}
+
+interface AdsRow { id: string; name: string; status: string; phase: string | null; ends_at: string }
+
+export function AdsWidget({ data }: { data: { impressions: number; clicks: number; ctr: number | null; live: number; awaiting: number; series: { impressions: number }[]; campaigns: AdsRow[] } }) {
+  const label = (c: AdsRow) => (c.status === 'paid' ? (c.phase === 'running' ? 'در حال نمایش' : 'زمان‌بندی‌شده') : c.status === 'approved' ? 'آماده‌ی پرداخت' : c.status === 'rejected' ? 'نیاز به اصلاح' : 'در انتظار بررسی');
+
+  return (
+    <Shell icon={<Megaphone />} title="تبلیغات در کافه‌گردی" description={data.live ? `${formatNumber(data.live)} کمپین در حال نمایش` : 'کمپین فعالی نیست'}
+      actions={<Link href="/dashboard/ads" className="text-xs font-medium text-brand hover:underline">مدیریت</Link>}>
+      <div className="grid grid-cols-3 gap-2 px-5 pb-3 text-center">
+        <p className="rounded-lg bg-surface-muted p-2"><span className="block text-lg font-bold">{formatNumber(data.impressions)}</span><span className="text-xs text-text-muted">نمایش ۷ روز</span></p>
+        <p className="rounded-lg bg-surface-muted p-2"><span className="block text-lg font-bold">{formatNumber(data.clicks)}</span><span className="text-xs text-text-muted">کلیک</span></p>
+        <p className="rounded-lg bg-surface-muted p-2"><span className="block text-lg font-bold">{data.ctr === null ? '—' : `٪${toPersianDigits(data.ctr)}`}</span><span className="text-xs text-text-muted">نرخ کلیک</span></p>
+      </div>
+      {data.campaigns.length === 0 ? <Empty text="با یک بنر یا جایگاه بالای نتایج، مشتری‌های تازه پیدا کنید." /> : (
+        <ul className="divide-y divide-border px-5 pb-3">
+          {data.campaigns.map((c) => (
+            <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+              <span className="min-w-0 truncate">{c.name}</span>
+              <Badge tone={c.status === 'paid' ? 'success' : c.status === 'rejected' ? 'danger' : c.status === 'approved' ? 'brand' : 'warning'} dot>{label(c)}</Badge>
             </li>
           ))}
         </ul>

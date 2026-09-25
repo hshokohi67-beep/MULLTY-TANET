@@ -61,6 +61,11 @@
   --mood-cold-ink: #0369a1;
   --mood-cold-soft: #e6f3fb;
 
+  /* Text and scrims over photos and generated cover art (same in both themes: the image decides). */
+  --color-on-media: #ffffff;
+  --color-on-media-muted: rgb(255 255 255 / 0.82);
+  --color-scrim: rgb(12 10 8 / 0.72);
+
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-brand) 30%, transparent);
 
   --radius-sm: 8px;
@@ -97,7 +102,6 @@
     --color-text-muted: #b3b0a6;
     --color-text-subtle: #8a877e;
     --color-danger: #f47067;
-  --color-on-danger: #2a0906;
     --color-on-danger: #2a0906;
     --color-danger-soft: #3a1714;
     --color-success: #4cc98c;
@@ -144,6 +148,7 @@
   --color-text-muted: #b3b0a6;
   --color-text-subtle: #8a877e;
   --color-danger: #f47067;
+  --color-on-danger: #2a0906;
   --color-danger-soft: #3a1714;
   --color-success: #4cc98c;
   --color-success-soft: #10301f;

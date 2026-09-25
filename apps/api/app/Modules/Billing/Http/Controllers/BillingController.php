@@ -37,7 +37,7 @@ final class BillingController
     {
         $snap = $this->snapshot();
         $snap['subscription']->loadMissing('scheduledPlan');
-        $open = BillingInvoice::query()->with('plan')->where('status', 'open')->orderByDesc('created_at')->first();
+        $open = BillingInvoice::query()->with('plan')->where('status', 'open')->whereIn('kind', BillingInvoice::SUBSCRIPTION_KINDS)->orderByDesc('created_at')->first();
 
         return response()->json(['data' => [
             'subscription' => BillingPresenter::subscription($snap['subscription'], $snap['state'], $snap['features']),

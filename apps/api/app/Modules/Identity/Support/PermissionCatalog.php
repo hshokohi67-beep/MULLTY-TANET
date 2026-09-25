@@ -89,6 +89,8 @@ final class PermissionCatalog
 
     public const MARKETPLACE_MANAGE = 'marketplace.manage';
 
+    public const ADS_MANAGE = 'ads.manage';
+
     /**
      * key => [group, Persian label]
      *
@@ -137,6 +139,7 @@ final class PermissionCatalog
             self::REPORTS_VIEW => ['group' => 'reports', 'label' => 'گزارش‌های فروش، محصولات، شعبه‌ها و سود و زیان'],
             self::BILLING_MANAGE => ['group' => 'billing', 'label' => 'اشتراک، تغییر پلن و پرداخت صورت‌حساب‌ها'],
             self::MARKETPLACE_MANAGE => ['group' => 'marketplace', 'label' => 'معرفی کافه در بازارگاه'],
+            self::ADS_MANAGE => ['group' => 'marketplace', 'label' => 'تبلیغ در کافه‌گردی و پرداخت هزینه‌ی آن'],
         ];
     }
 

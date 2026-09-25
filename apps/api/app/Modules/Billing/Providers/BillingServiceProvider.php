@@ -8,6 +8,7 @@ use App\Modules\Billing\Models\EntitlementOverride;
 use App\Modules\Billing\Models\Subscription;
 use App\Modules\Billing\Models\SubscriptionAddon;
 use App\Modules\Billing\Support\Entitlements;
+use App\Modules\Billing\Support\InvoiceFulfillers;
 use App\Modules\Core\Models\Tenant;
 use App\Support\Entitlements\EntitlementGate;
 use App\Support\Tenancy\TenantContext;
@@ -28,6 +29,8 @@ final class BillingServiceProvider extends ServiceProvider
         // One instance per request, reachable both as the concrete class and as the gate.
         $this->app->scoped(Entitlements::class);
         $this->app->scoped(EntitlementGate::class, fn ($app) => $app->make(Entitlements::class));
+        // Registrations only (kind => class name): safe to keep for the process lifetime.
+        $this->app->singleton(InvoiceFulfillers::class);
     }
 
     public function boot(): void

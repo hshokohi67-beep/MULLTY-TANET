@@ -2,6 +2,8 @@
 
 namespace App\Modules\Insights\Support;
 
+use App\Modules\Advertising\Models\AdCampaign;
+use App\Modules\Advertising\Support\AdStats;
 use App\Modules\Commerce\Enums\OrderStatus;
 use App\Modules\Commerce\Enums\OrderType;
 use App\Modules\Commerce\Models\Order;
@@ -69,6 +71,7 @@ final class WidgetData
             'labour' => $this->labour(),
             'expenses' => $this->expenses($range),
             'stock_alerts' => $this->stockAlerts(),
+            'ads' => $this->ads(),
             default => [],
         };
     }
@@ -498,6 +501,27 @@ final class WidgetData
             'branch' => (string) ($branches[$r->getAttribute('branch_id')] ?? ''),
             'negative' => (float) $r->getAttribute('quantity') < 0,
         ])->values()->all()];
+    }
+
+    /**
+     * The café's ads in «کافه‌گردی»: last 7 days' impressions and clicks, and what is running or waiting.
+     *
+     * @return array{impressions: int, clicks: int, ctr: ?float, live: int, awaiting: int, series: list<array{date: string, impressions: int, clicks: int}>, campaigns: list<array{id: string, name: string, status: string, phase: ?string, ends_at: string}>}
+     */
+    public function ads(): array
+    {
+        $series = AdStats::series($this->timezone, 7);
+        $summary = AdStats::summary($series);
+        $campaigns = AdCampaign::query()
+            ->where(fn ($q) => $q->whereIn('status', [AdCampaign::PENDING, AdCampaign::APPROVED, AdCampaign::REJECTED])
+                ->orWhere(fn ($w) => $w->where('status', AdCampaign::PAID)->where('ends_at', '>', $this->now)))
+            ->orderBy('starts_at')->limit(4)->get();
+
+        return [
+            'impressions' => $summary['impressions'], 'clicks' => $summary['clicks'], 'ctr' => $summary['ctr'],
+            'live' => $summary['live'], 'awaiting' => $summary['awaiting'], 'series' => $series,
+            'campaigns' => $campaigns->map(fn (AdCampaign $c) => ['id' => $c->id, 'name' => $c->name, 'status' => $c->status, 'phase' => $c->phase(), 'ends_at' => $c->ends_at->toIso8601String()])->values()->all(),
+        ];
     }
 
     /** @return array{notes: list<array{id: string, body: string, author: string, author_id: string, created_at: string}>} */

@@ -70,7 +70,7 @@ final class BillingPresenter
     {
         return [
             'id' => $i->id, 'number' => $i->number, 'kind' => $i->kind, 'status' => $i->status,
-            'plan' => ['id' => $i->plan->id, 'name' => $i->plan->name], 'cycle' => $i->cycle, 'mode' => $i->mode,
+            'plan' => $i->plan ? ['id' => $i->plan->id, 'name' => $i->plan->name] : null, 'cycle' => $i->cycle, 'mode' => $i->mode,
             'lines' => $i->lines, 'subtotal' => $i->subtotal, 'credit' => $i->credit, 'vat_rate' => $i->vat_rate, 'vat' => $i->vat, 'total' => $i->total,
             'period_start' => $i->period_start?->toIso8601String(), 'period_end' => $i->period_end?->toIso8601String(),
             'due_at' => $i->due_at?->toIso8601String(), 'paid_at' => $i->paid_at?->toIso8601String(),

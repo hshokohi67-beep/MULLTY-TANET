@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { gregorianToJalali, JALALI_MONTHS, jalaliDaysInMonth, jalaliToGregorian, toPersianDigits, todayIn } from '@cafe/locale';
 
 /**
@@ -8,7 +8,12 @@ import { gregorianToJalali, JALALI_MONTHS, jalaliDaysInMonth, jalaliToGregorian,
  * those follow the browser locale and show Gregorian/English. Submits a Gregorian "YYYY-MM-DD"
  * under `name`, which is what the API expects.
  */
-export function JalaliDateField({ label, name, defaultValue, years = 3 }: { label: string; name: string; defaultValue?: string; years?: number }) {
+export function JalaliDateField({ label, name, defaultValue, years = 3, future = false, onChange }: {
+  label: string; name: string; defaultValue?: string; years?: number;
+  /** Offer this year and the next ones (bookings) instead of this year and the previous ones. */
+  future?: boolean;
+  onChange?: (gregorian: string) => void;
+}) {
   const initial = gregorianToJalali(defaultValue || todayIn());
   const [year, setYear] = useState(initial.year);
   const [month, setMonth] = useState(initial.month);
@@ -16,6 +21,8 @@ export function JalaliDateField({ label, name, defaultValue, years = 3 }: { labe
   const thisYear = gregorianToJalali(todayIn()).year;
   const maxDay = jalaliDaysInMonth(year, month);
   const safeDay = Math.min(day, maxDay);
+  const value = jalaliToGregorian({ year, month, day: safeDay });
+  useEffect(() => { onChange?.(value); }, [value]); // eslint-disable-line react-hooks/exhaustive-deps -- report changes only
   const select = 'h-10 rounded-md border border-border-strong bg-surface px-2 text-sm focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none';
 
   return (
@@ -29,10 +36,10 @@ export function JalaliDateField({ label, name, defaultValue, years = 3 }: { labe
           {JALALI_MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
         </select>
         <select aria-label={`${label}: سال`} value={year} onChange={(e) => setYear(Number(e.target.value))} className={select}>
-          {Array.from({ length: years }, (_, i) => thisYear - i).map((y) => <option key={y} value={y}>{toPersianDigits(y)}</option>)}
+          {Array.from({ length: years }, (_, i) => (future ? thisYear + i : thisYear - i)).map((y) => <option key={y} value={y}>{toPersianDigits(y)}</option>)}
         </select>
       </div>
-      <input type="hidden" name={name} value={jalaliToGregorian({ year, month, day: safeDay })} />
+      <input type="hidden" name={name} value={value} />
     </fieldset>
   );
 }

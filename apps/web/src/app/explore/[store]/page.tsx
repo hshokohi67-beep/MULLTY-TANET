@@ -1,10 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { createElement } from 'react';
 import { ArrowRight, BadgePercent, Bike, Leaf, Clock, Coffee, CreditCard, MapPin, Navigation, Phone, ShoppingBag, Sparkles, Timer, UtensilsCrossed } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatMoney, formatPhone, toPersianDigits } from '@cafe/locale';
-import { AMENITY_ICONS, BrandStyles, CATEGORY_ICONS, OpenPill, PriceLevel } from '@/components/explore/ExploreParts';
+import { CoverArt, Logo } from '@/components/explore/Art';
+import { AMENITY_ICONS, BrandStyles, OpenPill, PriceLevel, StoreCard } from '@/components/explore/ExploreParts';
+import { Rail } from '@/components/explore/Showcase';
+import { illustrationFor } from '@/components/store/ProductVisuals';
 import { FavoriteButton, ShareButton } from '@/components/explore/ExploreClient';
 import { getStoreProfile } from '@/lib/marketplace';
 import { PRICE_LABELS } from '@/lib/marketplace-types';
@@ -34,29 +38,25 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
   const s = await getStoreProfile((await params).store);
   if (!s) notFound();
   const todayIso = ((new Date().getUTCDay() + 6) % 7) + 1; // ISO weekday (the tenant is in Iran; good enough for highlighting)
-  const Icon = CATEGORY_ICONS[s.categories[0]?.key ?? 'cafe'] ?? Coffee;
+  const open = s.branches.some((b) => b.is_open);
 
   return (
-    <div data-brand={s.store} className="pb-16">
-      <BrandStyles stores={[s]} />
-      <div className="relative h-56 overflow-hidden bg-brand-soft sm:h-72">
+    <div data-brand={s.store} className="pb-28 sm:pb-16">
+      <BrandStyles stores={[s, ...s.similar]} />
+      <div className="relative h-60 overflow-hidden bg-brand-soft sm:h-80">
         {s.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
           <img src={s.cover_url} alt="" className="size-full object-cover" />
         ) : (
-          <div className="flex size-full items-center justify-center bg-gradient-to-br from-brand-soft via-surface-muted to-brand-soft text-brand"><Icon className="size-24 opacity-60" strokeWidth={1} aria-hidden="true" /></div>
+          <CoverArt store={s.store} name={s.name} category={s.categories[0]?.key} size="lg" />
         )}
-        {s.cover_url ? <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" aria-hidden="true" /> : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-scrim/60 via-transparent to-scrim/20" aria-hidden="true" />
         <Link href="/explore" className="glass absolute start-4 top-4 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium"><ArrowRight className="size-4" aria-hidden="true" />کافه‌گردی</Link>
       </div>
 
       <div className="mx-auto -mt-14 flex max-w-5xl flex-col gap-8 px-4 sm:px-6">
         <section className="relative flex flex-col gap-4 rounded-3xl border border-border bg-surface p-5 shadow-[var(--shadow-lg)] sm:flex-row sm:items-end sm:p-6">
-          {s.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
-            <img src={s.logo_url} alt={`لوگوی ${s.name}`} className="size-20 shrink-0 rounded-2xl border-4 border-surface bg-surface object-cover shadow-[var(--shadow-md)] sm:size-24" />
-          )
-            : <span className="flex size-20 shrink-0 items-center justify-center rounded-2xl bg-brand text-on-brand sm:size-24"><Icon className="size-10" aria-hidden="true" /></span>}
+          <Logo url={s.logo_url} name={s.name} className="-mt-14 size-24 shrink-0 rounded-3xl border-4 border-surface text-4xl shadow-[var(--shadow-lg)] sm:mt-0 sm:size-28" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-black sm:text-3xl">{s.name}</h1>
@@ -112,13 +112,13 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
                 </div>
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {s.highlights.map((h) => (
-                    <li key={h.name} className="overflow-hidden rounded-2xl border border-border bg-surface">
+                    <li key={h.name} className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-sm)]">
                       <div className="aspect-square bg-surface-muted">
                         {h.image_url ? (
                           // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
-                          <img src={h.image_url} alt={h.name} loading="lazy" className="size-full object-cover" />
+                          <img src={h.image_url} alt={h.name} loading="lazy" className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />
                         )
-                          : <div className="flex size-full items-center justify-center text-text-subtle"><Coffee className="size-10" strokeWidth={1.25} aria-hidden="true" /></div>}
+                          : <div className="flex size-full items-center justify-center bg-brand-soft text-brand">{createElement(illustrationFor(h.name), { className: 'size-12 opacity-80', strokeWidth: 1.25, 'aria-hidden': true })}</div>}
                       </div>
                       <div className="p-3">
                         <p className="line-clamp-1 text-sm font-semibold">{h.name}</p>
@@ -182,6 +182,24 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
             })}
           </aside>
         </div>
+
+        {s.similar.length ? (
+          <section aria-labelledby="similar" className="flex flex-col gap-4">
+            <h2 id="similar" className="text-xl font-black">کافه‌های مشابه</h2>
+            <Rail label="کافه‌های مشابه">{s.similar.map((x) => <StoreCard key={x.store} s={x} />)}</Rail>
+          </section>
+        ) : null}
+      </div>
+
+      {/* Phones: the way in stays at hand while scrolling. */}
+      <div className="glass fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:hidden">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold">{s.name}</p>
+          <p className={cx('text-xs', open ? 'text-success' : 'text-text-muted')}>{open ? 'همین حالا باز است' : 'فعلاً بسته است'}</p>
+        </div>
+        <Link href={s.storefront_path} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-on-brand shadow-[var(--shadow-md)]">
+          <Coffee className="size-4" aria-hidden="true" />منو و سفارش
+        </Link>
       </div>
     </div>
   );

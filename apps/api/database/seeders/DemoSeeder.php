@@ -97,5 +97,6 @@ class DemoSeeder extends Seeder
         $second->update(['status' => TenantStatus::Active]);
 
         $this->call(MarketplaceDemoSeeder::class);
+        $this->call(AdsDemoSeeder::class);
     }
 }

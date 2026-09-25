@@ -17,12 +17,13 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $tenant_id
  * @property string $number
- * @property string $kind
+ * @property string $kind checkout | renewal (subscription) or a registered kind such as `ad`
+ * @property ?string $subject_id what a non-subscription invoice pays for
  * @property string $status
- * @property string $plan_id
- * @property string $cycle
+ * @property ?string $plan_id
+ * @property ?string $cycle
  * @property list<array{addon_id: string, quantity: int}> $addons
- * @property string $mode
+ * @property ?string $mode
  * @property list<array{label: string, amount: int}> $lines
  * @property int $subtotal
  * @property int $credit
@@ -37,12 +38,20 @@ use Illuminate\Support\Carbon;
  * @property ?string $reference
  * @property ?string $created_by
  * @property Carbon $created_at
- * @property Plan $plan
+ * @property ?Plan $plan
  */
-#[Fillable(['number', 'kind', 'status', 'plan_id', 'cycle', 'addons', 'mode', 'lines', 'subtotal', 'credit', 'vat_rate', 'vat', 'total', 'period_start', 'period_end', 'due_at', 'paid_at', 'paid_via', 'reference', 'created_by'])]
+#[Fillable(['number', 'kind', 'subject_id', 'status', 'plan_id', 'cycle', 'addons', 'mode', 'lines', 'subtotal', 'credit', 'vat_rate', 'vat', 'total', 'period_start', 'period_end', 'due_at', 'paid_at', 'paid_via', 'reference', 'created_by'])]
 class BillingInvoice extends Model
 {
     use BelongsToTenant, HasUlids;
+
+    /** Kinds that change the subscription (applied by ApplyPaidInvoice). */
+    public const SUBSCRIPTION_KINDS = ['checkout', 'renewal'];
+
+    public function isSubscription(): bool
+    {
+        return in_array($this->kind, self::SUBSCRIPTION_KINDS, true);
+    }
 
     protected function casts(): array
     {

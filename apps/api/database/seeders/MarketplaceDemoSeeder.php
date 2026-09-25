@@ -11,6 +11,7 @@ use App\Modules\Core\Data\CreateTenantData;
 use App\Modules\Core\Enums\TenantStatus;
 use App\Modules\Core\Models\Branch;
 use App\Modules\Core\Models\Tenant;
+use App\Modules\Core\Models\TenantBranding;
 use App\Modules\Discounts\Models\Discount;
 use App\Modules\Marketplace\Actions\ProjectStore;
 use App\Modules\Marketplace\Models\MarketplaceListing;
@@ -66,8 +67,13 @@ class MarketplaceDemoSeeder extends Seeder
         $offers = [
             'narenj' => ['قهوه‌ی صبح', 1500, 0], 'eram' => ['فالوده‌ی تابستان', 1000, 500_000], 'toranj' => ['شیرینی تازه', 2000, 1_000_000],
         ];
+        // Each demo café has its own brand colour (the default teal is kept by «کافه نمونه»).
+        $colours = ['narenj' => '#EA580C', 'koohpayeh' => '#92400E', 'eram' => '#15803D', 'naghsh' => '#1D4ED8', 'yas' => '#CA8A04', 'toranj' => '#BE185D', 'sabz' => '#65A30D'];
         foreach (Tenant::query()->whereIn('slug', array_keys($areas))->get() as $tenant) {
-            $context->runAs($tenant, function () use ($tenant, $areas, $offers): void {
+            $context->runAs($tenant, function () use ($tenant, $areas, $offers, $colours): void {
+                if (isset($colours[$tenant->slug])) {
+                    TenantBranding::query()->firstOrNew()->fill(['primary_color' => $colours[$tenant->slug]])->save();
+                }
                 foreach ($areas[$tenant->slug] as $branchSlug => $district) {
                     Branch::query()->where('slug', $branchSlug)->update(['district' => $district]);
                 }
