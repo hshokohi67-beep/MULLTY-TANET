@@ -58,7 +58,7 @@ final class SmsDriversTest extends TestCase
     {
         Http::fake([
             'raygansms.com/*' => Http::response('2451871', 200),
-            'smspanel.trez.ir/*' => Http::sequence()->push('1587', 200)->push('8', 200),
+            'smspanel.trez.ir/*' => Http::sequence()->push('3587412', 200)->push('1587', 200)->push('8', 200),
         ]);
         $cafe = SmsDrivers::make('raygan', ['username' => 'u', 'password' => 'p', 'sender' => '5000']);
         $this->assertTrue($cafe->send($this->msg())->successful);
@@ -70,8 +70,9 @@ final class SmsDriversTest extends TestCase
         $this->app->forgetInstance(SmsProvider::class);
         $platform = $this->app->make(SmsProvider::class);
         $this->assertTrue($platform->sendVerificationCode('+989121234567', '12345')->successful);
-        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'SendMessageWithCode.ashx') && str_contains(urldecode($r->url()), '12345') && str_contains($r->url(), 'Mobile=09121234567'));
-        $this->assertSame('provider_status_8', $platform->sendVerificationCode('+989121234567', '12345')->error); // bad credentials
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'AutoSendCode.ashx') && $r['Footer'] === '12345' && $r['Mobile'] === '09121234567' && $r['UserName'] === 'plat');
+        $this->assertFalse($platform->sendVerificationCode('+989121234567', '12345')->successful); // 2000 or below: not sent
+        $this->assertSame('provider_status_8', $platform->sendVerificationCode('+989121234567', '12345')->error); // web service not enabled
     }
 
     public function test_connection_failures_never_throw(): void

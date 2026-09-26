@@ -14,8 +14,7 @@ return [
         'raygan' => [
             'username' => env('RAYGAN_USERNAME'),
             'password' => env('RAYGAN_PASSWORD'),
-            'sender' => env('RAYGAN_SENDER'),
-            'code_template' => env('RAYGAN_CODE_TEMPLATE', "کد ورود شما: :code\n:app"),
+            'sender' => env('RAYGAN_SENDER'), // text messages only; login codes use Trez's AutoSendCode line
         ],
         'kavenegar' => [
             'api_key' => env('KAVENEGAR_API_KEY'),

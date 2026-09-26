@@ -33,7 +33,6 @@ final class SmsServiceProvider extends ServiceProvider
                     (string) config('sms.providers.raygan.username') ?: throw new LogicException('RAYGAN_USERNAME is not configured.'),
                     (string) config('sms.providers.raygan.password'),
                     config('sms.providers.raygan.sender'),
-                    (string) config('sms.providers.raygan.code_template'),
                 ),
                 'kavenegar' => new KavenegarSmsProvider(
                     $app->make(HttpFactory::class),
