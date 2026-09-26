@@ -1,6 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { ApiError } from './api';
+import { COOKIE_SECURE } from './cookie-secure';
 
 /**
  * Kitchen screens authenticate as a paired device (its own HttpOnly cookies) or, if none, as the
@@ -12,7 +13,7 @@ const API_URL = process.env.API_URL ?? 'http://127.0.0.1:8000';
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: COOKIE_SECURE,
   sameSite: 'lax' as const,
   path: '/',
   maxAge: 365 * 24 * 60 * 60, // a paired tablet stays paired until revoked

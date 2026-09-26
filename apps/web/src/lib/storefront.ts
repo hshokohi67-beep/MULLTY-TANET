@@ -5,6 +5,7 @@ import { api, ApiError } from './api';
 import { slugFromHost, storeLink } from './store-links';
 import type { PublicLanding } from './landing-types';
 import type { Menu, PublicStory, Storefront } from './storefront-types';
+import { COOKIE_SECURE } from './cookie-secure';
 
 /**
  * Storefront BFF helpers. Every token lives in an HttpOnly cookie scoped to /s/{tenant}, so
@@ -64,7 +65,7 @@ export async function readCookie(tenant: string, kind: CookieKind): Promise<stri
 export async function writeCookie(tenant: string, kind: CookieKind, value: string): Promise<void> {
   (await cookies()).set(COOKIES[kind], value, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: COOKIE_SECURE,
     sameSite: 'lax',
     path: await cookiePath(tenant),
     maxAge: MAX_AGE[kind],

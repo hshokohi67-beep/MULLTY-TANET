@@ -79,6 +79,8 @@ NEXT_PUBLIC_STORE_BASE_DOMAIN=cafeyar.ir
 NEXT_PUBLIC_STORE_PROTOCOL=https
 ```
 
+Never set `COOKIE_SECURE=false` in production. It exists only to test a build over plain http on a local network (e.g. from a phone at `http://192.168.x.x`), where browsers refuse Secure cookies and every login seems to bounce back to the login page.
+
 ## 4. Shared cPanel steps
 
 1. **API**

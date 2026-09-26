@@ -1,5 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
+import { COOKIE_SECURE } from './cookie-secure';
 
 /**
  * The staff API token never reaches browser JavaScript: it lives in an HttpOnly cookie
@@ -11,7 +12,7 @@ const MAX_AGE_SECONDS = 12 * 60 * 60; // matches STAFF_TOKEN_HOURS in the API
 
 const baseOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: COOKIE_SECURE,
   sameSite: 'lax' as const,
   path: '/',
 };
