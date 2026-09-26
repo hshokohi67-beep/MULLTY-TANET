@@ -12,6 +12,7 @@ use App\Modules\Payments\Support\GatewayFactory;
 use App\Modules\Payments\Support\PaymentLog;
 use App\Support\Localization\PersianNumber;
 use App\Support\Localization\PhoneNormalizer;
+use App\Support\Tenancy\StorefrontUrl;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,8 @@ final class StartOnlinePayment
         });
 
         $payment = $opened['payment'];
-        $callbackUrl = config('payments.storefront_url').'/s/'.$tenant->slug.'/pay/'.$payment->id;
+        // Back to the host the customer ordered from (their own café subdomain when enabled).
+        $callbackUrl = StorefrontUrl::to($tenant, '/s/'.$tenant->slug.'/pay/'.$payment->id);
 
         if ($opened['reused']) {
             return ['payment' => $payment, 'redirect_url' => $gateway->startUrl((string) $payment->authority, $callbackUrl)];

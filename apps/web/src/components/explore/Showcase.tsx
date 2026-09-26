@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Megaphone, Store } from 'lucide-r
 import { cx } from '@cafe/ui';
 import { trackAd } from '@/app/actions/explore';
 import type { Banner } from '@/lib/marketplace-types';
+import { storeHref } from '@/lib/store-links';
 import { CoverArt, HeroPattern, Logo } from './Art';
 
 /* ------------------------------------------------------------------ ad beacons */
@@ -76,7 +77,7 @@ function BannerSlide({ b, index, total, eager }: { b: Banner; index: number; tot
         {b.body ? <p className="line-clamp-2 text-sm text-on-media-muted sm:text-lg">{b.body}</p> : null}
         <span className="mt-1 inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-on-brand shadow-[var(--shadow-lg)]">{b.cta_label}<ArrowLeft className="size-4" aria-hidden="true" /></span>
       </div>
-      <Link href={b.href} onClick={() => void trackAd(b.token, 'click')} aria-label={`${b.name}: ${b.headline} (تبلیغ)`}
+      <Link href={storeHref(b.href)} onClick={() => void trackAd(b.token, 'click')} aria-label={`${b.name}: ${b.headline} (تبلیغ)`}
         className="absolute inset-0 rounded-3xl focus-visible:shadow-[inset_0_0_0_3px_var(--color-on-media)] focus-visible:outline-none" />
     </article>
   );

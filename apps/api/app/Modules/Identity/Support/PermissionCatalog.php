@@ -91,6 +91,8 @@ final class PermissionCatalog
 
     public const ADS_MANAGE = 'ads.manage';
 
+    public const SMS_MANAGE = 'sms.manage';
+
     /**
      * key => [group, Persian label]
      *
@@ -139,6 +141,7 @@ final class PermissionCatalog
             self::REPORTS_VIEW => ['group' => 'reports', 'label' => 'گزارش‌های فروش، محصولات، شعبه‌ها و سود و زیان'],
             self::BILLING_MANAGE => ['group' => 'billing', 'label' => 'اشتراک، تغییر پلن و پرداخت صورت‌حساب‌ها'],
             self::MARKETPLACE_MANAGE => ['group' => 'marketplace', 'label' => 'معرفی کافه در بازارگاه'],
+            self::SMS_MANAGE => ['group' => 'customers', 'label' => 'پنل پیامک کافه، پیام‌های خودکار و کمپین پیامکی'],
             self::ADS_MANAGE => ['group' => 'marketplace', 'label' => 'تبلیغ در خوراک‌گردی و پرداخت هزینه‌ی آن'],
         ];
     }

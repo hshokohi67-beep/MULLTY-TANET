@@ -9,19 +9,18 @@ use App\Modules\Insights\Support\Overview;
 use App\Support\Localization\PersianNumber;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyFormatter;
-use App\Support\Sms\SmsMessage;
-use App\Support\Sms\SmsProvider;
+use App\Support\Sms\CafeMessenger;
 use App\Support\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * End-of-day SMS to the owner(s) of the current tenant, at the tenant's chosen local hour,
+ * End-of-day SMS to the owner(s) of the current tenant (through the café's own SMS line), at the tenant's chosen local hour,
  * at most once per day. Off unless the tenant enables `reports.daily_sms`.
  */
 final class SendDailyReport
 {
-    public function __construct(private readonly SmsProvider $sms) {}
+    public function __construct(private readonly CafeMessenger $sms) {}
 
     /** @return bool whether a report was sent this run */
     public function handle(?CarbonImmutable $now = null): bool
@@ -69,7 +68,8 @@ final class SendDailyReport
             return false;
         }
 
-        $this->sms->send(new SmsMessage(array_values(array_map('strval', $phones)), $text));
+        // From the café's own SMS line (the platform line only carries login codes).
+        $this->sms->send('daily_report', array_values(array_map('strval', $phones)), $text);
 
         return true;
     }

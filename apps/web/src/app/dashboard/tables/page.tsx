@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
+import { storeLink } from '@/lib/store-links';
 import { requireMembership } from '@/lib/auth';
 import type { Branch, RestaurantTable } from '@/lib/types';
 import { AddTableForm, TableRow } from './TablesManager';
@@ -22,7 +23,7 @@ export default async function TablesPage() {
   ]);
 
   // The printed QR opens this tenant's storefront table page.
-  const storefrontBase = `${process.env.STOREFRONT_URL ?? 'http://127.0.0.1:3765'}/s/${membership.tenant.slug}/t`;
+  const storefrontBase = storeLink(membership.tenant.slug, '/t');
   const canManage = can('tables.manage');
 
   return (

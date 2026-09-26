@@ -2,6 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { cookies, headers } from 'next/headers';
 import { api, ApiError } from './api';
+import { slugFromHost, storeLink } from './store-links';
 import type { Menu, PublicStory, Storefront } from './storefront-types';
 
 /**
@@ -34,6 +35,19 @@ export function assertTenant(tenant: string): string {
   return tenant;
 }
 
+/**
+ * On the café's own subdomain the cookies cover the whole (host-only) site; on the shared host
+ * they stay scoped to /s/{tenant}. Either way no other café ever receives them.
+ */
+async function cookiePath(tenant: string): Promise<string> {
+  assertTenant(tenant);
+
+  // Read the Host itself: server actions on rewritten routes don't always carry proxy-set headers.
+  const h = await headers();
+
+  return slugFromHost(h.get('x-forwarded-host') ?? h.get('host')) === tenant ? '/' : `/s/${tenant}`;
+}
+
 export async function readCookie(tenant: string, kind: CookieKind): Promise<string | undefined> {
   // The browser only sends a path-scoped cookie on that path, but check the value shape anyway.
   const value = (await cookies()).get(COOKIES[kind])?.value;
@@ -47,13 +61,13 @@ export async function writeCookie(tenant: string, kind: CookieKind, value: strin
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: `/s/${assertTenant(tenant)}`,
+    path: await cookiePath(tenant),
     maxAge: MAX_AGE[kind],
   });
 }
 
 export async function clearCookie(tenant: string, kind: CookieKind): Promise<void> {
-  (await cookies()).set(COOKIES[kind], '', { path: `/s/${assertTenant(tenant)}`, maxAge: 0 });
+  (await cookies()).set(COOKIES[kind], '', { path: await cookiePath(tenant), maxAge: 0 });
 }
 
 /** The visitor's IP, so the API rate-limits each shopper instead of this server. */
@@ -130,7 +144,5 @@ export const getStories = cache(async (tenant: string, branchSlug?: string): Pro
 });
 
 export function storeUrl(tenant: string, path = ''): string {
-  const base = process.env.STOREFRONT_URL ?? 'http://127.0.0.1:3765';
-
-  return `${base}/s/${tenant}${path}`;
+  return storeLink(tenant, path);
 }

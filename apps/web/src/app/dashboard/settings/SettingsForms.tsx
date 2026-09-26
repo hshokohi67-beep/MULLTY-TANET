@@ -82,7 +82,6 @@ export function BrandingForm({ branding, readOnly }: { branding: Branding; readO
 export function GeneralSettingsForm({ settings, readOnly }: { settings: SettingItem[]; readOnly: boolean }) {
   const [state, action, pending] = useActionState(updateSettings, initial);
   const byKey = Object.fromEntries(settings.map((s) => [s.key, s]));
-  const apiKey = byKey['integrations.sms.kavenegar_api_key'];
   const e = state.errors ?? {};
 
   return (
@@ -93,20 +92,6 @@ export function GeneralSettingsForm({ settings, readOnly }: { settings: SettingI
         <fieldset disabled={readOnly || pending} className="grid gap-4 sm:grid-cols-2">
           <TextField label="تلفن تماس" name="contact.phone" defaultValue={String(byKey['contact.phone']?.value ?? '')} inputMode="tel" ltr error={e['contact.phone']} />
           <TextField label="اینستاگرام" name="contact.instagram" defaultValue={String(byKey['contact.instagram']?.value ?? '')} ltr error={e['contact.instagram']} hint="فقط نام کاربری، بدون @" />
-          {apiKey ? (
-            <div className="sm:col-span-2">
-              <TextField
-                label="کلید API کاوه‌نگار"
-                name="integrations.sms.kavenegar_api_key"
-                type="password"
-                autoComplete="off"
-                ltr
-                placeholder={apiKey.is_set ? apiKey.masked ?? '' : ''}
-                error={e['integrations.sms.kavenegar_api_key']}
-                hint={apiKey.is_set ? 'کلید ثبت شده است. برای تغییر، کلید جدید را وارد کنید؛ خالی بگذارید تا تغییری نکند.' : 'کلید به‌صورت رمزنگاری‌شده ذخیره می‌شود و دیگر نمایش داده نمی‌شود.'}
-              />
-            </div>
-          ) : null}
         </fieldset>
         {!readOnly ? <div><Button type="submit" loading={pending}>ذخیره</Button></div> : null}
       </form>

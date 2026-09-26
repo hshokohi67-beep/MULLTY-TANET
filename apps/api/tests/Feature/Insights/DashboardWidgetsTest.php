@@ -6,9 +6,12 @@ use App\Modules\Commerce\Models\Order;
 use App\Modules\Core\Models\Branch;
 use App\Modules\Discounts\Models\Discount;
 use App\Modules\Insights\Actions\SendDailyReport;
+use App\Modules\Messaging\Models\SmsAccount;
+use App\Modules\Messaging\Models\SmsLog;
 use App\Support\Sms\Providers\ArraySmsProvider;
 use App\Support\Sms\SmsProvider;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Kitchen\KitchenTestCase;
 
@@ -160,6 +163,9 @@ final class DashboardWidgetsTest extends KitchenTestCase
     public function test_daily_report_is_sent_once_at_the_chosen_hour(): void
     {
         $this->settings(['reports.daily_sms' => '1', 'reports.daily_sms_hour' => '22']);
+        // The report goes out on the café's own SMS line (never the platform line).
+        Http::fake(['api.sms.ir/*' => Http::response(['status' => 1, 'data' => ['packId' => 'p']])]);
+        $this->inTenant($this->tenant, fn () => SmsAccount::query()->create(['provider' => 'smsir', 'credentials' => ['api_key' => 'k', 'sender' => '3000'], 'is_active' => true]));
         $this->at('2026-09-23 12:00');
         $this->quickQrOrder();
         $send = fn (string $at) => $this->inTenant($this->tenant, fn () => app(SendDailyReport::class)->handle(CarbonImmutable::parse($at, 'Asia/Tehran')));
@@ -168,10 +174,10 @@ final class DashboardWidgetsTest extends KitchenTestCase
         $this->assertTrue($send('2026-09-23 22:05'));
         $this->assertFalse($send('2026-09-23 22:40'));
 
-        $sms = app(SmsProvider::class);
-        $this->assertInstanceOf(ArraySmsProvider::class, $sms);
-        $this->assertStringContainsString('فروش: ۶۵٬۰۰۰ تومان', $sms->messages[0]->text);
-        $this->assertSame([$this->owner->phone_e164], $sms->messages[0]->recipients);
+        $log = $this->inTenant($this->tenant, fn () => SmsLog::query()->where('kind', 'daily_report')->sole());
+        $this->assertStringContainsString('فروش: ۶۵٬۰۰۰ تومان', $log->body);
+        $this->assertSame([$this->owner->phone_e164, 'sent'], [$log->recipient, $log->status]);
+        $this->assertSame([], app(SmsProvider::class) instanceof ArraySmsProvider ? app(SmsProvider::class)->messages : []);
 
         $this->settings(['reports.daily_sms' => '0']);
         $this->assertFalse($send('2026-09-24 22:05'));

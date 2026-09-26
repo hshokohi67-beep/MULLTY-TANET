@@ -17,25 +17,25 @@ final class SettingsAndBrandingTest extends TestCase
         $headers = $this->staffHeaders($owner, $tenant);
 
         $response = $this->patchJson('/api/v1/tenant/settings', ['settings' => [
-            'integrations.sms.kavenegar_api_key' => 'SECRET-KEY-123456',
+            'payments.zarinpal.merchant_id' => 'a1b2c3d4-e5f6-4890-abcd-123456783456',
             'orders.allow_preorder_when_closed' => false,
         ]], $headers)->assertOk();
 
-        $secret = collect($response->json('data'))->firstWhere('key', 'integrations.sms.kavenegar_api_key');
+        $secret = collect($response->json('data'))->firstWhere('key', 'payments.zarinpal.merchant_id');
         $this->assertNull($secret['value']);
         $this->assertTrue($secret['is_set']);
         $this->assertSame('••••••••3456', $secret['masked']);
         $this->assertFalse(collect($response->json('data'))->firstWhere('key', 'orders.allow_preorder_when_closed')['value']);
 
         // Never plaintext in the database or the response, never in the audit log.
-        $raw = DB::table('tenant_settings')->where('key', 'integrations.sms.kavenegar_api_key')->value('value');
-        $this->assertStringNotContainsString('SECRET-KEY', (string) $raw);
-        $this->assertStringNotContainsString('SECRET-KEY', $response->getContent());
-        $this->assertSame('SECRET-KEY-123456', $this->inTenant($tenant, fn () => TenantSetting::query()->where('key', 'integrations.sms.kavenegar_api_key')->first()->plainValue()));
+        $raw = DB::table('tenant_settings')->where('key', 'payments.zarinpal.merchant_id')->value('value');
+        $this->assertStringNotContainsString('a1b2c3d4', (string) $raw);
+        $this->assertStringNotContainsString('a1b2c3d4', $response->getContent());
+        $this->assertSame('a1b2c3d4-e5f6-4890-abcd-123456783456', $this->inTenant($tenant, fn () => TenantSetting::query()->where('key', 'payments.zarinpal.merchant_id')->first()->plainValue()));
 
         $audit = $this->inTenant($tenant, fn () => AuditLog::query()->where('action', 'settings.updated')->latest('created_at')->first());
-        $this->assertStringNotContainsString('SECRET-KEY', (string) json_encode($audit->changes));
-        $this->assertSame('[REDACTED]', $audit->changes['integrations.sms.kavenegar_api_key']);
+        $this->assertStringNotContainsString('a1b2c3d4', (string) json_encode($audit->changes));
+        $this->assertSame('[REDACTED]', $audit->changes['payments.zarinpal.merchant_id']);
     }
 
     public function test_unknown_setting_keys_are_rejected(): void

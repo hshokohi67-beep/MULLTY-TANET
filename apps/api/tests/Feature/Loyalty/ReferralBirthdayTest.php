@@ -4,10 +4,13 @@ namespace Tests\Feature\Loyalty;
 
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Loyalty\Actions\GiveBirthdayGifts;
+use App\Modules\Messaging\Models\SmsAccount;
+use App\Modules\Messaging\Models\SmsLog;
+use App\Modules\Messaging\Models\SmsTemplate;
+use App\Modules\Messaging\Support\TemplateCatalog;
 use App\Support\Localization\JalaliDate;
-use App\Support\Sms\Providers\ArraySmsProvider;
-use App\Support\Sms\SmsProvider;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Http;
 
 final class ReferralBirthdayTest extends ClubTestCase
 {
@@ -63,6 +66,12 @@ final class ReferralBirthdayTest extends ClubTestCase
     public function test_birthday_gift_on_the_jalali_day_after_nine_local_once_a_year(): void
     {
         $this->settings(['loyalty.birthday_wallet_gift' => '500000', 'loyalty.birthday_points' => '20']);
+        // The greeting goes out on the café's own SMS line, once the café switches it on.
+        Http::fake(['api.sms.ir/*' => Http::response(['status' => 1, 'data' => ['packId' => 'p']])]);
+        $this->inTenant($this->tenant, function (): void {
+            SmsAccount::query()->create(['provider' => 'smsir', 'credentials' => ['api_key' => 'k', 'sender' => '3000'], 'is_active' => true]);
+            SmsTemplate::query()->create(['key' => 'birthday', 'is_enabled' => true, 'body' => TemplateCatalog::TEMPLATES['birthday']['body']]);
+        });
         $customer = $this->birthdayOn(7, 2);
         $this->birthdayOn(7, 3, '+989122222222');
         $day = JalaliDate::toGregorian(1405, 7, 2, 'Asia/Tehran');
@@ -73,10 +82,10 @@ final class ReferralBirthdayTest extends ClubTestCase
 
         $this->assertSame(500_000, $this->walletBalance($customer));
         $this->assertSame(20, $this->points($customer));
-        $sms = app(SmsProvider::class);
-        $this->assertInstanceOf(ArraySmsProvider::class, $sms);
-        $this->assertStringContainsString('تولدت مبارک', $sms->messages[0]->text);
-        $this->assertStringContainsString('۵۰٬۰۰۰ تومان', $sms->messages[0]->text);
+        $log = $this->inTenant($this->tenant, fn () => SmsLog::query()->where('kind', 'birthday')->sole());
+        $this->assertStringContainsString('تولدت مبارک', $log->body);
+        $this->assertStringContainsString('۵۰٬۰۰۰ تومان', $log->body);
+        $this->assertSame('sent', $log->status);
 
         // Next Jalali year: again.
         $this->assertSame(1, $this->gifts(JalaliDate::toGregorian(1406, 7, 2, 'Asia/Tehran')->setTime(10, 0)));

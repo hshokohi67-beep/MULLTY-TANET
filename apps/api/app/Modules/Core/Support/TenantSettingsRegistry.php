@@ -42,7 +42,6 @@ final class TenantSettingsRegistry
             'goals.monthly_sales' => ['type' => 'int', 'secret' => false, 'label' => 'هدف فروش ماهانه (ریال)', 'rules' => ['integer', 'min:0', 'max:100000000000000'], 'default' => 0],
             'reports.daily_sms' => ['type' => 'bool', 'secret' => false, 'label' => 'پیامک گزارش پایان روز برای مالک', 'rules' => ['boolean'], 'default' => false],
             'reports.daily_sms_hour' => ['type' => 'int', 'secret' => false, 'label' => 'ساعت ارسال گزارش پایان روز', 'rules' => ['integer', 'between:0,23'], 'default' => 23],
-            'integrations.sms.kavenegar_api_key' => ['type' => 'string', 'secret' => true, 'label' => 'کلید API کاوه‌نگار', 'rules' => ['nullable', 'string', 'max:200'], 'default' => null],
         ];
     }
 

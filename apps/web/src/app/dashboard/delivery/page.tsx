@@ -43,7 +43,7 @@ export default async function DeliveryPage() {
                   محل این شعبه روی نقشه مشخص نشده است؛ تا آن را در <Link href={`/dashboard/branches/${branch.id}`} className="font-semibold underline">صفحه‌ی شعبه</Link> روی نقشه نزنید، ارسال با پیک فعال نمی‌شود.
                 </Alert>
               ) : (
-                <ZonesMap center={{ lat: Number(branch.latitude), lng: Number(branch.longitude) }} zones={list.map((z) => ({ id: z.id, name: z.name, radius_m: z.radius_m, is_active: z.is_active }))} />
+                <ZonesMap center={{ lat: Number(branch.latitude), lng: Number(branch.longitude) }} zones={list.map((z) => ({ id: z.id, name: z.name, radius_m: z.radius_m, is_active: z.is_active, delivery_fee: z.delivery_fee }))} />
               )}
               {list.length === 0 ? (
                 <EmptyState title="این شعبه ارسال با پیک ندارد" description="با فرم زیر اولین محدوده را بسازید." />

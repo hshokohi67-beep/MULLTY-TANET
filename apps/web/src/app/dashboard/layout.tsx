@@ -6,6 +6,7 @@ import { getBillingStatus } from '@/lib/billing';
 import { SCREEN_FEATURES } from '@/lib/billing-types';
 import { HelpButton } from '@/components/help/HelpButton';
 import { screenMap, visibleTopics } from '@/lib/help';
+import { storeLink } from '@/lib/store-links';
 import { AppShell, type NavGroup } from './AppShell';
 import { TimeClockButton } from './TimeClockButton';
 
@@ -54,6 +55,7 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       items: [
         ...(can('customers.view') ? [{ href: '/dashboard/customers', label: 'مشتریان', icon: 'customers' }] : []),
         ...(can('loyalty.manage') ? [{ href: '/dashboard/club', label: 'باشگاه مشتریان', icon: 'club' }] : []),
+        ...(can('sms.manage') ? [{ href: '/dashboard/sms', label: 'پیامک', icon: 'sms' }] : []),
         ...(can('payments.view') ? [{ href: '/dashboard/payments', label: 'پرداخت‌ها', icon: 'payments' }] : []),
       ],
     },
@@ -88,7 +90,7 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       userPhone={user.phone ? formatPhone(user.phone) : null}
       canSwitchTenant={memberships.length > 1}
       permissions={membership.permissions}
-      storefrontUrl={`/s/${membership.tenant.slug}`}
+      storefrontUrl={storeLink(membership.tenant.slug)}
       billing={billing ? { state: billing.state, daysLeft: billing.days_left, status: billing.status, canManage: can('billing.manage') } : null}
       isPlatformAdmin={user.is_platform_admin}
       topActions={<>

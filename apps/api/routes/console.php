@@ -16,3 +16,5 @@ Schedule::command('analytics:rollup')->everyFiveMinutes()->withoutOverlapping()-
 Schedule::command('billing:renewals')->dailyAt('09:00')->timezone('Asia/Tehran')->withoutOverlapping()->onOneServer();
 Schedule::command('marketplace:refresh')->hourly()->withoutOverlapping()->onOneServer();
 Schedule::command('backup:run')->dailyAt('03:30')->timezone('Asia/Tehran')->withoutOverlapping()->onOneServer();
+Schedule::command('sms:campaigns')->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command('sms:prune')->dailyAt('04:10')->timezone('Asia/Tehran')->withoutOverlapping()->onOneServer();

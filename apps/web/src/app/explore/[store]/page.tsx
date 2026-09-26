@@ -11,6 +11,7 @@ import { Rail } from '@/components/explore/Showcase';
 import { illustrationFor } from '@/components/store/ProductVisuals';
 import { FavoriteButton, ShareButton } from '@/components/explore/ExploreClient';
 import { getStoreProfile } from '@/lib/marketplace';
+import { storeHref } from '@/lib/store-links';
 import { PRICE_LABELS } from '@/lib/marketplace-types';
 
 export async function generateMetadata({ params }: PageProps<'/explore/[store]'>): Promise<Metadata> {
@@ -71,7 +72,7 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
           <div className="flex flex-wrap items-center gap-2">
             <FavoriteButton store={s.store} name={s.name} className="size-12 border border-border" />
             <ShareButton title={s.name} />
-            <Link href={s.storefront_path} className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-6 font-semibold text-on-brand shadow-[var(--shadow-md)] hover:bg-brand-strong sm:flex-none">
+            <Link href={storeHref(s.storefront_path)} className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-6 font-semibold text-on-brand shadow-[var(--shadow-md)] hover:bg-brand-strong sm:flex-none">
               <Coffee className="size-5" aria-hidden="true" />دیدن منو و سفارش
             </Link>
           </div>
@@ -108,7 +109,7 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
               <section aria-labelledby="menu" className="flex flex-col gap-3">
                 <div className="flex items-end justify-between">
                   <h2 id="menu" className="text-lg font-bold">از منو</h2>
-                  <Link href={s.storefront_path} className="text-sm font-medium text-brand hover:underline">منوی کامل</Link>
+                  <Link href={storeHref(s.storefront_path)} className="text-sm font-medium text-brand hover:underline">منوی کامل</Link>
                 </div>
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {s.highlights.map((h) => (
@@ -197,7 +198,7 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
           <p className="truncate text-sm font-bold">{s.name}</p>
           <p className={cx('text-xs', open ? 'text-success' : 'text-text-muted')}>{open ? 'همین حالا باز است' : 'فعلاً بسته است'}</p>
         </div>
-        <Link href={s.storefront_path} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-on-brand shadow-[var(--shadow-md)]">
+        <Link href={storeHref(s.storefront_path)} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-on-brand shadow-[var(--shadow-md)]">
           <Coffee className="size-4" aria-hidden="true" />منو و سفارش
         </Link>
       </div>

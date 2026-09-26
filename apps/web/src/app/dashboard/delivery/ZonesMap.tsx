@@ -11,7 +11,7 @@ const ATTRIBUTION = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ?? '&copy; OpenStree
  * Read-only picture of a branch's delivery zones: the branch pin and each radius as a circle
  * (largest first, so smaller zones stay clickable on top). Colours come from the theme tokens.
  */
-export function ZonesMap({ center, zones }: { center: { lat: number; lng: number }; zones: { id: string; name: string; radius_m: number; is_active: boolean }[] }) {
+export function ZonesMap({ center, zones }: { center: { lat: number; lng: number }; zones: { id: string; name: string; radius_m: number; is_active: boolean; delivery_fee: number }[] }) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<LeafletMap | null>(null);
 
@@ -23,14 +23,15 @@ export function ZonesMap({ center, zones }: { center: { lat: number; lng: number
       const styles = getComputedStyle(document.documentElement);
       const brand = styles.getPropertyValue('--color-brand').trim() || 'currentColor';
       const muted = styles.getPropertyValue('--color-text-subtle').trim() || 'gray';
+      const success = styles.getPropertyValue('--color-success').trim() || brand;
       const m = L.map(box.current, { center: [center.lat, center.lng], zoom: 13, scrollWheelZoom: false });
       L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(m);
       const icon = L.divIcon({ className: 'map-pin', html: '<span></span>', iconSize: [28, 40], iconAnchor: [14, 38] });
       L.marker([center.lat, center.lng], { icon, title: 'شعبه' }).addTo(m);
 
       const circles = [...zones].sort((a, b) => b.radius_m - a.radius_m).map((z) =>
-        L.circle([center.lat, center.lng], { radius: z.radius_m, color: z.is_active ? brand : muted, weight: 2, fillOpacity: z.is_active ? 0.08 : 0.03, dashArray: z.is_active ? undefined : '6 6' })
-          .bindTooltip(`${z.name}${z.is_active ? '' : ' (غیرفعال)'}`, { direction: 'top' })
+        L.circle([center.lat, center.lng], { radius: z.radius_m, color: !z.is_active ? muted : z.delivery_fee === 0 ? success : brand, weight: 2, fillOpacity: z.is_active ? (z.delivery_fee === 0 ? 0.14 : 0.08) : 0.03, dashArray: z.is_active ? undefined : '6 6' })
+          .bindTooltip(`${z.name}${z.delivery_fee === 0 ? ' • ارسال رایگان' : ''}${z.is_active ? '' : ' (غیرفعال)'}`, { direction: 'top' })
           .addTo(m));
       if (circles.length) m.fitBounds(L.featureGroup(circles).getBounds(), { padding: [16, 16] });
       map.current = m;

@@ -10,11 +10,9 @@ use App\Support\Localization\JalaliDate;
 use App\Support\Localization\PersianNumber;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyFormatter;
-use App\Support\Sms\SmsMessage;
-use App\Support\Sms\SmsProvider;
+use App\Support\Sms\CafeMessenger;
 use App\Support\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
-use Throwable;
 
 /**
  * Birthday gifts for the current tenant, on the customer's Jalali birthday in the tenant's local
@@ -28,7 +26,7 @@ final class GiveBirthdayGifts
     public function __construct(
         private readonly PostWalletTransaction $wallet,
         private readonly PostPointsTransaction $points,
-        private readonly SmsProvider $sms,
+        private readonly CafeMessenger $sms,
     ) {}
 
     /** @return int number of customers gifted this run */
@@ -69,15 +67,12 @@ final class GiveBirthdayGifts
 
                 $count++;
 
-                try {
-                    $this->sms->send(new SmsMessage([$customer->phone_e164], __('messages.birthday_sms', [
-                        'name' => $customer->name ?: 'دوست عزیز',
-                        'cafe' => $tenant->name,
-                        'gift' => $gift > 0 ? MoneyFormatter::format(Money::rials($gift)) : PersianNumber::toPersian((string) $points).' امتیاز',
-                    ])));
-                } catch (Throwable $e) {
-                    report($e); // the gift stands even if the SMS fails
-                }
+                // Through the café's own SMS line, only if it switched the birthday message on (never throws).
+                $this->sms->template('birthday', $customer->phone_e164, [
+                    'name' => $customer->name ?: 'دوست',
+                    'cafe' => $tenant->name,
+                    'gift' => $gift > 0 ? MoneyFormatter::format(Money::rials($gift)) : PersianNumber::toPersian((string) $points).' امتیاز',
+                ]);
             });
 
         return $count;
