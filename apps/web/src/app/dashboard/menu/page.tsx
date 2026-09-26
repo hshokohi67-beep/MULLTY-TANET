@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge, Card, EmptyState, SelectField } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
+import { FileSpreadsheet } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
@@ -38,7 +39,8 @@ export default async function MenuPage({ searchParams }: PageProps<'/dashboard/m
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="آیتم‌های منو" description={soldOutOnly ? `${formatNumber(products.length)} آیتم تمام شده` : `${formatNumber(meta.total)} آیتم`} />
+      <PageHeader title="آیتم‌های منو" description={soldOutOnly ? `${formatNumber(products.length)} آیتم تمام شده` : `${formatNumber(meta.total)} آیتم`}
+        actions={canManage ? <Link href="/dashboard/menu/import" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-border bg-surface px-3 text-sm hover:bg-surface-muted"><FileSpreadsheet className="size-4 text-brand" aria-hidden="true" />ورود از اکسل</Link> : null} />
 
       {canManage ? <QuickAddForm categories={categories} /> : null}
 

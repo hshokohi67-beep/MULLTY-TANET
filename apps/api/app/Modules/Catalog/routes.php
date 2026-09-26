@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Catalog\Http\Controllers\CatalogImportController;
 use App\Modules\Catalog\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Http\Controllers\ModifierGroupController;
 use App\Modules\Catalog\Http\Controllers\PricingController;
@@ -21,6 +22,10 @@ Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->p
     Route::post('categories/{category}/image', [CategoryController::class, 'uploadImage'])->middleware([$manage, 'throttle:uploads'])->name('categories.image');
     Route::delete('categories/{category}/image', [CategoryController::class, 'deleteImage'])->middleware($manage)->name('categories.image.destroy');
 
+    // «ورود از اکسل»: preview first, then import (creates products and sets prices).
+    Route::get('import/template', [CatalogImportController::class, 'template'])->middleware($view)->name('import.template');
+    Route::post('import/preview', [CatalogImportController::class, 'preview'])->middleware(['can:'.P::CATALOG_MANAGE, 'can:'.P::PRICES_MANAGE, 'throttle:uploads'])->name('import.preview');
+    Route::post('import', [CatalogImportController::class, 'store'])->middleware(['can:'.P::CATALOG_MANAGE, 'can:'.P::PRICES_MANAGE, 'throttle:uploads'])->name('import.store');
     Route::get('products', [ProductController::class, 'index'])->middleware($view)->name('products.index');
     Route::post('products', [ProductController::class, 'store'])->middleware(['can:'.P::CATALOG_MANAGE, 'can:'.P::PRICES_MANAGE])->name('products.store');
     Route::post('products/quick', [ProductController::class, 'quickAdd'])->middleware(['can:'.P::CATALOG_MANAGE, 'can:'.P::PRICES_MANAGE])->name('products.quick');
