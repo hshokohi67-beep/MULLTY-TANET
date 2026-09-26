@@ -1,5 +1,7 @@
 # Deploy: shared cPanel for the pilot, a VPS later
 
+> Persian version: [deploy.fa.md](deploy.fa.md). Keep both in sync.
+
 The app has three parts:
 
 - **API**: Laravel on PHP 8.4, with a queue and a per-minute scheduler.
