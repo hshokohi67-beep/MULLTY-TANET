@@ -42,6 +42,7 @@ final class TenantSettingsRegistry
             'goals.monthly_sales' => ['type' => 'int', 'secret' => false, 'label' => 'هدف فروش ماهانه (ریال)', 'rules' => ['integer', 'min:0', 'max:100000000000000'], 'default' => 0],
             'storefront.menu_look' => ['type' => 'string', 'secret' => false, 'label' => 'ظاهر منوی آنلاین', 'rules' => ['string', 'in:bright,night,warm,minimal,landing'], 'default' => 'bright'],
             'storefront.menu_layout' => ['type' => 'string', 'secret' => false, 'label' => 'چیدمان کارت‌های منو', 'rules' => ['string', 'in:list,grid,compact'], 'default' => 'list'],
+            'storefront.menu_categories' => ['type' => 'string', 'secret' => false, 'label' => 'جای دسته‌ها در منوی کامپیوتر', 'rules' => ['string', 'in:top,side'], 'default' => 'top'],
             'storefront.show_calories' => ['type' => 'bool', 'secret' => false, 'label' => 'نمایش کالری در منو', 'rules' => ['boolean'], 'default' => true],
             'storefront.show_popular' => ['type' => 'bool', 'secret' => false, 'label' => 'برچسب «پرفروش» روی محصولات', 'rules' => ['boolean'], 'default' => true],
             'storefront.suggestions' => ['type' => 'bool', 'secret' => false, 'label' => 'پیشنهاد محصولات کنار سفارش', 'rules' => ['boolean'], 'default' => true],

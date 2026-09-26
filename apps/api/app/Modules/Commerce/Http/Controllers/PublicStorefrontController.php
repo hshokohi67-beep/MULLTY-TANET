@@ -80,6 +80,7 @@ final class PublicStorefrontController
                 'menu' => [
                     'look' => (string) TenantSettings::get('storefront.menu_look'),
                     'layout' => (string) TenantSettings::get('storefront.menu_layout'),
+                    'categories' => (string) TenantSettings::get('storefront.menu_categories'),
                     'show_calories' => (bool) TenantSettings::get('storefront.show_calories'),
                 ],
             ],

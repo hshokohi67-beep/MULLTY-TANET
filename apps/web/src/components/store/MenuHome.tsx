@@ -132,7 +132,7 @@ export async function MenuHome({ tenant, store, query }: { tenant: string; store
         ) : null}
       </section>
 
-      {menu ? <MenuBrowser menu={menu} stories={stories} layout={store.features.menu?.layout ?? 'list'} showCalories={store.features.menu?.show_calories ?? true} /> : (
+      {menu ? <MenuBrowser menu={menu} stories={stories} layout={store.features.menu?.layout ?? 'list'} showCalories={store.features.menu?.show_calories ?? true} categoriesAt={store.features.menu?.categories ?? 'top'} /> : (
         <p className="py-16 text-center text-text-muted">منوی این کافه هنوز منتشر نشده است.</p>
       )}
     </>

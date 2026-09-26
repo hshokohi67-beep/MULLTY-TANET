@@ -15,6 +15,10 @@ const LOOKS: [string, string, string][] = [
   ['minimal', 'مینیمال', 'کارت‌های تخت و ساده، بدون سایه'],
   ['landing', 'مثل صفحه‌ی معرفی', 'همان حال‌وهوای صفحه‌ی معرفی کافه'],
 ];
+const CATEGORY_PLACES: [string, string, string][] = [
+  ['top', 'دسته‌ها بالای منو', 'نوار دسته‌ها روی جست‌وجو؛ منو پهن‌تر'],
+  ['side', 'ستون دسته‌ها کنار منو', 'فهرست دسته‌ها در ستونی کنار منو'],
+];
 const LAYOUTS: [string, string, string][] = [
   ['list', 'فهرستی', 'متن کنار عکس کوچک'],
   ['grid', 'شبکه‌ای', 'عکس بزرگ، دو یا سه ستون'],
@@ -38,6 +42,7 @@ export function MenuSettingsForm({ settings, readOnly }: { settings: SettingItem
   const byKey = Object.fromEntries(settings.map((s) => [s.key, s]));
   const look = String(byKey['storefront.menu_look']?.value ?? 'bright');
   const layout = String(byKey['storefront.menu_layout']?.value ?? 'list');
+  const categoryPlace = String(byKey['storefront.menu_categories']?.value ?? 'top');
   const on = (key: string) => byKey[key]?.value !== false;
 
   return (
@@ -53,6 +58,11 @@ export function MenuSettingsForm({ settings, readOnly }: { settings: SettingItem
           <div>
             <p className="mb-2 text-sm font-semibold">چیدمان کارت‌ها</p>
             <div className="grid gap-2 sm:grid-cols-3">{LAYOUTS.map(([v, l, h]) => <Pick key={v} name="storefront.menu_layout" value={v} label={l} hint={h} checked={layout === v} />)}</div>
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-semibold">جای دسته‌ها در کامپیوتر</p>
+            <div className="grid gap-2 sm:grid-cols-2">{CATEGORY_PLACES.map(([v, l, h]) => <Pick key={v} name="storefront.menu_categories" value={v} label={l} hint={h} checked={categoryPlace === v} />)}</div>
+            <p className="mt-1.5 text-xs text-text-subtle">در موبایل دسته‌ها همیشه بالای منو هستند.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <Checkbox label="نمایش کالری" name="storefront.show_calories" defaultChecked={on('storefront.show_calories')} hint="روی کارت‌ها، صفحه‌ی محصول و فیلتر کالری. کالری هر محصول را در ویرایش محصول وارد کنید." />

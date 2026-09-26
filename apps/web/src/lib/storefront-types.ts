@@ -48,7 +48,7 @@ export interface Storefront {
     wallet_payments: boolean;
     preorder_when_closed: boolean;
     /** The café's menu look ("landing" follows its landing page), card layout and calorie display. */
-    menu: { look: MenuLook; layout: MenuLayout; show_calories: boolean };
+    menu: { look: MenuLook; layout: MenuLayout; categories?: 'top' | 'side'; show_calories: boolean };
   };
 }
 

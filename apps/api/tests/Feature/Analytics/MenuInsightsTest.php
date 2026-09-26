@@ -95,14 +95,14 @@ final class MenuInsightsTest extends PaymentsTestCase
     public function test_menu_settings_are_published_with_the_storefront_and_validated(): void
     {
         $this->getJson('/api/v1/public/storefront', $this->publicHeaders())->assertOk()
-            ->assertJsonPath('data.features.menu', ['look' => 'bright', 'layout' => 'list', 'show_calories' => true]);
+            ->assertJsonPath('data.features.menu', ['look' => 'bright', 'layout' => 'list', 'categories' => 'top', 'show_calories' => true]);
 
         $h = $this->staffHeaders($this->owner, $this->tenant);
         $this->patchJson('/api/v1/tenant/settings', ['settings' => ['storefront.menu_look' => 'neon']], $h)->assertUnprocessable();
-        $this->patchJson('/api/v1/tenant/settings', ['settings' => ['storefront.menu_look' => 'landing', 'storefront.menu_layout' => 'grid', 'storefront.show_calories' => false]], $h)->assertOk();
+        $this->patchJson('/api/v1/tenant/settings', ['settings' => ['storefront.menu_look' => 'landing', 'storefront.menu_layout' => 'grid', 'storefront.menu_categories' => 'side', 'storefront.show_calories' => false]], $h)->assertOk();
 
         Cache::flush();
         $this->getJson('/api/v1/public/storefront', $this->publicHeaders())->assertOk()
-            ->assertJsonPath('data.features.menu', ['look' => 'landing', 'layout' => 'grid', 'show_calories' => false]);
+            ->assertJsonPath('data.features.menu', ['look' => 'landing', 'layout' => 'grid', 'categories' => 'side', 'show_calories' => false]);
     }
 }

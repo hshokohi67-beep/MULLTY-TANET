@@ -261,12 +261,14 @@ const MENU_LAYOUTS = ['list', 'grid', 'compact'];
 export async function updateMenuSettings(_prev: FormState, formData: FormData): Promise<FormState> {
   const look = String(formData.get('storefront.menu_look'));
   const layout = String(formData.get('storefront.menu_layout'));
+  const categories = String(formData.get('storefront.menu_categories'));
   try {
     await api('/tenant/settings', {
       method: 'PATCH',
       body: { settings: {
         'storefront.menu_look': MENU_LOOKS.includes(look) ? look : 'bright',
         'storefront.menu_layout': MENU_LAYOUTS.includes(layout) ? layout : 'list',
+        'storefront.menu_categories': categories === 'side' ? 'side' : 'top',
         'storefront.show_calories': formData.get('storefront.show_calories') === 'on',
         'storefront.show_popular': formData.get('storefront.show_popular') === 'on',
         'storefront.suggestions': formData.get('storefront.suggestions') === 'on',

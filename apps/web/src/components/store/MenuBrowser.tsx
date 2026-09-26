@@ -8,6 +8,7 @@ import { initialOf } from '@/components/explore/Art';
 import { applyMenuFilters, CALORIE_LABELS, caloriesUseful, isFiltering, menuTags, NO_FILTERS, SORT_LABELS, suggestionsFor, type MenuFilters } from '@/lib/menu-logic';
 import type { Menu, MenuLayout, MenuProduct, Mood, PublicStory } from '@/lib/storefront-types';
 import { CartPanel } from './menu/CartPanel';
+import { StoreInfoCard } from './menu/StoreInfoCard';
 import { FilterSheet } from './menu/FilterSheet';
 import { ProductCard, priceLabel } from './menu/ProductCard';
 import { ProductDetails } from './ProductDetails';
@@ -21,7 +22,7 @@ const OTHER = '__other';
 interface Section { id: string; name: string; mood: Mood | null; image: string | null; products: MenuProduct[] }
 
 const LISTS: Record<MenuLayout, string> = {
-  list: 'grid gap-3 md:grid-cols-2 lg:grid-cols-1',
+  list: 'grid gap-3 md:grid-cols-2',
   grid: 'grid grid-cols-2 gap-3 sm:grid-cols-3',
   compact: 'rounded-3xl border border-border bg-surface px-4',
 };
@@ -42,7 +43,14 @@ function CategoryIcon({ s, className }: { s: Section; className?: string }) {
  * category chips that follow your scroll), a featured row and product cards in the café's layout.
  * On wide screens: categories | menu | cart. Cards open a sheet in place (and stay real links).
  */
-export function MenuBrowser({ menu, stories, layout, showCalories }: { menu: Menu; stories: PublicStory[]; layout: MenuLayout; showCalories: boolean }) {
+export function MenuBrowser({ menu, stories, layout, showCalories, categoriesAt = 'top' }: {
+  menu: Menu;
+  stories: PublicStory[];
+  layout: MenuLayout;
+  showCalories: boolean;
+  /** Wide screens: categories in the sticky bar above the menu (default), or as a column beside it. */
+  categoriesAt?: 'top' | 'side';
+}) {
   const { tenant, store } = useStore();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<MenuFilters>(NO_FILTERS);
@@ -134,11 +142,16 @@ export function MenuBrowser({ menu, stories, layout, showCalories }: { menu: Men
   const branch = store.branches.find((b) => b.id === menu.branch.id) ?? store.branches[0];
   const filterCount = activeChips.length;
 
+  const side = categoriesAt === 'side' && sections.length > 1;
+  // In the side layout the middle column is narrower: list cards one per row there.
+  const list = side && layout === 'list' ? 'grid gap-3 md:grid-cols-2 lg:grid-cols-1' : LISTS[layout];
+
   return (
-    <div className="lg:mt-5 lg:grid lg:grid-cols-[11.5rem_minmax(0,1fr)_19rem] lg:items-start lg:gap-6">
-      {/* Wide screens: the category list on the side. */}
-      {sections.length > 1 ? (
-        <nav aria-label="دسته‌ها" className="sticky top-4 hidden max-h-[calc(100dvh-2rem)] flex-col gap-1 overflow-y-auto rounded-3xl border border-border bg-surface p-2 lg:flex">
+    <div className={cx('lg:mt-5 lg:grid lg:items-start lg:gap-6', side ? 'lg:grid-cols-[12.5rem_minmax(0,1fr)_19rem]' : 'lg:grid-cols-[minmax(0,1fr)_20rem]')}>
+      {/* Wide screens, side layout: the category list, then the café's details (no empty corner). */}
+      {side ? (
+        <div className="sticky top-4 hidden flex-col gap-4 lg:flex">
+        <nav aria-label="دسته‌ها" className="no-scrollbar flex max-h-[calc(100dvh-16rem)] flex-col gap-1 overflow-y-auto rounded-3xl border border-border bg-surface p-2">
           {sections.map((s) => (
             <a key={s.id} href={`#cat-${s.id}`} aria-current={active === s.id && !results ? 'true' : undefined} onClick={(e) => { e.preventDefault(); openCategory(s.id); }}
               className={cx('flex items-center gap-2.5 rounded-2xl px-2 py-1.5 text-sm transition-colors', active === s.id && !results ? 'bg-brand-soft font-semibold text-text' : 'text-text-muted hover:bg-surface-muted hover:text-text')}>
@@ -148,7 +161,9 @@ export function MenuBrowser({ menu, stories, layout, showCalories }: { menu: Men
             </a>
           ))}
         </nav>
-      ) : <div className="hidden lg:block" />}
+        <StoreInfoCard store={store} branch={branch} />
+        </div>
+      ) : null}
 
       <div className="min-w-0">
         {stories.length ? (
@@ -206,7 +221,7 @@ export function MenuBrowser({ menu, stories, layout, showCalories }: { menu: Men
           ) : null}
 
           {!results && sections.length > 1 ? (
-            <nav aria-label="دسته‌ها" ref={chipsRef} className="no-scrollbar -mx-4 mt-2.5 flex gap-2.5 overflow-x-auto px-4 pt-1 pb-3 lg:hidden">
+            <nav aria-label="دسته‌ها" ref={chipsRef} className={cx('no-scrollbar -mx-4 mt-2.5 flex gap-2.5 overflow-x-auto px-4 pt-1 pb-3 lg:mx-0 lg:px-0', side && 'lg:hidden')}>
               {sections.map((s) => {
                 const on = active === s.id;
 
@@ -238,7 +253,7 @@ export function MenuBrowser({ menu, stories, layout, showCalories }: { menu: Men
               {formatNumber(results.items.length)} مورد{query.trim() ? ` برای «${query.trim()}»` : ''}
               {results.unknownCalories ? <span className="mt-1 block text-xs text-text-subtle">{formatNumber(results.unknownCalories)} محصول کالری ثبت‌شده ندارند و در این نتیجه نیستند.</span> : null}
             </p>
-            {results.items.length ? <ul className={LISTS[layout]}>{results.items.map(card)}</ul> : (
+            {results.items.length ? <ul className={list}>{results.items.map(card)}</ul> : (
               <EmptyState icon={<Search />} title="چیزی پیدا نشد" description="فیلترها را کمتر کنید یا نام دیگری را امتحان کنید." />
             )}
           </section>
@@ -284,15 +299,16 @@ export function MenuBrowser({ menu, stories, layout, showCalories }: { menu: Men
                   <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">{formatNumber(s.products.length)} مورد</span>
                   <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-l from-border to-transparent" />
                 </h2>
-                <ul className={LISTS[layout]}>{s.products.map(card)}</ul>
+                <ul className={list}>{s.products.map(card)}</ul>
               </section>
             ))}
           </>
         )}
       </div>
 
-      <div className="sticky top-4 hidden lg:block">
+      <div className="sticky top-4 hidden flex-col gap-4 lg:flex">
         <CartPanel menu={menu} onOpen={setOpen} />
+        {side ? null : <StoreInfoCard store={store} branch={branch} />}
       </div>
 
       {sheet ? (
