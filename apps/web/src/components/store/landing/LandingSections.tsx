@@ -5,6 +5,7 @@ import { formatClock, formatMoney } from '@cafe/locale';
 import { MoodChip, ProductPhoto } from '@/components/store/ProductVisuals';
 import type { LandingDesign, PublicLanding } from '@/lib/landing-types';
 import type { Menu, MenuProduct, Storefront } from '@/lib/storefront-types';
+import { LandingDeals } from './LandingDeals';
 import { LandingGallery } from './LandingGallery';
 import { ArtLayer, Go, Heading, hoursToday, mapsHref, nth, todayIn } from './parts';
 
@@ -16,6 +17,13 @@ const Shell = ({ id, design, seed, tone, className, children }: { id: string; de
     <div className="mx-auto max-w-6xl px-5 @xl:px-8">{children}</div>
   </section>
 );
+
+/** Specials and menu offers (client-side: what is on depends on the moment). */
+export function DealsSection({ tenant, landing, menu, preview }: SectionProps) {
+  if (!menu?.deals || (menu.deals.offers.length === 0 && menu.deals.specials.length === 0)) return null;
+
+  return <LandingDeals tenant={tenant} landing={landing} menu={menu} preview={preview} />;
+}
 
 const paragraphs = (text: string) => text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 

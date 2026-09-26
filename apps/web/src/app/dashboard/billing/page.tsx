@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { CalendarClock, CreditCard, FileText, Lock, Package, Printer, Receipt, Sparkles } from 'lucide-react';
+import { CalendarClock, CreditCard, FileText, Gem, Lock, Package, Printer, Receipt } from 'lucide-react';
 import { Alert, Badge, Card, CardHeader, cx, EmptyState, type Tone } from '@cafe/ui';
 import { formatJalaliDate, formatMoney, formatNumber, toPersianDigits } from '@cafe/locale';
 import { PageHeader } from '@/components/PageHeader';
@@ -56,7 +56,7 @@ export default async function BillingPage({ searchParams }: PageProps<'/dashboar
           <div className="flex flex-col gap-5 p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand"><Sparkles className="size-6" aria-hidden="true" /></span>
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand"><Gem className="size-6" aria-hidden="true" /></span>
                 <div>
                   <p className="text-xs text-text-muted">پلن فعلی</p>
                   <p className="text-xl font-bold">{s.plan.name} <span className="text-sm font-normal text-text-muted">• {s.status === 'trialing' ? 'آزمایشی' : s.cycle === 'yearly' ? 'سالانه' : 'ماهانه'}</span></p>

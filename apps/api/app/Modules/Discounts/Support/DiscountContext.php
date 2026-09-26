@@ -10,7 +10,7 @@ use Carbon\CarbonImmutable;
 final readonly class DiscountContext
 {
     /**
-     * @param  list<array{product_id: string, category_ids: list<string>, line_total: int}>  $lines
+     * @param  list<array{product_id: string, category_ids: list<string>, line_total: int, unit_total?: int, quantity?: int}>  $lines
      */
     public function __construct(
         public string $branchId,

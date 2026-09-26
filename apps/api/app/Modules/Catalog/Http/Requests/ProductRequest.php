@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Http\Requests;
 
 use App\Modules\Catalog\Data\ProductData;
 use App\Modules\Catalog\Data\VariantData;
+use App\Modules\Catalog\Models\MenuTag;
 use App\Modules\Catalog\Models\Product;
 use App\Support\Validation\TenantExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -37,7 +38,17 @@ final class ProductRequest extends FormRequest
             'nutrition.caffeine_mg' => ['nullable', 'integer', 'between:0,1000'],
             'nutrition.protein_g' => ['nullable', 'integer', 'between:0,500'],
             'dietary_tags' => ['nullable', 'array', 'max:10'],
-            'dietary_tags.*' => ['string', 'distinct', Rule::in(array_keys(Product::DIETARY_TAGS))],
+            // The platform's tags or the café's own («c:{id}», see MenuTag).
+            'dietary_tags.*' => ['string', 'distinct', function (string $attribute, mixed $value, \Closure $fail): void {
+                $known = is_string($value) && (isset(Product::DIETARY_TAGS[$value])
+                    || (str_starts_with($value, MenuTag::PREFIX) && MenuTag::query()->whereKey(substr($value, strlen(MenuTag::PREFIX)))->exists()));
+                if (! $known) {
+                    $fail(__('validation.in', ['attribute' => $attribute]));
+                }
+            }],
+            // «پیشنهاد امروز» on these ISO weekdays (1 = Monday … 7 = Sunday); [] = never.
+            'special_days' => ['sometimes', 'nullable', 'array', 'max:7'],
+            'special_days.*' => ['integer', 'between:1,7', 'distinct'],
             ...self::variantRules($creating ? 'required' : 'sometimes'),
         ];
     }
@@ -93,6 +104,7 @@ final class ProductRequest extends FormRequest
             nutrition: isset($v['nutrition']) ? array_filter($v['nutrition'], fn ($x) => $x !== null) : null,
             dietaryTags: isset($v['dietary_tags']) ? array_values($v['dietary_tags']) : null,
             temperature: $v['temperature'] ?? null,
+            specialDays: array_key_exists('special_days', $v) ? array_values(array_map('intval', $v['special_days'] ?? [])) : null,
         );
     }
 

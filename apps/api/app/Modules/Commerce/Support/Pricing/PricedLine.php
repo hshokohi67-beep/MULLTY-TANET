@@ -3,6 +3,7 @@
 namespace App\Modules\Commerce\Support\Pricing;
 
 use App\Modules\Commerce\Exceptions\CommerceException;
+use App\Modules\Discounts\Support\AppliedDiscount;
 
 final class PricedLine
 {
@@ -24,7 +25,22 @@ final class PricedLine
         public readonly ?string $note,
         public readonly array $categoryIds,
         public readonly ?CommerceException $problem = null,
+        public readonly ?AppliedDiscount $offer = null,   // the menu offer on this line («نمایش روی منو»)
     ) {}
+
+    public function withOffer(AppliedDiscount $offer): self
+    {
+        return new self(
+            $this->ref, $this->productId, $this->variantId, $this->productName, $this->variantName, $this->unitPrice,
+            $this->modifiers, $this->modifiersTotal, $this->quantity, $this->lineTotal, $this->note, $this->categoryIds, $this->problem, $offer,
+        );
+    }
+
+    /** What the line costs after its menu offer. */
+    public function payable(): int
+    {
+        return $this->lineTotal - ($this->offer->amount ?? 0);
+    }
 
     public function isValid(): bool
     {
@@ -45,6 +61,7 @@ final class PricedLine
             'modifiers_total' => $this->modifiersTotal,
             'quantity' => $this->quantity,
             'line_total' => $this->lineTotal,
+            'offer' => $this->offer ? ['name' => $this->offer->discount->name, 'amount' => $this->offer->amount, 'line_total' => $this->payable()] : null,
             'note' => $this->note,
             'problem' => $this->problem ? ['code' => $this->problem->errorCode, 'message' => $this->problem->getMessage()] : null,
         ];

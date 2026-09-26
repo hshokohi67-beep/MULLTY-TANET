@@ -122,7 +122,7 @@ final class PlaceOrder
                 'discount_total' => $priced->discountTotal(),
                 'delivery_fee' => $priced->deliveryFee(),
                 'total' => $priced->total,
-                'discount_snapshot' => $discount?->snapshot(),
+                'discount_snapshot' => $priced->discountSnapshot($discount),
                 'idempotency_key' => $data->idempotencyKey,
                 'placed_at' => now(),
             ]);
@@ -154,6 +154,17 @@ final class PlaceOrder
                     'amount' => $discount->amount,
                 ]);
                 Discount::query()->whereKey($discount->discount->id)->increment('used_count');
+            }
+
+            // Menu offers: one usage row per discount (no limits to re-check: offers can't have any).
+            foreach ($priced->offersByDiscount() as $offer) {
+                DiscountUsage::query()->create([
+                    'discount_id' => $offer['discount_id'],
+                    'order_id' => $order->id,
+                    'customer_id' => $data->customer?->getKey(),
+                    'amount' => $offer['amount'],
+                ]);
+                Discount::query()->whereKey($offer['discount_id'])->increment('used_count');
             }
 
             OrderStatusHistory::query()->create([

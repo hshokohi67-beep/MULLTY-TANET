@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
-  Accessibility, BadgePercent, Bike, CigaretteOff, CreditCard, Laptop, MapPin, Megaphone, Moon, Music, PawPrint, Sparkles, SquareParking, Timer, Trees,
-  Users, Wifi, type LucideIcon,
+  Accessibility, Award, BadgePercent, Bike, CigaretteOff, CreditCard, Laptop, MapPin, Megaphone, Moon, Music, PawPrint, SquareParking, Timer, Trees, Users, Wifi, type LucideIcon,
 } from 'lucide-react';
 import { brandCss, cx } from '@cafe/ui';
 import { formatTime, toPersianDigits } from '@cafe/locale';
@@ -74,7 +73,7 @@ export function StoreCard({ s, priority = false }: { s: Card; priority?: boolean
           <span className="flex flex-wrap items-center gap-1.5">
             <OpenPill isOpen={s.is_open} next={s.next_opening_at} className="shadow-[var(--shadow-sm)]" />
             {s.ad ? <span className="glass-light inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold text-on-media"><Megaphone className="size-3" aria-hidden="true" />تبلیغ</span>
-              : s.is_featured ? <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand shadow-[var(--shadow-sm)]"><Sparkles className="size-3" aria-hidden="true" />ویژه</span> : null}
+              : s.is_featured ? <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand shadow-[var(--shadow-sm)]"><Award className="size-3" aria-hidden="true" />ویژه</span> : null}
           </span>
           <FavoriteButton store={s.store} name={s.name} />
         </div>
@@ -120,7 +119,7 @@ export function SpotlightCard({ s, priority = false }: { s: Card; priority?: boo
       <div className="absolute inset-0"><Visual s={s} size="lg" priority={priority} /></div>
       <div className="absolute inset-0 bg-gradient-to-t from-scrim via-scrim/30 to-transparent" aria-hidden="true" />
       <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-        <span className="glass-light inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-on-media"><Sparkles className="size-3.5" aria-hidden="true" />ویژه</span>
+        <span className="glass-light inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-on-media"><Award className="size-3.5" aria-hidden="true" />ویژه</span>
         <FavoriteButton store={s.store} name={s.name} />
       </div>
       <div className="relative mt-auto flex w-full flex-col gap-2 p-4 text-on-media sm:p-5">

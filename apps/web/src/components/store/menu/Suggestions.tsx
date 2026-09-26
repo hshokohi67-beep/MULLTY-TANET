@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
+import { HandPlatter } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import type { MenuProduct } from '@/lib/storefront-types';
 import { MoodChip, ProductPhoto } from '../ProductVisuals';
 import { useStore } from '../StoreProvider';
-import { priceLabel } from './ProductCard';
+import { DealPrice } from '../deals/DealPrice';
+import { useDeals } from '../deals/DealsProvider';
 import { QuickAdd } from './QuickAdd';
 
 /**
@@ -22,13 +23,14 @@ export function Suggestions({ title, products, branchId, onOpen, className }: {
   className?: string;
 }) {
   const { tenant } = useStore();
+  const deals = useDeals();
   const router = useRouter();
   const page = (p: MenuProduct) => `/s/${tenant}/p/${encodeURIComponent(p.slug)}`;
   if (products.length === 0) return null;
 
   return (
     <section aria-label={title} className={cx('flex flex-col gap-2.5', className)}>
-      <h2 className="flex items-center gap-1.5 text-sm font-bold"><Sparkles className="size-4 text-accent" aria-hidden="true" />{title}</h2>
+      <h2 className="flex items-center gap-1.5 text-sm font-bold"><HandPlatter className="size-4 text-accent" aria-hidden="true" />{title}</h2>
       <ul className="grid gap-2">
         {products.map((p) => (
           <li key={p.id} data-mood={p.temperature ?? undefined} className="relative flex items-center gap-3 rounded-2xl border border-border bg-surface p-2">
@@ -39,7 +41,7 @@ export function Suggestions({ title, products, branchId, onOpen, className }: {
               ) : (
                 <Link href={page(p)} className="truncate text-sm font-semibold after:absolute after:inset-0 after:rounded-2xl">{p.name}</Link>
               )}
-              <span className="flex items-center gap-1.5 text-xs text-text-muted"><span className="tabular">{priceLabel(p)}</span><MoodChip mood={p.temperature} /></span>
+              <span className="flex items-center gap-1.5 text-xs text-text-muted"><DealPrice product={p} deal={deals.get(p.id) ?? null} strongClass="" /><MoodChip mood={p.temperature} /></span>
             </div>
             <QuickAdd product={p} branchId={branchId} onOptions={() => (onOpen ? onOpen(p) : router.push(page(p)))} className="relative z-10 shadow-none ring-0" />
           </li>

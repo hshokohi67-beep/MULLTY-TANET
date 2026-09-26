@@ -4,10 +4,13 @@ namespace App\Modules\Discounts\Http\Requests;
 
 use App\Modules\Commerce\Enums\OrderType;
 use App\Modules\Discounts\Enums\DiscountKind;
+use App\Modules\Discounts\Models\Discount;
+use App\Modules\Discounts\Support\MenuOffers;
 use App\Support\Tenancy\TenantContext;
 use App\Support\Validation\TenantExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 final class DiscountRequest extends FormRequest
 {
@@ -46,6 +49,7 @@ final class DiscountRequest extends FormRequest
             'usage_limit' => ['nullable', 'integer', 'min:1', 'max:10000000'],
             'per_customer_limit' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'is_active' => ['sometimes', 'boolean'],
+            'show_on_menu' => ['sometimes', 'boolean'],
             'priority' => ['nullable', 'integer', 'between:-100,100'],
             'rules' => ['sometimes', 'array', 'max:200'],
             'rules.product_ids' => ['sometimes', 'array'],
@@ -61,5 +65,27 @@ final class DiscountRequest extends FormRequest
             'rules.tier_ids' => ['sometimes', 'array', 'max:20'],
             'rules.tier_ids.*' => ['string', TenantExists::in('loyalty_tiers')],
         ];
+    }
+
+    /** @return list<callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $v): void {
+            if (! $this->boolean('show_on_menu') || $v->errors()->isNotEmpty()) {
+                return;
+            }
+            // Rules may be left out of an update (they are kept): check against the saved ones then.
+            $discount = $this->route('discount');
+            $saved = $discount instanceof Discount ? [
+                'product_ids' => $discount->rules()->where('rule_type', 'product')->pluck('target')->all(),
+                'category_ids' => $discount->rules()->where('rule_type', 'category')->pluck('target')->all(),
+            ] : [];
+            $data = $this->all();
+            $data['rules'] = $this->has('rules') ? (array) $this->input('rules') : $saved;
+
+            foreach (MenuOffers::problems($data) as $problem) {
+                $v->errors()->add('show_on_menu', $problem);
+            }
+        }];
     }
 }

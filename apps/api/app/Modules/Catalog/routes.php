@@ -2,6 +2,7 @@
 
 use App\Modules\Catalog\Http\Controllers\CatalogImportController;
 use App\Modules\Catalog\Http\Controllers\CategoryController;
+use App\Modules\Catalog\Http\Controllers\MenuTagController;
 use App\Modules\Catalog\Http\Controllers\ModifierGroupController;
 use App\Modules\Catalog\Http\Controllers\PricingController;
 use App\Modules\Catalog\Http\Controllers\ProductController;
@@ -38,6 +39,11 @@ Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->p
     Route::put('products/{product}/availability', [ProductController::class, 'setAvailability'])->middleware('can:'.P::AVAILABILITY_MANAGE)->name('products.availability');
     Route::post('products/{product}/images', [ProductController::class, 'uploadImage'])->middleware([$manage, 'throttle:uploads'])->name('products.images.store');
     Route::delete('products/{product}/images/{image}', [ProductController::class, 'deleteImage'])->middleware($manage)->name('products.images.destroy');
+
+    // Diet/allergy tags: the platform's list plus the café's own.
+    Route::get('menu-tags', [MenuTagController::class, 'index'])->middleware($view)->name('menu-tags.index');
+    Route::post('menu-tags', [MenuTagController::class, 'store'])->middleware($manage)->name('menu-tags.store');
+    Route::delete('menu-tags/{menuTag}', [MenuTagController::class, 'destroy'])->middleware($manage)->name('menu-tags.destroy');
 
     Route::get('modifier-groups', [ModifierGroupController::class, 'index'])->middleware($view)->name('modifier-groups.index');
     Route::post('modifier-groups', [ModifierGroupController::class, 'store'])->middleware($manage)->name('modifier-groups.store');

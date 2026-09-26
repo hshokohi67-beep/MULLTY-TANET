@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense, type ReactNode } from 'react';
 import {
-  ArrowLeft, BadgePercent, Bike, ChevronLeft, ChevronRight, Clock, Compass, CreditCard, EggFried, Laptop, Leaf, List, Map as MapIcon, Moon, PiggyBank,
-  SearchX, Sparkles, Timer, Trees, Trophy, Truck, WheatOff, type LucideIcon,
+  ArrowLeft, Award, BadgePercent, Bike, ChevronLeft, ChevronRight, Clock, Compass, CreditCard, EggFried, Laptop, Leaf, List, Map as MapIcon, Moon, PiggyBank, SearchX, ShoppingBag, Timer, Trees, Trophy, Truck, WheatOff, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatNumber, toPersianDigits } from '@cafe/locale';
@@ -27,7 +26,7 @@ const LISTS = ['amenities', 'dietary', 'stores'] as const;
 const QUICK: { key: string; value?: string; label: string; icon: LucideIcon; list?: 'dietary' }[] = [
   { key: 'open_now', label: 'الان باز است', icon: Clock },
   { key: 'offers', label: 'تخفیف‌دار', icon: BadgePercent },
-  { key: 'featured', label: 'ویژه', icon: Sparkles },
+  { key: 'featured', label: 'ویژه', icon: Award },
   { key: 'price', value: '1', label: 'اقتصادی', icon: PiggyBank },
   { key: 'delivery', label: 'ارسال با پیک', icon: Bike },
   { key: 'free_delivery', label: 'ارسال رایگان', icon: Truck },
@@ -146,7 +145,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
                   <span className="relative flex size-2.5" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-50" /><span className="relative inline-flex size-2.5 rounded-full bg-success" /></span>
                   <span><b className="text-text">{toPersianDigits(home.open_now)}</b> مکان همین حالا باز است</span>
                 </li>
-                <li className="inline-flex items-center gap-2"><Sparkles className="size-4 text-accent" aria-hidden="true" />سفارش آنلاین، بدون واسطه</li>
+                <li className="inline-flex items-center gap-2"><ShoppingBag className="size-4 text-accent" aria-hidden="true" />سفارش آنلاین، بدون واسطه</li>
               </ul>
             ) : null}
           </div>
@@ -234,7 +233,7 @@ export default async function ExplorePage({ searchParams }: PageProps<'/explore'
           <>
             {home.featured.length ? (
               <section aria-labelledby="featured" className="flex flex-col gap-5">
-                <SectionHead id="featured" title="ویژه‌های خوراک‌گردی" subtitle="جاهایی که این روزها باید سر زد" icon={Sparkles} tone="accent" />
+                <SectionHead id="featured" title="ویژه‌های خوراک‌گردی" subtitle="جاهایی که این روزها باید سر زد" icon={Award} tone="accent" />
                 {home.featured.length <= 3 ? (
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{home.featured.map((s, i) => <SpotlightCard key={s.store} s={s} priority={i < 2} />)}</div>
                 ) : (

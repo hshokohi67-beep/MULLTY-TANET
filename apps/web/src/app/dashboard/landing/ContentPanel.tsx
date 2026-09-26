@@ -206,6 +206,17 @@ function SectionFields({ section, content, setContent, products, galleryCount, o
         </>
       );
 
+    case 'deals':
+      return (
+        <>
+          <TextField label="عنوان بخش" maxLength={80} value={content.deals.title ?? ''} onChange={(e) => setContent('deals', { title: e.target.value || null })} />
+          <p className="text-sm text-text-muted">
+            محصول‌ها خودکار می‌آیند: تخفیف‌هایی که «نمایش روی منو» دارند (با قیمت خط‌خورده و زمان باقی‌مانده) و محصولاتی که امروز «پیشنهاد روز» هستند.{' '}
+            <a href="/dashboard/discounts" className="font-semibold text-brand hover:underline">تخفیف‌ها</a>
+          </p>
+        </>
+      );
+
     case 'visit':
       return (
         <>

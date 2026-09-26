@@ -15,9 +15,9 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * The single place discounts are decided (never in controllers).
  *
- * V1 policy: one discount per order, either the customer's coupon or else the automatic
- * discount worth the most (ties → higher priority). No stacking. Other policies
- * (stacking, loyalty-tier discounts, BOGO) are extension points behind this class.
+ * Policy: first, menu offers (`MenuOffers`: shown on the cards) take their amount off each
+ * item, every line its best offer. Then one discount per order, on the reduced lines: either the
+ * customer's coupon or else the automatic discount worth the most (ties → higher priority).
  */
 final class DiscountEngine
 {
@@ -29,6 +29,40 @@ final class DiscountEngine
         }
 
         return $this->bestAutomatic($context);
+    }
+
+    /**
+     * The best menu offer of each line, keyed by the line's index in `$context->lines`.
+     * Lines need `unit_total` (unit + modifiers) and `quantity`; the amount is per unit × quantity,
+     * the same formula as the price on the card.
+     *
+     * @return array<int, AppliedDiscount>
+     */
+    public function menuOffers(DiscountContext $context): array
+    {
+        $offers = Discount::query()->with('rules')->whereNull('code')->where('is_active', true)->where('show_on_menu', true)->get()
+            ->filter(fn (Discount $d) => MenuOffers::qualifies($d) && MenuOffers::appliesToBranch($d, $context->branchId) && $this->activeAt($d, $context));
+
+        $applied = [];
+        foreach ($context->lines as $i => $line) {
+            $unit = $line['unit_total'] ?? $line['line_total'];
+            $quantity = $line['quantity'] ?? 1;
+            $best = null;
+            foreach ($offers as $offer) {
+                if (! MenuOffers::appliesToItem($offer, $line['product_id'], $line['category_ids'])) {
+                    continue;
+                }
+                $amount = MenuOffers::unitAmount($offer, $unit) * $quantity;
+                if ($amount > 0 && ($best === null || $amount > $best->amount || ($amount === $best->amount && $offer->priority > $best->discount->priority))) {
+                    $best = new AppliedDiscount($offer, $amount, $line['line_total']);
+                }
+            }
+            if ($best !== null) {
+                $applied[$i] = $best;
+            }
+        }
+
+        return $applied;
     }
 
     private function applyCoupon(DiscountContext $context, string $code): AppliedDiscount
@@ -68,6 +102,10 @@ final class DiscountEngine
         $best = null;
 
         foreach ($candidates as $discount) {
+            if (MenuOffers::qualifies($discount)) {
+                continue; // applied per item by menuOffers()
+            }
+
             if (! $this->activeAt($discount, $context) || $context->subtotal < $discount->min_order) {
                 continue;
             }

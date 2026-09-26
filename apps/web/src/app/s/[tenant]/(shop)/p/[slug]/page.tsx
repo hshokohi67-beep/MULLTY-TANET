@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
+import { DealsProvider } from '@/components/store/deals/DealsProvider';
 import { ProductDetails } from '@/components/store/ProductDetails';
 import { suggestionsFor } from '@/lib/menu-logic';
 import { getMenu, getStorefront, storeUrl } from '@/lib/storefront';
@@ -36,6 +37,9 @@ export default async function ProductPage({ params }: PageProps<'/s/[tenant]/p/[
   if (!data) notFound();
   const { store, menu, product } = data;
   const category = menu.categories.find((c) => product.category_ids.includes(c.id));
+  const suggestions = suggestionsFor(menu, [product.id]);
+  // Offers only need these products (and the deals): keep the page's payload small.
+  const dealsMenu = { ...menu, categories: [], products: [product, ...suggestions] };
 
   const jsonLd = [
     {
@@ -75,7 +79,9 @@ export default async function ProductPage({ params }: PageProps<'/s/[tenant]/p/[
       </nav>
       <article className="rounded-3xl border border-border bg-surface px-5 pt-5 pb-4 shadow-[var(--shadow-sm)]">
         <h1 className="mb-4 text-2xl font-bold">{product.name}</h1>
-        <ProductDetails product={product} branchId={menu.branch.id} showCalories={store.features.menu.show_calories} suggestions={suggestionsFor(menu, [product.id])} />
+        <DealsProvider menu={dealsMenu} tenant={tenant}>
+          <ProductDetails product={product} branchId={menu.branch.id} showCalories={store.features.menu.show_calories} suggestions={suggestions} />
+        </DealsProvider>
       </article>
     </div>
   );

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Storefront;
 
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Storefront\Models\StorefrontLanding;
 use App\Modules\Storefront\Models\StorefrontMedia;
 use App\Modules\Storefront\Support\LandingSchema;
 use Illuminate\Http\UploadedFile;
@@ -66,7 +67,8 @@ final class LandingTest extends CommerceTestCase
             ->assertJsonPath('data.is_published', false)
             ->assertJsonPath('data.design', LandingSchema::defaultDesign())
             ->assertJsonPath('data.content.hero.title', $this->tenant->name)
-            ->assertJsonPath('data.sections.0', ['key' => 'story', 'visible' => true]);
+            ->assertJsonPath('data.sections.0', ['key' => 'deals', 'visible' => true])
+            ->assertJsonPath('data.sections.1', ['key' => 'story', 'visible' => true]);
 
         $page = $this->page([
             'design' => ['template' => 'warm', 'hero' => 'split', 'font' => 'samim', 'texture' => 'dots'],
@@ -97,6 +99,26 @@ final class LandingTest extends CommerceTestCase
 
         $this->save([...$page, 'is_published' => false])->assertOk();
         $this->getJson('/api/v1/public/landing', $this->publicHeaders())->assertNotFound();
+    }
+
+    public function test_pages_saved_before_the_deals_section_get_it_first_and_can_be_saved_again(): void
+    {
+        $this->save($this->page())->assertOk();
+        // As stored before «پیشنهاد امروز و تخفیف‌ها» existed: no deals content, six sections.
+        $this->inTenant($this->tenant, function (): void {
+            $landing = StorefrontLanding::query()->sole();
+            $content = $landing->content;
+            unset($content['deals']);
+            $landing->content = $content;
+            $landing->sections = array_values(array_filter($landing->sections, fn (array $s) => $s['key'] !== 'deals'));
+            $landing->save();
+        });
+
+        $page = $this->page();
+        $this->assertSame(['variant' => 'slider', 'title' => 'پیشنهاد امروز و تخفیف‌ها'], $page['content']['deals']);
+        $this->assertSame(['key' => 'deals', 'visible' => true], $page['sections'][0]);
+        $this->save($page)->assertOk();
+        $this->getJson('/api/v1/public/landing', $this->publicHeaders())->assertOk()->assertJsonPath('data.content.deals.variant', 'slider');
     }
 
     public function test_only_known_options_and_own_products_are_accepted(): void

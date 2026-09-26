@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createElement } from 'react';
-import { ArrowRight, BadgePercent, Bike, Leaf, Clock, Coffee, CreditCard, MapPin, Navigation, Phone, ShoppingBag, Sparkles, Timer, UtensilsCrossed } from 'lucide-react';
+import { ArrowRight, Award, BadgePercent, Bike, Clock, Coffee, CreditCard, Leaf, MapPin, Navigation, Phone, ShoppingBag, Timer, UtensilsCrossed } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatMoney, formatPhone, toPersianDigits } from '@cafe/locale';
 import { CoverArt, Logo } from '@/components/explore/Art';
@@ -61,7 +61,7 @@ export default async function StorePage({ params }: PageProps<'/explore/[store]'
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-black sm:text-3xl">{s.name}</h1>
-              {s.is_featured ? <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand"><Sparkles className="size-3" aria-hidden="true" />ویژه</span> : null}
+              {s.is_featured ? <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand"><Award className="size-3" aria-hidden="true" />ویژه</span> : null}
             </div>
             {s.headline ? <p className="mt-1 text-text-muted">{s.headline}</p> : null}
             <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">

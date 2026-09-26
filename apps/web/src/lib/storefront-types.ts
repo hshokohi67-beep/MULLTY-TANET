@@ -33,7 +33,7 @@ export interface StoreBranch {
 }
 
 export type MenuLook = 'bright' | 'night' | 'warm' | 'minimal' | 'landing';
-export type MenuLayout = 'list' | 'grid' | 'compact';
+export type MenuLayout = 'list' | 'duo' | 'grid' | 'compact';
 
 export interface Storefront {
   name: string;
@@ -48,7 +48,7 @@ export interface Storefront {
     wallet_payments: boolean;
     preorder_when_closed: boolean;
     /** The café's menu look ("landing" follows its landing page), card layout and calorie display. */
-    menu: { look: MenuLook; layout: MenuLayout; categories?: 'top' | 'side'; show_calories: boolean };
+    menu: { look: MenuLook; layout: MenuLayout; categories?: 'top' | 'side'; show_calories: boolean; show_deals?: boolean };
   };
 }
 
@@ -61,6 +61,8 @@ export interface MenuProduct {
   name: string;
   description: string | null;
   is_featured: boolean;
+  /** ISO weekdays on which it is «پیشنهاد امروز» (whether it is today comes from `deals.specials`). */
+  special_days?: number[];
   temperature: Mood | null;
   is_available: boolean;
   category_ids: string[];
@@ -80,7 +82,27 @@ export interface Menu {
   products: MenuProduct[];
   /** Best sellers and "bought together" pairs (empty when the café hides them or has no data yet). */
   insights: { popular: string[]; pairs: Record<string, string[]> };
+  /** Menu offers and today's specials; windows are UTC instants (null = open-ended). See lib/deals. */
+  deals?: MenuDeals;
   generated_at: string;
+}
+
+export interface DealWindow { from: string | null; to: string | null }
+
+export interface MenuOffer {
+  id: string;
+  label: string;
+  kind: 'percent' | 'fixed';
+  /** percent: basis points (2000 = 20٪) • fixed: rial off each item */
+  value: number;
+  priority: number;
+  product_ids: string[];
+  windows: DealWindow[];
+}
+
+export interface MenuDeals {
+  offers: MenuOffer[];
+  specials: { product_id: string; windows: DealWindow[] }[];
 }
 
 export interface QuoteLine {
@@ -94,6 +116,8 @@ export interface QuoteLine {
   modifiers_total: number;
   quantity: number;
   line_total: number;
+  /** The menu offer on this line: what it takes off and what the line costs after it. */
+  offer?: { name: string; amount: number; line_total: number } | null;
   note: string | null;
   problem: { code: string; message: string } | null;
 }
@@ -102,6 +126,9 @@ export interface Quote {
   lines: QuoteLine[];
   subtotal: number;
   discount: { name: string; code: string | null; amount: number } | null;
+  /** Menu offers summed per offer (they come on top of the one discount above). */
+  offers?: { name: string; amount: number }[];
+  discount_total?: number;
   delivery: { zone_name: string; distance_m: number; fee: number; free_delivery_applied: boolean; free_delivery_min: number | null; min_order: number; eta_minutes: number | null } | null;
   delivery_fee: number;
   total: number;

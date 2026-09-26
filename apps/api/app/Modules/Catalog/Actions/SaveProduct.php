@@ -41,6 +41,11 @@ final class SaveProduct
                 'dietary_tags' => $data->dietaryTags,
                 'temperature' => $data->temperature,
             ]);
+            if ($data->specialDays !== null) {
+                $days = array_values(array_unique($data->specialDays));
+                sort($days);
+                $product->special_days = $days === [] ? null : $days;
+            }
 
             if ($isNew) {
                 $product->slug = Slugger::unique($data->name, fn (string $s) => Product::withTrashed()->where('slug', $s)->exists());

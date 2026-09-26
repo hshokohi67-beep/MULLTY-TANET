@@ -31,6 +31,7 @@ final class DiscountResource extends JsonResource
             'per_customer_limit' => $this->per_customer_limit,
             'used_count' => $this->used_count,
             'is_active' => $this->is_active,
+            'show_on_menu' => $this->show_on_menu,
             'priority' => $this->priority,
             'rules' => $this->whenLoaded('rules', fn () => $this->rules->map(fn (DiscountRule $r) => ['type' => $r->rule_type->value, 'target' => $r->target])->values()),
         ];

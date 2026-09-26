@@ -1,7 +1,7 @@
 'use client';
 
 import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Flame, Search, SlidersHorizontal, Snowflake, Sparkles, X } from 'lucide-react';
+import { Flame, Search, SlidersHorizontal, Snowflake, ThumbsUp, X } from 'lucide-react';
 import { cx, Dialog, EmptyState } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
 import { initialOf } from '@/components/explore/Art';
@@ -10,7 +10,12 @@ import type { Menu, MenuLayout, MenuProduct, Mood, PublicStory } from '@/lib/sto
 import { CartPanel } from './menu/CartPanel';
 import { StoreInfoCard } from './menu/StoreInfoCard';
 import { FilterSheet } from './menu/FilterSheet';
-import { ProductCard, priceLabel } from './menu/ProductCard';
+import { ProductCard } from './menu/ProductCard';
+import { DealPrice } from './deals/DealPrice';
+import { DealsProvider, useDeal } from './deals/DealsProvider';
+import { DealsSlider } from './deals/DealsSlider';
+import { QuickAdd } from './menu/QuickAdd';
+import { ScrollRow } from './ScrollRow';
 import { ProductDetails } from './ProductDetails';
 import { hasPhoto, illustrationFor, MoodChip, ProductPhoto } from './ProductVisuals';
 import { variantOf } from './StoreArt';
@@ -23,6 +28,7 @@ interface Section { id: string; name: string; mood: Mood | null; image: string |
 
 const LISTS: Record<MenuLayout, string> = {
   list: 'grid gap-3 md:grid-cols-2',
+  duo: 'grid grid-cols-2 gap-x-3 gap-y-3',
   grid: 'grid grid-cols-2 gap-3 sm:grid-cols-3',
   compact: 'rounded-3xl border border-border bg-surface px-4',
 };
@@ -38,16 +44,47 @@ function CategoryIcon({ s, className }: { s: Section; className?: string }) {
   );
 }
 
+/** A «پیشنهاد ما» tile: photo-led, with the offer price when one is on. */
+function FeaturedTile({ product: p, onOpen }: { product: MenuProduct; onOpen: (p: MenuProduct) => void }) {
+  const deal = useDeal(p.id);
+
+  return (
+    <button type="button" onClick={() => onOpen(p)} className="relative block w-full rounded-3xl text-start focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none">
+      <ProductPhoto product={p} sizes="tile" className="aspect-[4/5] w-full rounded-3xl" />
+      {hasPhoto(p) ? (
+        // Over a photo: the scrim keeps the text readable.
+        <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 rounded-b-3xl bg-gradient-to-t from-scrim via-scrim/40 to-transparent p-3 pt-10 text-on-media">
+          <span className="truncate text-sm font-bold">{p.name}</span>
+          <span className="w-fit rounded-full bg-on-media/20 px-2 py-0.5 text-xs backdrop-blur-sm [&_s]:text-on-media-muted"><DealPrice product={p} deal={deal} strongClass="font-semibold" /></span>
+        </span>
+      ) : (
+        <span className="flex flex-col gap-1 px-1 pt-2.5 pb-1">
+          <span className="flex items-center gap-1.5 truncate text-sm font-bold">{p.name}<MoodChip mood={p.temperature} /></span>
+          <span className="text-xs text-text-muted"><DealPrice product={p} deal={deal} strongClass="font-semibold" /></span>
+        </span>
+      )}
+    </button>
+  );
+}
+
 /**
  * The menu: stories, a sticky bar (the café's name once the hero scrolls away, search, filters and
  * category chips that follow your scroll), a featured row and product cards in the café's layout.
  * On wide screens: categories | menu | cart. Cards open a sheet in place (and stay real links).
  */
-export function MenuBrowser({ menu, stories, layout, showCalories, categoriesAt = 'top' }: {
+export function MenuBrowser(props: Parameters<typeof MenuContent>[0]) {
+  const { tenant } = useStore();
+
+  return <DealsProvider menu={props.menu} tenant={tenant}><MenuContent {...props} /></DealsProvider>;
+}
+
+function MenuContent({ menu, stories, layout, showCalories, showDeals = true, categoriesAt = 'top' }: {
   menu: Menu;
   stories: PublicStory[];
   layout: MenuLayout;
   showCalories: boolean;
+  /** «پیشنهاد امروز و تخفیف‌ها» slider above the menu (prices on cards show offers either way). */
+  showDeals?: boolean;
   /** Wide screens: categories in the sticky bar above the menu (default), or as a column beside it. */
   categoriesAt?: 'top' | 'side';
 }) {
@@ -58,7 +95,7 @@ export function MenuBrowser({ menu, stories, layout, showCalories, categoriesAt 
   const [open, setOpen] = useState<MenuProduct | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [compact, setCompact] = useState(false);
-  const chipsRef = useRef<HTMLDivElement>(null);
+  const chipsRef = useRef<HTMLElement>(null);
 
   const popular = useMemo(() => new Set(menu.insights?.popular ?? []), [menu.insights]);
   const calories = showCalories && caloriesUseful(menu.products);
@@ -221,7 +258,7 @@ export function MenuBrowser({ menu, stories, layout, showCalories, categoriesAt 
           ) : null}
 
           {!results && sections.length > 1 ? (
-            <nav aria-label="دسته‌ها" ref={chipsRef} className={cx('no-scrollbar -mx-4 mt-2.5 flex gap-2.5 overflow-x-auto px-4 pt-1 pb-3 lg:mx-0 lg:px-0', side && 'lg:hidden')}>
+            <ScrollRow as="nav" label="دسته‌ها" ref={chipsRef} wrapperClassName={cx(side && 'lg:hidden')} className="-mx-4 mt-2.5 flex gap-2.5 px-4 pt-1 pb-3 lg:mx-0 lg:px-0">
               {sections.map((s) => {
                 const on = active === s.id;
 
@@ -243,7 +280,7 @@ export function MenuBrowser({ menu, stories, layout, showCalories, categoriesAt 
                   </a>
                 );
               })}
-            </nav>
+            </ScrollRow>
           ) : <div className="h-3" />}
         </div>
 
@@ -259,33 +296,24 @@ export function MenuBrowser({ menu, stories, layout, showCalories, categoriesAt 
           </section>
         ) : (
           <>
+            {showDeals ? (
+              <DealsSlider menu={menu} open={setOpen} className="mt-5"
+                action={(p) => <QuickAdd product={p} branchId={menu.branch.id} onOptions={() => setOpen(p)} />} />
+            ) : null}
+
             {featured.length > 0 ? (
               <section aria-labelledby="featured-title" className="mt-5">
                 <h2 id="featured-title" className="mb-3 flex items-center gap-2 text-lg font-bold">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-accent-soft text-accent"><Sparkles className="size-4" aria-hidden="true" /></span>
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-accent-soft text-accent"><ThumbsUp className="size-4" aria-hidden="true" /></span>
                   پیشنهاد ما
                 </h2>
-                <ul className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 pt-1 lg:mx-0 lg:px-0">
+                <ScrollRow as="ul" label="پیشنهاد ما" className="-mx-4 flex snap-x snap-mandatory gap-3 px-4 pb-3 pt-1 lg:mx-0 lg:px-0">
                   {featured.map((p) => (
                     <li key={p.id} data-mood={p.temperature ?? undefined} className="w-44 shrink-0 snap-start">
-                      <button type="button" onClick={() => setOpen(p)} className="relative block w-full rounded-3xl text-start focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none">
-                        <ProductPhoto product={p} sizes="tile" className="aspect-[4/5] w-full rounded-3xl" />
-                        {hasPhoto(p) ? (
-                          // Over a photo: the scrim keeps the text readable.
-                          <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 rounded-b-3xl bg-gradient-to-t from-scrim via-scrim/40 to-transparent p-3 pt-10 text-on-media">
-                            <span className="truncate text-sm font-bold">{p.name}</span>
-                            <span className="tabular w-fit rounded-full bg-on-media/20 px-2 py-0.5 text-xs font-semibold backdrop-blur-sm">{priceLabel(p)}</span>
-                          </span>
-                        ) : (
-                          <span className="flex flex-col gap-1 px-1 pt-2.5 pb-1">
-                            <span className="flex items-center gap-1.5 truncate text-sm font-bold">{p.name}<MoodChip mood={p.temperature} /></span>
-                            <span className="tabular text-xs font-semibold text-text-muted">{priceLabel(p)}</span>
-                          </span>
-                        )}
-                      </button>
+                      <FeaturedTile product={p} onOpen={setOpen} />
                     </li>
                   ))}
-                </ul>
+                </ScrollRow>
               </section>
             ) : null}
 

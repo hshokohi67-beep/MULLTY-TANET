@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
-import { Compass, EyeOff, Eye, Sparkles } from 'lucide-react';
+import { Award, Compass, Eye, EyeOff } from 'lucide-react';
 import { Badge, Button, Card, Dialog, EmptyState, TextField } from '@cafe/ui';
 import { formatJalaliDate, toPersianDigits } from '@cafe/locale';
 import { moderate } from '@/app/actions/marketplace';
@@ -56,7 +56,7 @@ export function ModerationTable({ rows }: { rows: ListingRow[] }) {
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
                     {r.live_branches ? <Link href={`/explore/${r.tenant.slug}`} target="_blank" className="inline-flex h-8 items-center rounded-lg px-2.5 text-sm text-brand hover:bg-brand-soft">مشاهده</Link> : null}
-                    <Button size="sm" variant="ghost" icon={<Sparkles />} onClick={() => setAction({ kind: 'feature', row: r })}>ویژه</Button>
+                    <Button size="sm" variant="ghost" icon={<Award />} onClick={() => setAction({ kind: 'feature', row: r })}>ویژه</Button>
                     {r.hidden_at
                       ? <Button size="sm" variant="secondary" icon={<Eye />} loading={pending} onClick={() => run(r.tenant.id, 'unhide', null)}>نمایش دوباره</Button>
                       : <Button size="sm" variant="ghost" icon={<EyeOff />} onClick={() => setAction({ kind: 'hide', row: r })}>توقف نمایش</Button>}

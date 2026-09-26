@@ -8,6 +8,7 @@ final readonly class ProductData
      * @param  list<string>  $categoryIds
      * @param  array<string, int>|null  $nutrition
      * @param  list<string>|null  $dietaryTags
+     * @param  list<int>|null  $specialDays
      */
     public function __construct(
         public string $name,
@@ -19,5 +20,6 @@ final readonly class ProductData
         public ?array $nutrition = null,
         public ?array $dietaryTags = null,
         public ?string $temperature = null,
+        public ?array $specialDays = null,   // null = leave as is, [] = none
     ) {}
 }

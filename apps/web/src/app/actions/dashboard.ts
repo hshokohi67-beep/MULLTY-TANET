@@ -255,7 +255,7 @@ export async function updateMemberRoles(memberId: string, _prev: FormState, form
 }
 
 const MENU_LOOKS = ['bright', 'night', 'warm', 'minimal', 'landing'];
-const MENU_LAYOUTS = ['list', 'grid', 'compact'];
+const MENU_LAYOUTS = ['list', 'duo', 'grid', 'compact'];
 
 /** How the online menu looks and what it shows (look, card layout, calories, best sellers, suggestions). */
 export async function updateMenuSettings(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -272,6 +272,7 @@ export async function updateMenuSettings(_prev: FormState, formData: FormData): 
         'storefront.show_calories': formData.get('storefront.show_calories') === 'on',
         'storefront.show_popular': formData.get('storefront.show_popular') === 'on',
         'storefront.suggestions': formData.get('storefront.suggestions') === 'on',
+        'storefront.show_deals': formData.get('storefront.show_deals') === 'on',
       } },
     });
   } catch (error) {

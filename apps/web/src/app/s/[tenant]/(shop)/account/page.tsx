@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { Crown, Gift, MapPin, Pencil, Plus, Receipt, Sparkles, Wallet } from 'lucide-react';
+import { Coins, Crown, Gift, MapPin, Pencil, Plus, Receipt, Wallet } from 'lucide-react';
 import { Badge, Card, CardHeader, EmptyState, type Tone } from '@cafe/ui';
 import { formatJalaliDateTime, formatMoney, formatNumber } from '@cafe/locale';
 import { DeleteAddress, LogoutButton, ProfileForm, RedeemPoints, ReferralBox, ReorderButton } from '@/components/store/AccountClient';
@@ -70,7 +70,7 @@ export default async function AccountPage({ params }: PageProps<'/s/[tenant]/acc
                 <p className="tabular mt-1 text-2xl font-black">{formatMoney(club.wallet_balance)}</p>
               </div>
               <div>
-                <p className="flex items-center gap-1.5 text-sm opacity-80"><Sparkles className="size-4" aria-hidden="true" />امتیاز</p>
+                <p className="flex items-center gap-1.5 text-sm opacity-80"><Coins className="size-4" aria-hidden="true" />امتیاز</p>
                 <p className="tabular mt-1 text-2xl font-black">{formatNumber(club.points)}</p>
                 <p className="text-xs opacity-80">معادل {formatMoney(club.points_value)}</p>
               </div>
@@ -90,7 +90,7 @@ export default async function AccountPage({ params }: PageProps<'/s/[tenant]/acc
       {club && clubOn ? (
         <div className="grid gap-4 md:grid-cols-2">
           <Card className="p-5">
-            <CardHeader icon={<Sparkles />} title="امتیازهای شما" description={`هر ۱۰ هزار تومان خرید = ${formatNumber(club.program.points_per_100k)} امتیاز`} />
+            <CardHeader icon={<Coins />} title="امتیازهای شما" description={`هر ۱۰ هزار تومان خرید = ${formatNumber(club.program.points_per_100k)} امتیاز`} />
             <div className="mt-4"><RedeemPoints points={club.points} min={club.program.min_redeem_points} pointValue={club.program.point_value} /></div>
           </Card>
           <Card className="p-5">

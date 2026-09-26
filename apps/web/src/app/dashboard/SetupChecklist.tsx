@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
-import { ArrowUpLeft, Check, ChevronDown, EyeOff, Sparkles } from 'lucide-react';
+import { ArrowUpLeft, Check, ChevronDown, EyeOff, Star } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatNumber } from '@cafe/locale';
 import { skipSetupStep, type SetupData } from '@/app/actions/palette';
@@ -87,7 +87,7 @@ export function SetupChecklist({ setup, canSkip }: { setup: SetupData; canSkip: 
                     <span>
                       <span className="flex items-center gap-1.5 text-sm font-medium">
                         {step.title}
-                        {step.essential ? <Sparkles className="size-3.5 text-accent" aria-label="ضروری" /> : null}
+                        {step.essential ? <Star className="size-3.5 fill-current text-accent" aria-label="ضروری" /> : null}
                       </span>
                       <span className="block text-xs leading-5 text-text-muted">{step.hint}</span>
                     </span>

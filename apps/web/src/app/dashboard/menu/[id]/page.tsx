@@ -6,7 +6,7 @@ import { api, ApiError } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
 import { hasFeature } from '@/lib/billing';
 import type { Ingredient, Recipe } from '@/lib/inventory-types';
-import type { Branch, Category, ModifierGroup, Product } from '@/lib/types';
+import type { Branch, Category, MenuTags, ModifierGroup, Product } from '@/lib/types';
 import { BranchPricesForm, DeleteProductButton, ImagesManager, ModifierGroupsForm, ProductDetailsForm, VariantsForm } from './ProductEditor';
 import { RecipeEditor } from './RecipeEditor';
 
@@ -24,10 +24,11 @@ export default async function ProductPage({ params }: PageProps<'/dashboard/menu
     throw error;
   }
 
-  const [{ data: categories }, { data: groups }, { data: branches }] = await Promise.all([
+  const [{ data: categories }, { data: groups }, { data: branches }, { data: tags }] = await Promise.all([
     api<{ data: Category[] }>('/catalog/categories'),
     api<{ data: ModifierGroup[] }>('/catalog/modifier-groups'),
     api<{ data: Branch[] }>('/branches'),
+    api<{ data: MenuTags }>('/catalog/menu-tags'),
   ]);
 
   const canManage = can('catalog.manage');
@@ -47,7 +48,7 @@ export default async function ProductPage({ params }: PageProps<'/dashboard/menu
         description={<Link href="/dashboard/menu" className="text-brand hover:underline">بازگشت به منو</Link>}
         actions={canManage ? <DeleteProductButton productId={product.id} name={product.name} /> : null}
       />
-      <ProductDetailsForm product={product} categories={categories} readOnly={!canManage} />
+      <ProductDetailsForm product={product} categories={categories} tags={tags} readOnly={!canManage} />
       <VariantsForm product={product} readOnly={!(canManage && canPrice)} />
       {branches.length > 1 && canPrice ? <BranchPricesForm product={product} branches={branches} /> : null}
       <ModifierGroupsForm product={product} groups={groups} readOnly={!canManage} />

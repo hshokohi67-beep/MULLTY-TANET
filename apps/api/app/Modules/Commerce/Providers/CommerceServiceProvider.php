@@ -2,11 +2,13 @@
 
 namespace App\Modules\Commerce\Providers;
 
+use App\Modules\Catalog\Contracts\MenuOfferFeed;
 use App\Modules\Commerce\Models\DeliveryZone;
 use App\Modules\Commerce\Models\Order;
 use App\Modules\Commerce\Models\OrderSession;
 use App\Modules\Commerce\Models\RestaurantTable;
 use App\Modules\Commerce\Models\TableSessionRequest;
+use App\Modules\Commerce\Support\DiscountOfferFeed;
 use App\Support\Realtime\LiveVersion;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -16,6 +18,11 @@ use Illuminate\Support\ServiceProvider;
 
 final class CommerceServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->bind(MenuOfferFeed::class, DiscountOfferFeed::class);
+    }
+
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');

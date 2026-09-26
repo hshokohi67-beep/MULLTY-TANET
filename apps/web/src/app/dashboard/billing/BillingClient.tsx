@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { Check, CreditCard, Minus, Plus, Sparkles, X } from 'lucide-react';
+import { Check, CreditCard, Minus, Plus, ThumbsUp, X } from 'lucide-react';
 import { Alert, Badge, Button, cx, Dialog, Spinner } from '@cafe/ui';
 import { formatJalaliDate, formatMoney, formatNumber, toPersianDigits } from '@cafe/locale';
 import { checkoutSelection, payInvoice, quoteSelection, setCancelled } from '@/app/actions/billing';
@@ -53,7 +53,7 @@ export function PlanPicker({ plans, addons, features, current, highlight }: { pl
           return (
             <article key={p.id} className={cx('relative flex flex-col gap-4 rounded-2xl border bg-surface p-5 shadow-[var(--shadow-sm)] transition-shadow',
               recommended ? 'border-brand shadow-[var(--shadow-md)]' : 'border-border', lacks && 'opacity-60')}>
-              {recommended ? <span className="absolute -top-3 start-5 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-on-brand"><Sparkles className="size-3" aria-hidden="true" />پیشنهاد ما</span> : null}
+              {recommended ? <span className="absolute -top-3 start-5 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-on-brand"><ThumbsUp className="size-3" aria-hidden="true" />پیشنهاد ما</span> : null}
               <div>
                 <p className="flex items-center gap-2 text-lg font-bold">{p.name}{isCurrent ? <Badge tone="success">پلن فعلی</Badge> : null}</p>
                 {p.tagline ? <p className="mt-1 min-h-10 text-sm text-text-muted">{p.tagline}</p> : null}

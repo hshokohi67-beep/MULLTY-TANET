@@ -20,12 +20,13 @@ export interface LandingDesign {
   motion: LandingMotion;
 }
 
-export type SectionKey = 'story' | 'highlights' | 'featured' | 'marquee' | 'gallery' | 'visit';
+export type SectionKey = 'deals' | 'story' | 'highlights' | 'featured' | 'marquee' | 'gallery' | 'visit';
 
 export interface Highlight { value: string; unit: string | null; label: string }
 
 export interface LandingContent {
   hero: { eyebrow: string | null; title: string; subtitle: string | null; cta_label: string };
+  deals: { variant: 'slider' | 'grid'; title: string | null };
   story: { variant: 'photo_end' | 'photo_start' | 'text'; title: string | null; text: string | null };
   highlights: { variant: 'bento' | 'row' | 'numbers'; title: string | null; items: Highlight[] };
   featured: { variant: 'showcase' | 'grid' | 'carousel'; title: string | null; product_ids: string[] };
@@ -79,6 +80,7 @@ export const DESIGN_LABELS: { [K in keyof LandingDesign]: { title: string; optio
 };
 
 export const SECTION_LABELS: Record<SectionKey, { title: string; hint: string; variants: Record<string, string> }> = {
+  deals: { title: 'پیشنهاد امروز و تخفیف‌ها', hint: 'خودکار از تخفیف‌های «نمایش روی منو» و پیشنهادهای امروز؛ وقتی چیزی نیست دیده نمی‌شود', variants: { slider: 'اسلایدی', grid: 'شبکه‌ای' } },
   story: { title: 'داستان ما', hint: 'چند خط درباره‌ی کافه، با یک عکس', variants: { photo_end: 'عکس کنار متن', photo_start: 'عکس اول', text: 'فقط متن' } },
   highlights: { title: 'ویژگی‌ها', hint: 'تا ۴ کارت با یک عدد درشت', variants: { bento: 'کاشی‌کاری', row: 'یک ردیف', numbers: 'فقط عددها' } },
   featured: { title: 'محصولات منتخب', hint: 'تا ۶ محصول از منو، با قیمت زنده', variants: { showcase: 'ویترینی', grid: 'شبکه‌ای', carousel: 'اسلایدی' } },

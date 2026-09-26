@@ -7,10 +7,11 @@ import type { Menu, Storefront } from '@/lib/storefront-types';
 import { CartBar } from '../CartBar';
 import { LandingFrame } from './LandingFrame';
 import { LandingHeader, LandingHero } from './LandingHero';
-import { FeaturedSection, GallerySection, HighlightsSection, MarqueeSection, StorySection, VisitSection, type SectionProps } from './LandingSections';
+import { DealsSection, FeaturedSection, GallerySection, HighlightsSection, MarqueeSection, StorySection, VisitSection, type SectionProps } from './LandingSections';
 import { Go } from './parts';
 
 const SECTIONS: Record<SectionKey, ComponentType<SectionProps>> = {
+  deals: DealsSection,
   story: StorySection,
   highlights: HighlightsSection,
   featured: FeaturedSection,

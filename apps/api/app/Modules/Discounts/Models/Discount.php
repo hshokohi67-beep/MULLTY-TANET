@@ -27,12 +27,13 @@ use Illuminate\Support\Carbon;
  * @property ?int $per_customer_limit
  * @property int $used_count
  * @property bool $is_active
+ * @property bool $show_on_menu a menu offer (see MenuOffers)
  * @property int $priority
  * @property Collection<int, DiscountRule> $rules
  */
 #[Fillable([
     'name', 'code', 'kind', 'value', 'applies_to', 'min_order', 'max_discount', 'starts_at', 'ends_at',
-    'schedule', 'usage_limit', 'per_customer_limit', 'is_active', 'priority',
+    'schedule', 'usage_limit', 'per_customer_limit', 'is_active', 'show_on_menu', 'priority',
 ])]
 class Discount extends Model
 {
@@ -52,6 +53,7 @@ class Discount extends Model
             'per_customer_limit' => 'integer',
             'used_count' => 'integer',
             'is_active' => 'boolean',
+            'show_on_menu' => 'boolean',
             'priority' => 'integer',
         ];
     }

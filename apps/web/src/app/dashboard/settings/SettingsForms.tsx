@@ -20,8 +20,9 @@ const CATEGORY_PLACES: [string, string, string][] = [
   ['side', 'ستون دسته‌ها کنار منو', 'فهرست دسته‌ها در ستونی کنار منو'],
 ];
 const LAYOUTS: [string, string, string][] = [
-  ['list', 'فهرستی', 'متن کنار عکس کوچک'],
-  ['grid', 'شبکه‌ای', 'عکس بزرگ، دو یا سه ستون'],
+  ['list', 'فهرستی', 'متن کنار عکسی که از کادر بیرون زده'],
+  ['duo', 'دو ستونه', 'کارت‌های دوتایی، عکس بزرگ بالای هر کارت بیرون زده'],
+  ['grid', 'شبکه‌ای', 'عکس تمام‌عرض، دو یا سه ستون'],
   ['compact', 'فشرده', 'فقط متن؛ برای منوهای طولانی'],
 ];
 
@@ -57,7 +58,7 @@ export function MenuSettingsForm({ settings, readOnly }: { settings: SettingItem
           </div>
           <div>
             <p className="mb-2 text-sm font-semibold">چیدمان کارت‌ها</p>
-            <div className="grid gap-2 sm:grid-cols-3">{LAYOUTS.map(([v, l, h]) => <Pick key={v} name="storefront.menu_layout" value={v} label={l} hint={h} checked={layout === v} />)}</div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{LAYOUTS.map(([v, l, h]) => <Pick key={v} name="storefront.menu_layout" value={v} label={l} hint={h} checked={layout === v} />)}</div>
           </div>
           <div>
             <p className="mb-2 text-sm font-semibold">جای دسته‌ها در کامپیوتر</p>
@@ -68,6 +69,7 @@ export function MenuSettingsForm({ settings, readOnly }: { settings: SettingItem
             <Checkbox label="نمایش کالری" name="storefront.show_calories" defaultChecked={on('storefront.show_calories')} hint="روی کارت‌ها، صفحه‌ی محصول و فیلتر کالری. کالری هر محصول را در ویرایش محصول وارد کنید." />
             <Checkbox label="برچسب «پرفروش»" name="storefront.show_popular" defaultChecked={on('storefront.show_popular')} hint="روی ۵ محصول پرفروش ۳۰ روز اخیر، از روی فروش واقعی." />
             <Checkbox label="پیشنهاد «کنارش می‌چسبد»" name="storefront.suggestions" defaultChecked={on('storefront.suggestions')} hint="در صفحه‌ی محصول و سبد خرید، از روی چیزهایی که معمولاً با هم سفارش داده می‌شوند." />
+            <Checkbox label="اسلایدر «پیشنهاد امروز و تخفیف‌ها»" name="storefront.show_deals" defaultChecked={on('storefront.show_deals')} hint="بالای منو، با زمان باقی‌مانده. از تخفیف‌های «نمایش روی منو» و «پیشنهاد روز» محصولات پر می‌شود؛ قیمت تخفیفی روی کارت‌ها در هر حال نمایش داده می‌شود." />
           </div>
         </fieldset>
         {!readOnly ? <div><Button type="submit" loading={pending}>ذخیره</Button></div> : null}

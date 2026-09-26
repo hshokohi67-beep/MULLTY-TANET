@@ -65,7 +65,9 @@ function Line({ line, busy, onChange }: { line: QuoteLine; busy: boolean; onChan
         {line.note ? <p className="mt-0.5 text-xs text-text-subtle">«{line.note}»</p> : null}
         {line.problem ? <p className="mt-1 rounded-lg bg-danger-soft px-2 py-1 text-xs text-danger">{line.problem.message}</p> : null}
         <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="tabular text-sm font-bold">{formatMoney(line.line_total)}</span>
+          <span className="tabular text-sm font-bold">
+            {line.offer ? <><s className="me-1.5 text-xs font-normal text-text-subtle">{formatMoney(line.line_total)}</s>{formatMoney(line.offer.line_total)}</> : formatMoney(line.line_total)}
+          </span>
           <div className="flex h-9 items-center gap-0.5 rounded-full bg-surface-muted p-0.5">
             <button type="button" disabled={busy} onClick={() => onChange(line.quantity + 1)} aria-label={`یکی بیشتر ${line.product_name}`} className="flex size-8 items-center justify-center rounded-full hover:bg-surface"><Plus className="size-4" /></button>
             <span className="tabular w-6 text-center text-sm font-bold" aria-label="تعداد">{formatNumber(line.quantity)}</span>
@@ -380,6 +382,9 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
 
           <dl aria-live="polite" className={cx('flex flex-col gap-2.5 text-sm transition-opacity', busy && 'opacity-60')}>
             <div className="flex justify-between"><dt className="text-text-muted">جمع آیتم‌ها</dt><dd className="tabular">{formatMoney(q.subtotal)}</dd></div>
+            {(q.offers ?? []).map((o) => (
+              <div key={o.name} className="flex justify-between text-success"><dt>{o.name}</dt><dd className="tabular">− {formatMoney(o.amount)}</dd></div>
+            ))}
             {q.discount ? <div className="flex justify-between text-success"><dt>تخفیف</dt><dd className="tabular">− {formatMoney(q.discount.amount)}</dd></div> : null}
             {isDelivery ? <div className="flex justify-between"><dt className="text-text-muted">هزینه‌ی ارسال</dt><dd className="tabular">{q.delivery ? (q.delivery_fee ? formatMoney(q.delivery_fee) : 'رایگان') : '—'}</dd></div> : null}
             {walletUse > 0 ? <div className="flex justify-between text-success"><dt>از کیف پول</dt><dd className="tabular">− {formatMoney(walletUse)}</dd></div> : null}

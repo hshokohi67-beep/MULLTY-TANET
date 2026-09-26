@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, type CSSProperties } from 'react';
-import { Check, Minus, Sparkles } from 'lucide-react';
+import { Check, Crown, Minus } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
 
@@ -55,7 +55,7 @@ export function Pricing({ plans, features, vat, trialDays }: { plans: PublicPlan
           return (
             <article key={p.key} data-reveal style={{ '--i': i } as CSSProperties}
               className={cx('l-card relative flex flex-col gap-5 border p-6', featured ? 'border-brand bg-surface shadow-[var(--shadow-lg)] lg:-my-3 lg:py-9' : 'border-border bg-surface/80')}>
-              {featured ? <span className="absolute -top-3 start-6 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-bold text-on-brand"><Sparkles className="size-3.5" aria-hidden="true" />پرطرفدار</span> : null}
+              {featured ? <span className="absolute -top-3 start-6 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-bold text-on-brand"><Crown className="size-3.5" aria-hidden="true" />پرطرفدار</span> : null}
               <div>
                 <h3 className="text-xl font-black">{p.name}</h3>
                 {p.tagline ? <p className="mt-1 text-sm leading-6 text-text-muted">{p.tagline}</p> : null}

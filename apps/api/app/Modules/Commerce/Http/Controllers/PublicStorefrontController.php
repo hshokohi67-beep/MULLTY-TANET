@@ -82,6 +82,7 @@ final class PublicStorefrontController
                     'layout' => (string) TenantSettings::get('storefront.menu_layout'),
                     'categories' => (string) TenantSettings::get('storefront.menu_categories'),
                     'show_calories' => (bool) TenantSettings::get('storefront.show_calories'),
+                    'show_deals' => (bool) TenantSettings::get('storefront.show_deals'),
                 ],
             ],
         ]])->header('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');

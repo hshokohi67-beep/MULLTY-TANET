@@ -37,6 +37,7 @@ final class ProductResource extends JsonResource
             'sort' => $this->sort,
             'nutrition' => $this->nutrition,
             'dietary_tags' => $this->dietary_tags ?? [],
+            'special_days' => $this->special_days ?? [],
             'categories' => $this->whenLoaded('categories', fn () => $this->categories->map(fn (Category $c) => ['id' => $c->id, 'name' => $c->name])->values()),
             'variants' => $this->whenLoaded('variants', fn () => $this->variants->map(fn (ProductVariant $v) => [
                 'id' => $v->id,

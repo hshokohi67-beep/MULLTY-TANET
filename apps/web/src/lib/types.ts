@@ -170,6 +170,8 @@ export interface Product {
   sort: number;
   nutrition: { calories?: number; caffeine_mg?: number; protein_g?: number } | null;
   dietary_tags: string[];
+  /** ISO weekdays on which it is «پیشنهاد امروز» on the menu. */
+  special_days?: number[];
   categories?: { id: string; name: string }[];
   variants?: Variant[];
   price_from?: number | null;
@@ -211,6 +213,12 @@ export interface BulkPriceResult {
   batch_id: string | null;
   changed_count: number;
   rows: BulkPriceRow[];
+}
+
+/** The editor's tag lists: the platform's fixed tags and the café's own («c:{id}»). */
+export interface MenuTags {
+  platform: { key: string; label: string }[];
+  custom: { id: string; key: string; label: string }[];
 }
 
 export const DIETARY_TAGS: Record<string, string> = {
@@ -332,6 +340,8 @@ export interface Discount {
   per_customer_limit: number | null;
   used_count: number;
   is_active: boolean;
+  /** A menu offer: shown on the cards, applied per item on top of the order's one discount. */
+  show_on_menu?: boolean;
 }
 
 export interface PaymentRefund {

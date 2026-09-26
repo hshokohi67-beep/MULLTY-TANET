@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ChefHat, Crown, LineChart, QrCode, Sparkles } from 'lucide-react';
+import { ChefHat, Crown, Gift, LineChart, QrCode } from 'lucide-react';
 import { getStaffToken } from '@/lib/session';
 import { SignupForm } from './SignupForm';
 
@@ -37,7 +37,7 @@ export default async function SignupPage() {
         <div className="absolute -start-24 -top-24 size-96 rounded-full bg-on-brand/10 blur-3xl" />
         <div className="absolute -bottom-32 -end-16 size-[28rem] rounded-full bg-accent/25 blur-3xl" />
         <div className="relative max-w-md px-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-on-brand/15 px-3 py-1 text-xs font-semibold"><Sparkles className="size-3.5" />۱۴ روز رایگان، بدون کارت بانکی</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-on-brand/15 px-3 py-1 text-xs font-semibold"><Gift className="size-3.5" />۱۴ روز رایگان، بدون کارت بانکی</span>
           <p className="mt-4 text-3xl font-bold leading-snug">همه‌ی کافه در یک پنل فارسی</p>
           <ul className="mt-8 flex flex-col gap-3">
             {PERKS.map((p) => (

@@ -21,12 +21,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property ?string $description
  * @property bool $is_active
  * @property bool $is_featured
+ * @property ?list<int> $special_days ISO weekdays on which it is «پیشنهاد امروز»
  * @property int $sort
  * @property ?array{calories?: int, caffeine_mg?: int, protein_g?: int} $nutrition
  * @property ?list<string> $dietary_tags
  * @property ?string $temperature hot|cold|null (null = inherit from the category)
  */
-#[Fillable(['name', 'slug', 'description', 'is_active', 'is_featured', 'sort', 'nutrition', 'dietary_tags', 'temperature'])]
+#[Fillable(['name', 'slug', 'description', 'is_active', 'is_featured', 'special_days', 'sort', 'nutrition', 'dietary_tags', 'temperature'])]
 class Product extends Model
 {
     use BelongsToTenant, HasUlids, SoftDeletes;
@@ -52,6 +53,7 @@ class Product extends Model
             'sort' => 'integer',
             'nutrition' => 'array',
             'dietary_tags' => 'array',
+            'special_days' => 'array',
         ];
     }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { BookOpen, Lock, Search, SearchX, Sparkles, X } from 'lucide-react';
+import { BookOpen, GraduationCap, Lock, Search, SearchX, X } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { normalizeForSearch, toPersianDigits } from '@cafe/locale';
 import { GROUP_TITLES, type HelpGroup, type HelpIcon as IconKey } from '@/lib/help/types';
@@ -51,7 +51,7 @@ export function HelpIndex({ topics, base, roleNames, isOwner, intro }: { topics:
 
       {!needle && roleGuides.length ? (
         <section aria-labelledby="roles" className="flex flex-col gap-3">
-          <h2 id="roles" className="flex items-center gap-2 text-lg font-black"><Sparkles className="size-5 text-accent" aria-hidden="true" />{isOwner ? 'راهنمای شروع هر نقش (برای آموزش تیم)' : 'از اینجا شروع کنید'}</h2>
+          <h2 id="roles" className="flex items-center gap-2 text-lg font-black"><GraduationCap className="size-5 text-accent" aria-hidden="true" />{isOwner ? 'راهنمای شروع هر نقش (برای آموزش تیم)' : 'از اینجا شروع کنید'}</h2>
           <div className={cx('grid gap-3', roleGuides.length > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : '')}>
             {roleGuides.map((t) => (
               <Link key={t.key} href={`${base}/${t.key}`} className="group flex items-start gap-3 rounded-2xl border border-accent/30 bg-accent-soft p-4 transition-shadow hover:shadow-[var(--shadow-md)]">

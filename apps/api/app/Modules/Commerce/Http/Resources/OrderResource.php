@@ -47,7 +47,12 @@ final class OrderResource extends JsonResource
             'address' => $this->address_snapshot,
             'subtotal' => $this->subtotal,
             'discount_total' => $this->discount_total,
-            'discount' => $this->discount_snapshot ? ['name' => $this->discount_snapshot['name'], 'code' => $this->discount_snapshot['code']] : null,
+            'discount' => $this->discount_snapshot ? [
+                // An order with only menu offers has no main discount: name the offers instead.
+                'name' => $this->discount_snapshot['name'] ?? implode('، ', array_column($this->discount_snapshot['offers'] ?? [], 'name')),
+                'code' => $this->discount_snapshot['code'] ?? null,
+                'offers' => array_map(fn (array $o) => ['name' => $o['name'], 'amount' => $o['amount']], $this->discount_snapshot['offers'] ?? []),
+            ] : null,
             'delivery_fee' => $this->delivery_fee,
             'total' => $this->total,
             'paid_total' => $this->paid_total,

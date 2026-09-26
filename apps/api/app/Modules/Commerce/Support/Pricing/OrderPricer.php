@@ -16,6 +16,7 @@ use App\Modules\Core\Support\OpeningHoursEvaluator;
 use App\Modules\Core\Support\TenantSettings;
 use App\Modules\Discounts\Contracts\CustomerTierLookup;
 use App\Modules\Discounts\Exceptions\CouponException;
+use App\Modules\Discounts\Support\AppliedDiscount;
 use App\Modules\Discounts\Support\DiscountContext;
 use App\Modules\Discounts\Support\DiscountEngine;
 use App\Support\Localization\JalaliDate;
@@ -51,17 +52,37 @@ final class OrderPricer
         $subtotal = array_sum(array_map(fn (PricedLine $l) => $l->lineTotal, $valid));
 
         $discount = null;
+        $offers = [];
         if ($valid !== []) {
+            $keys = array_keys($valid);
+            $context = fn (array $lines, int $subtotal, ?string $coupon) => new DiscountContext(
+                branchId: $request->branch->getKey(),
+                orderType: $request->orderType->value,
+                customerId: $request->customerId,
+                lines: $lines,
+                subtotal: $subtotal,
+                now: $scheduledFor ?? $now,
+                couponCode: $coupon,
+                customerTierId: app(CustomerTierLookup::class)->tierIdFor($request->customerId),
+            );
+
+            // Menu offers first: each line gets its advertised price.
+            $offerLines = array_values(array_map(fn (PricedLine $l) => [
+                'product_id' => $l->productId, 'category_ids' => $l->categoryIds, 'line_total' => $l->lineTotal,
+                'unit_total' => $l->unitPrice + $l->modifiersTotal, 'quantity' => $l->quantity,
+            ], $valid));
+            foreach ($this->discounts->menuOffers($context($offerLines, $subtotal, null)) as $i => $offer) {
+                $lines[$keys[$i]] = $lines[$keys[$i]]->withOffer($offer);
+                $offers[] = $offer;
+            }
+            $valid = array_filter($lines, fn (PricedLine $l) => $l->isValid());
+
+            // Then the order's one discount, on what the lines cost after their offers.
             try {
-                $discount = $this->discounts->apply(new DiscountContext(
-                    branchId: $request->branch->getKey(),
-                    orderType: $request->orderType->value,
-                    customerId: $request->customerId,
-                    lines: array_values(array_map(fn (PricedLine $l) => ['product_id' => $l->productId, 'category_ids' => $l->categoryIds, 'line_total' => $l->lineTotal], $valid)),
-                    subtotal: $subtotal,
-                    now: $scheduledFor ?? $now,
-                    couponCode: $request->couponCode,
-                    customerTierId: app(CustomerTierLookup::class)->tierIdFor($request->customerId),
+                $discount = $this->discounts->apply($context(
+                    array_values(array_map(fn (PricedLine $l) => ['product_id' => $l->productId, 'category_ids' => $l->categoryIds, 'line_total' => $l->payable()], $valid)),
+                    $subtotal - array_sum(array_map(fn (AppliedDiscount $o) => $o->amount, $offers)),
+                    $request->couponCode,
                 ));
             } catch (CouponException $e) {
                 if ($strict) {
@@ -86,9 +107,10 @@ final class OrderPricer
             }
         }
 
-        $total = $subtotal - ($discount->amount ?? 0) + ($quote->fee ?? 0);
+        $priced = new PricedOrder($lines, $subtotal, $discount, $quote, 0, $scheduledFor, $issues, $offers);
+        $total = $subtotal - $priced->discountTotal() + ($quote->fee ?? 0);
 
-        return new PricedOrder($lines, $subtotal, $discount, $quote, max(0, $total), $scheduledFor, $issues);
+        return new PricedOrder($lines, $subtotal, $discount, $quote, max(0, $total), $scheduledFor, $issues, $offers);
     }
 
     /**

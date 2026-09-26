@@ -143,15 +143,22 @@ export async function saveDiscount(discountId: string | null, _prev: FormState, 
   const to = text(formData, 'to');
   const timed = formData.get('timed') === 'on';
 
-  // The editor only manages the tier restriction; any other rules (set through the API) are kept.
-  const RULE_KEYS: Record<string, string> = { product: 'product_ids', category: 'category_ids', branch: 'branch_ids', order_type: 'order_types', customer: 'customer_ids' };
+  // The editor manages items (products/categories) and the tier; other rules (set through the API) are kept.
+  const onMenu = formData.get('show_on_menu') === 'on';
+  const appliesTo = onMenu || formData.get('applies_to') === 'items' ? 'items' : 'order';
+  const RULE_KEYS: Record<string, string> = { branch: 'branch_ids', order_type: 'order_types', customer: 'customer_ids' };
   const existing = JSON.parse(text(formData, 'rules_json') ?? '[]') as { type: string; target: string }[];
   const rules: Record<string, string[]> = {};
   for (const r of existing) {
     const key = RULE_KEYS[r.type];
     if (key) (rules[key] ??= []).push(r.target);
   }
-  const tierId = text(formData, 'tier_id');
+  if (appliesTo === 'items') {
+    rules.product_ids = formData.getAll('product_ids').map(String);
+    rules.category_ids = formData.getAll('category_ids').map(String);
+    if (!rules.product_ids.length && !rules.category_ids.length) return { ok: false, errors: { 'rules.product_ids': 'دست‌کم یک محصول یا دسته را انتخاب کنید.' } };
+  }
+  const tierId = onMenu ? null : text(formData, 'tier_id');
   if (tierId) rules.tier_ids = [tierId];
 
   try {
@@ -159,15 +166,17 @@ export async function saveDiscount(discountId: string | null, _prev: FormState, 
       method: discountId ? 'PUT' : 'POST',
       body: {
         name: text(formData, 'name'),
-        code: text(formData, 'code'),
+        code: onMenu ? null : text(formData, 'code'),
         kind,
         value,
-        applies_to: 'order',
-        min_order: min ?? 0,
-        max_discount: cap,
-        usage_limit: int(formData, 'usage_limit'),
-        per_customer_limit: int(formData, 'per_customer_limit'),
+        applies_to: appliesTo,
+        min_order: onMenu ? 0 : min ?? 0,
+        max_discount: onMenu ? null : cap,
+        usage_limit: onMenu ? null : int(formData, 'usage_limit'),
+        per_customer_limit: onMenu ? null : int(formData, 'per_customer_limit'),
         is_active: formData.get('is_active') === 'on',
+        show_on_menu: onMenu,
+        ends_at: text(formData, 'ends_at'),
         rules,
         schedule: weekdays.length || timed ? { weekdays: weekdays.length ? weekdays : null, from: timed ? from : null, to: timed ? to : null } : null,
       },

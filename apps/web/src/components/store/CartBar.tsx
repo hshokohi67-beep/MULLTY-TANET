@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag } from 'lucide-react';
 import { formatMoney, formatNumber } from '@cafe/locale';
+import { itemsTotal } from '@/lib/deals';
 import { useStore } from './StoreProvider';
 
 /**
@@ -34,7 +35,7 @@ export function CartBar() {
         </span>
         <span className="flex-1 text-sm font-semibold">سبد خرید</span>
         <span className="flex h-12 items-center gap-2 rounded-2xl bg-brand px-4 font-bold text-on-brand shadow-[var(--shadow-sm)] transition-colors hover:bg-brand-strong">
-          <span className="tabular">{formatMoney(cart.quote.subtotal)}</span>
+          <span className="tabular">{formatMoney(itemsTotal(cart.quote))}</span>
           <span className="text-xs font-medium opacity-80">ادامه</span>
         </span>
       </Link>

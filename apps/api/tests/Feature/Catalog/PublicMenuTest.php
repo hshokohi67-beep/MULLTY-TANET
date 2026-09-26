@@ -43,7 +43,7 @@ final class PublicMenuTest extends CatalogTestCase
         $product = $this->publicMenu()->json('data.products.0');
 
         $this->assertEqualsCanonicalizing(
-            ['id', 'slug', 'name', 'description', 'is_featured', 'temperature', 'is_available', 'category_ids', 'price_from', 'variants', 'images', 'nutrition', 'dietary_tags', 'modifier_groups'],
+            ['id', 'slug', 'name', 'description', 'is_featured', 'special_days', 'temperature', 'is_available', 'category_ids', 'price_from', 'variants', 'images', 'nutrition', 'dietary_tags', 'modifier_groups'],
             array_keys($product),
         );
         $this->assertArrayNotHasKey('sku', $product['variants'][0]);

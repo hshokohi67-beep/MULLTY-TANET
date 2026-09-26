@@ -7,6 +7,11 @@ use App\Support\Localization\PersianNumber;
 
 final class CatalogRuleException extends DomainException
 {
+    public static function tooManyTags(int $max): self
+    {
+        return new self('حداکثر '.PersianNumber::format($max).' برچسب اختصاصی می‌توانید داشته باشید.', 'menu_tags_limit', 422);
+    }
+
     public static function categoryTooDeep(): self
     {
         return new self('دسته‌بندی‌ها حداکثر سه سطح می‌توانند داشته باشند.', 'category_too_deep', 422);

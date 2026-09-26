@@ -5,6 +5,7 @@ import { useTransition } from 'react';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
+import { itemsTotal } from '@/lib/deals';
 import { updateCartLine } from '@/app/actions/storefront';
 import { suggestionsFor } from '@/lib/menu-logic';
 import type { Menu, MenuProduct } from '@/lib/storefront-types';
@@ -46,7 +47,9 @@ export function CartPanel({ menu, onOpen }: { menu: Menu; onOpen: (p: MenuProduc
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{l.product_name}{l.variant_name ? <span className="font-normal text-text-muted"> • {l.variant_name}</span> : null}</p>
                   {l.modifiers.length ? <p className="truncate text-xs text-text-muted">{l.modifiers.map((m) => m.name).join('، ')}</p> : null}
-                  <p className="tabular text-xs text-text-muted">{formatMoney(l.line_total)}</p>
+                  <p className="tabular text-xs text-text-muted">
+                    {l.offer ? <><s className="me-1 text-text-subtle">{formatMoney(l.line_total)}</s><span className="font-semibold text-success">{formatMoney(l.offer.line_total)}</span></> : formatMoney(l.line_total)}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-surface-muted p-0.5">
                   <button type="button" disabled={pending} onClick={() => change(l.ref, l.quantity + 1)} aria-label={`یکی بیشتر ${l.product_name}`} className="flex size-7 items-center justify-center rounded-full hover:bg-surface"><Plus className="size-3.5" /></button>
@@ -58,7 +61,7 @@ export function CartPanel({ menu, onOpen }: { menu: Menu; onOpen: (p: MenuProduc
           </ul>
           <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
             <span className="text-text-muted">جمع سبد</span>
-            <span className="tabular text-base font-bold">{formatMoney(cart?.quote.subtotal ?? 0)}</span>
+            <span className="tabular text-base font-bold">{formatMoney(cart ? itemsTotal(cart.quote) : 0)}</span>
           </div>
           <Link href={`/s/${tenant}/cart`} className="flex h-12 items-center justify-center rounded-2xl bg-brand font-bold text-on-brand shadow-[var(--shadow-sm)] hover:bg-brand-strong">ادامه و ثبت سفارش</Link>
           <Suggestions title="معمولاً با این سفارش می‌گیرند" products={suggestions} branchId={menu.branch.id} onOpen={onOpen} />

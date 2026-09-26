@@ -1,6 +1,5 @@
 import {
-  Bean, Building2, CakeSlice, Castle, ChefHat, Coffee, Croissant, CupSoda, EggFried, Flower2, IceCreamCone, Landmark, Leaf, MapPin, Mountain, Salad,
-  Sandwich, Sparkles, Trees, UtensilsCrossed, Waves, type LucideIcon,
+  Bean, Building2, CakeSlice, Castle, ChefHat, Coffee, Croissant, CupSoda, EggFried, Flower2, IceCreamCone, Landmark, Leaf, MapPin, Mountain, Salad, Sandwich, Trees, UtensilsCrossed, Waves, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
 
@@ -40,7 +39,7 @@ export const CATEGORY_TONE: Record<string, Tone> = {
 };
 
 const CITY_ICONS: Record<string, LucideIcon> = {
-  تهران: Building2, اصفهان: Landmark, شیراز: Flower2, مشهد: Sparkles, تبریز: Castle, کرج: Mountain, رشت: Trees, کیش: Waves, یزد: Landmark, کرمان: Castle,
+  تهران: Building2, اصفهان: Landmark, شیراز: Flower2, مشهد: Landmark, تبریز: Castle, کرج: Mountain, رشت: Trees, کیش: Waves, یزد: Landmark, کرمان: Castle,
 };
 const CITY_TONES: Tone[] = ['brand', 'accent', 'info', 'success', 'danger', 'cold', 'warning', 'hot'];
 

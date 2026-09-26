@@ -23,10 +23,11 @@ final class LandingSchema
     ];
 
     /** Sections below the hero, in their default order. */
-    public const SECTIONS = ['story', 'highlights', 'featured', 'marquee', 'gallery', 'visit'];
+    public const SECTIONS = ['deals', 'story', 'highlights', 'featured', 'marquee', 'gallery', 'visit'];
 
     /** Layout variants per section (the first one is the default). */
     public const VARIANTS = [
+        'deals' => ['slider', 'grid'],
         'story' => ['photo_end', 'photo_start', 'text'],
         'highlights' => ['bento', 'row', 'numbers'],
         'featured' => ['showcase', 'grid', 'carousel'],
@@ -52,6 +53,8 @@ final class LandingSchema
     {
         return [
             'hero' => ['eyebrow' => null, 'title' => $name, 'subtitle' => null, 'cta_label' => 'منو و سفارش'],
+            // The menu's specials and offers (drawn from the menu; hidden when there are none).
+            'deals' => ['variant' => 'slider', 'title' => 'پیشنهاد امروز و تخفیف‌ها'],
             'story' => ['variant' => 'photo_end', 'title' => 'داستان ما', 'text' => null],
             'highlights' => ['variant' => 'bento', 'title' => null, 'items' => []],
             'featured' => ['variant' => 'showcase', 'title' => 'پیشنهاد ما', 'product_ids' => []],
@@ -85,6 +88,7 @@ final class LandingSchema
             'content.hero.subtitle' => ['nullable', 'string', 'max:220'],
             'content.hero.cta_label' => ['required', 'string', 'max:24'],
 
+            'content.deals.title' => ['nullable', 'string', 'max:80'],
             'content.story.title' => ['nullable', 'string', 'max:80'],
             'content.story.text' => ['nullable', 'string', 'max:1500'],
 
@@ -170,6 +174,22 @@ final class LandingSchema
     }
 
     /**
+     * Stored content with sections added later filled in from the defaults (the hero is always
+     * stored, so the default's café name is never used).
+     *
+     * @param  array<string, mixed>  $content
+     * @return array<string, mixed>
+     */
+    public static function mergeContent(array $content): array
+    {
+        foreach (self::defaultContent('') as $section => $defaults) {
+            $content[$section] = is_array($content[$section] ?? null) ? [...$defaults, ...$content[$section]] : $defaults;
+        }
+
+        return $content;
+    }
+
+    /**
      * @param  array<int, mixed>  $sections
      * @return list<array{key: string, visible: bool}>
      */
@@ -180,6 +200,11 @@ final class LandingSchema
             if (is_array($s) && in_array($s['key'] ?? null, self::SECTIONS, true) && ! isset($out[$s['key']])) {
                 $out[$s['key']] = ['key' => (string) $s['key'], 'visible' => (bool) ($s['visible'] ?? true)];
             }
+        }
+        // «پیشنهاد امروز و تخفیف‌ها» came later: pages saved before it get it first and on (it
+        // shows nothing while the café has no specials or offers). Other new sections start hidden.
+        if (! isset($out['deals'])) {
+            $out = ['deals' => ['key' => 'deals', 'visible' => true], ...$out];
         }
         foreach (self::SECTIONS as $key) {
             $out[$key] ??= ['key' => $key, 'visible' => false];

@@ -21,7 +21,7 @@ final class LandingPresenter
             'is_published' => $landing->is_published,
             'published_at' => $landing->published_at?->toIso8601String(),
             'design' => LandingSchema::mergeDesign($landing->design),
-            'content' => $landing->content,
+            'content' => LandingSchema::mergeContent($landing->content),
             'sections' => LandingSchema::mergeSections($landing->sections),
             'media' => $this->media(),
             'options' => ['design' => LandingSchema::DESIGN, 'variants' => LandingSchema::VARIANTS],
@@ -31,7 +31,7 @@ final class LandingPresenter
     /** @return array<string, mixed> */
     public function public(StorefrontLanding $landing): array
     {
-        $content = $landing->content;
+        $content = LandingSchema::mergeContent($landing->content);
         $ids = $content['featured']['product_ids'] ?? [];
         if ($ids !== []) {
             $active = Product::query()->whereIn('id', $ids)->where('is_active', true)->pluck('id')->all();

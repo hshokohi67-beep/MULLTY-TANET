@@ -5,7 +5,9 @@ import { Check, Minus, Plus } from 'lucide-react';
 import { Button, cx } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
 import { addToCart } from '@/app/actions/storefront';
+import { offerPrice } from '@/lib/deals';
 import type { MenuModifierGroup, MenuProduct } from '@/lib/storefront-types';
+import { useDeal } from './deals/DealsProvider';
 import { useStore } from './StoreProvider';
 
 /** max_select 0 means "no limit" (same rule as the server's pricer). */
@@ -36,7 +38,11 @@ export function ProductOptions({ product, branchId, onAdded }: { product: MenuPr
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
   const extras = useMemo(() => product.modifier_groups.flatMap((g) => g.modifiers.filter((m) => picked[g.id]?.includes(m.id))).reduce((s, m) => s + m.price_delta, 0), [picked, product.modifier_groups]);
   const unmet = product.modifier_groups.filter((g) => (picked[g.id]?.length ?? 0) < g.min_select);
-  const total = ((variant?.price ?? 0) + extras) * quantity;
+  // A menu offer takes its share off each item, add-ons included (the cart uses the same formula).
+  const offer = useDeal(product.id)?.offer ?? null;
+  const unit = (variant?.price ?? 0) + extras;
+  const total = (offer ? offerPrice(unit, offer) : unit) * quantity;
+  const before = unit * quantity;
 
   const toggle = (g: MenuModifierGroup, id: string) => setPicked((prev) => {
     const current = prev[g.id] ?? [];
@@ -75,7 +81,9 @@ export function ProductOptions({ product, branchId, onAdded }: { product: MenuPr
               )}>
                 <input type="radio" name="variant" value={v.id} checked={v.id === variant.id} onChange={() => setVariantId(v.id)} className="sr-only" />
                 <span className="font-medium">{v.name ?? 'معمولی'}</span>
-                <span className="tabular text-sm text-text-muted">{formatMoney(v.price)}</span>
+                <span className="tabular text-sm text-text-muted">
+                  {offer ? <><s className="text-xs text-text-subtle">{formatMoney(v.price)}</s> {formatMoney(offerPrice(v.price, offer))}</> : formatMoney(v.price)}
+                </span>
               </label>
             ))}
           </div>
@@ -131,7 +139,9 @@ export function ProductOptions({ product, branchId, onAdded }: { product: MenuPr
         </div>
         <Button size="lg" className="min-w-0 flex-1 justify-between gap-2 px-4" onClick={add} loading={pending} disabled={unmet.length > 0}>
           <span className="truncate">{unmet.length > 0 ? `انتخاب ${unmet[0].name}` : <>افزودن<span className="hidden sm:inline"> به سبد</span></>}</span>
-          <span className="tabular shrink-0 text-sm">{formatMoney(total)}</span>
+          <span className="tabular shrink-0 text-sm">
+            {total !== before ? <s className="me-1.5 text-xs font-normal opacity-75">{formatMoney(before)}</s> : null}{formatMoney(total)}
+          </span>
         </Button>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useActionState, useState, useTransition } from 'react';
 import { Button, Card, CardHeader, Checkbox, EmptyState, SelectField, TextAreaField, TextField } from '@cafe/ui';
-import { formatMoney, toPersianDigits } from '@cafe/locale';
+import { formatMoney, IRANIAN_WEEK, toPersianDigits, WEEKDAY_LABELS } from '@cafe/locale';
 import {
   deleteProduct,
   deleteProductImage,
@@ -16,15 +16,16 @@ import {
 import { FormStatus } from '@/components/FormStatus';
 import { MoneyField } from '@/components/MoneyField';
 import { rialToTomanInput } from '@/lib/money';
-import { DIETARY_TAGS, type Branch, type Category, type FormState, type ModifierGroup, type Product } from '@/lib/types';
+import type { Branch, Category, FormState, MenuTags, ModifierGroup, Product } from '@/lib/types';
+import { MenuTagsField } from './MenuTagsField';
 
 const initial: FormState = { ok: false };
 
-export function ProductDetailsForm({ product, categories, readOnly }: { product: Product; categories: Category[]; readOnly: boolean }) {
+export function ProductDetailsForm({ product, categories, tags: tagLists, readOnly }: { product: Product; categories: Category[]; tags: MenuTags; readOnly: boolean }) {
   const [state, action, pending] = useActionState(saveProductDetails.bind(null, product.id), initial);
   const e = state.errors ?? {};
   const selected = new Set(product.categories?.map((c) => c.id));
-  const tags = new Set(product.dietary_tags);
+  const special = new Set(product.special_days ?? []);
 
   return (
     <Card>
@@ -55,13 +56,16 @@ export function ProductDetailsForm({ product, categories, readOnly }: { product:
             {e['category_ids.0'] ? <p role="alert" className="mt-1 text-xs text-danger">{e['category_ids.0']}</p> : null}
           </fieldset>
 
+          <MenuTagsField lists={tagLists} selected={product.dietary_tags} readOnly={readOnly} />
+
           <fieldset className="sm:col-span-2">
-            <legend className="mb-2 text-sm font-medium">برچسب‌های رژیمی و حساسیت</legend>
+            <legend className="mb-1 text-sm font-medium">پیشنهاد روز</legend>
+            <p className="mb-2 text-xs text-text-muted">در این روزها برچسب «پیشنهاد امروز» می‌گیرد و در اسلایدر بالای منو می‌آید (قیمت عوض نمی‌شود؛ برای قیمت، از «تخفیف‌ها» با «نمایش روی منو» استفاده کنید).</p>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(DIETARY_TAGS).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm has-[:checked]:border-brand has-[:checked]:bg-brand-soft">
-                  <input type="checkbox" name="dietary_tags" value={key} defaultChecked={tags.has(key)} className="accent-[var(--color-brand)]" />
-                  {label}
+              {IRANIAN_WEEK.map((w) => (
+                <label key={w} className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-sm has-[:checked]:border-brand has-[:checked]:bg-brand-soft">
+                  <input type="checkbox" name="special_days" value={w} defaultChecked={special.has(w)} className="accent-[var(--color-brand)]" />
+                  {WEEKDAY_LABELS[w]}
                 </label>
               ))}
             </div>

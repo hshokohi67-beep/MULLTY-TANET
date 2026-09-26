@@ -76,6 +76,7 @@ export async function saveProductDetails(productId: string, _prev: FormState, fo
         category_ids: formData.getAll('category_ids').map(String),
         nutrition: Object.keys(nutrition).length ? nutrition : null,
         dietary_tags: formData.getAll('dietary_tags').map(String),
+        special_days: formData.getAll('special_days').map(Number),
       },
     });
   } catch (error) {
@@ -85,6 +86,32 @@ export async function saveProductDetails(productId: string, _prev: FormState, fo
   refresh();
 
   return { ok: true, message: 'مشخصات محصول ذخیره شد.' };
+}
+
+/** Adds one of the café's own diet/allergy tags; the editor checks it on the product right away. */
+export async function addMenuTag(label: string): Promise<{ ok: true; tag: { id: string; key: string; label: string } } | { ok: false; message: string }> {
+  try {
+    const { data } = await api<{ data: { id: string; key: string; label: string } }>('/catalog/menu-tags', { method: 'POST', body: { label } });
+    refresh();
+
+    return { ok: true, tag: data };
+  } catch (error) {
+    const state = toFormState(error);
+
+    return { ok: false, message: state.errors?.label ?? state.message ?? 'برچسب ذخیره نشد.' };
+  }
+}
+
+/** Deletes a café tag and takes it off every product. */
+export async function deleteMenuTag(id: string): Promise<{ ok: boolean; message?: string }> {
+  try {
+    await api(`/catalog/menu-tags/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    refresh();
+
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: toFormState(error).message ?? 'حذف نشد.' };
+  }
 }
 
 export async function saveVariants(productId: string, _prev: FormState, formData: FormData): Promise<FormState> {

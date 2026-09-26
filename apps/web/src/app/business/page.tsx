@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ComponentType, CSSProperties, ReactNode } from 'react';
 import {
-  ArrowLeft, BellRing, BookOpenCheck, Building2, CalendarClock, ChartColumn, ChefHat, Coffee, Compass, Crown, Globe2, Languages, MessageSquareText,
-  PackageSearch, QrCode, Rocket, ShieldCheck, Smartphone, Sparkles, Store, UtensilsCrossed, type LucideIcon,
+  ArrowLeft, BellRing, BookOpenCheck, Building2, CalendarClock, ChartColumn, ChefHat, Coffee, Compass, Crown, Globe2, Languages, MessageSquareText, PackageSearch, QrCode, Rocket, ShieldCheck, ShoppingBag, Smartphone, Store, UtensilsCrossed, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
@@ -166,7 +165,7 @@ export default async function BusinessPage() {
                 <span className="text-xs"><span className="block font-bold">سفارش #۱۲ آماده است</span><span className="text-text-muted">کافه نارنج</span></span>
               </div>
               <div className="glass absolute -start-4 bottom-16 hidden items-center gap-2 rounded-2xl p-2.5 pe-4 shadow-[var(--shadow-lg)] sm:flex">
-                <span className="flex size-9 items-center justify-center rounded-xl bg-accent-soft text-accent"><Sparkles className="size-4" /></span>
+                <span className="flex size-9 items-center justify-center rounded-xl bg-accent-soft text-accent"><ShoppingBag className="size-4" /></span>
                 <span className="text-xs"><span className="block font-bold">سفارش تازه از میز ۶</span><span className="text-text-muted">۲ لاته، ۱ چیزکیک</span></span>
               </div>
             </div>
