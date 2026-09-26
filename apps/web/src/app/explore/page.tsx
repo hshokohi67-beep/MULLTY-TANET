@@ -340,9 +340,12 @@ function OwnerBand() {
           <h2 className="text-2xl font-black">کافه، رستوران یا شیرینی‌فروشی دارید؟</h2>
           <p className="mt-1 max-w-lg opacity-85">منوی آنلاین، سفارش از میز و پیک، باشگاه مشتریان و جایی در خوراک‌گردی؛ همه در کافه‌یار.</p>
         </div>
-        <Link href="/login" className="inline-flex h-12 shrink-0 items-center gap-2 rounded-xl bg-on-brand px-6 font-bold text-brand-strong shadow-[var(--shadow-md)] hover:opacity-90">
-          ورود به پنل کافه‌یار<ArrowLeft className="size-4" aria-hidden="true" />
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link href="/business" className="inline-flex h-12 items-center gap-2 rounded-xl bg-on-brand px-6 font-bold text-brand-strong shadow-[var(--shadow-md)] hover:opacity-90">
+            کافه‌یار را ببینید<ArrowLeft className="size-4" aria-hidden="true" />
+          </Link>
+          <Link href="/signup" className="inline-flex h-12 items-center rounded-xl border border-on-brand/40 px-5 font-semibold hover:bg-on-brand/10">شروع رایگان</Link>
+        </div>
       </div>
     </section>
   );

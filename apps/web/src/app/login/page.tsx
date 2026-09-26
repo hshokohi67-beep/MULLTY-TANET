@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ChefHat, Crown, LineChart, ReceiptText } from 'lucide-react';
 import { LoginForm } from './LoginForm';
 
@@ -28,6 +29,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
             <p className="mt-1.5 text-sm text-text-muted">با شماره موبایل یا ایمیل خود وارد پنل مدیریت شوید.</p>
           </div>
           <LoginForm next={next} expired={expired} />
+          <p className="mt-6 text-center text-sm text-text-muted">کافه یا رستوران دارید و هنوز حساب ندارید؟ <Link href="/signup" className="font-semibold text-brand hover:underline">شروع رایگان</Link></p>
         </div>
       </section>
 

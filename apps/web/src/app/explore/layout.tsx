@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { LogIn, UtensilsCrossed } from 'lucide-react';
+import { LogIn, Store, UtensilsCrossed } from 'lucide-react';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
 
 export const metadata: Metadata = {
@@ -23,6 +23,9 @@ export default function ExploreLayout({ children }: LayoutProps<'/explore'>) {
             </span>
           </Link>
           <div className="ms-auto flex items-center gap-2">
+            <Link href="/business" className="hidden h-9 items-center gap-1.5 rounded-lg bg-brand-soft px-3 text-sm font-semibold text-text hover:bg-brand hover:text-on-brand md:inline-flex">
+              <Store className="size-4" aria-hidden="true" />کافه یا رستوران دارید؟
+            </Link>
             <ThemeSwitch />
             <Link href="/login" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm text-text-muted hover:text-text">
               <LogIn className="size-4" aria-hidden="true" /><span className="hidden sm:inline">ورود کسب‌وکارها</span>
@@ -48,6 +51,8 @@ export default function ExploreLayout({ children }: LayoutProps<'/explore'>) {
           </nav>
           <nav aria-label="کسب‌وکارها" className="flex flex-col gap-2 text-sm">
             <p className="font-bold">کسب‌وکارها</p>
+            <Link href="/business" className="font-semibold text-brand hover:underline">کافه یا رستوران دارید؟ کافه‌یار را ببینید</Link>
+            <Link href="/signup" className="text-text-muted hover:text-text">شروع رایگان ۱۴ روزه</Link>
             <Link href="/login" className="text-text-muted hover:text-text">معرفی فروشگاه در خوراک‌گردی</Link>
             <Link href="/login" className="text-text-muted hover:text-text">تبلیغ در خوراک‌گردی</Link>
             <Link href="/login" className="text-text-muted hover:text-text">ورود به پنل کافه‌یار</Link>

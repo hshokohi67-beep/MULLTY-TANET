@@ -5,7 +5,8 @@ import { slugFromHost } from '@/lib/store-links';
 const GATED = ['/dashboard', '/print', '/billing', '/ads', '/platform', '/select-tenant'];
 
 /** Never rewritten on a café subdomain. */
-const PASS = ['/_next', '/fonts', '/favicon.ico', '/robots.txt'];
+// Served as-is on café subdomains too (sw.js: browser notifications on the café's own address).
+const PASS = ['/_next', '/fonts', '/favicon.ico', '/robots.txt', '/sw.js'];
 
 /**
  * 1. Café subdomains ({slug}.{NEXT_PUBLIC_STORE_BASE_DOMAIN}): "/x" is served by /s/{slug}/x.

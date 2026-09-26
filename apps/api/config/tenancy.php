@@ -20,5 +20,8 @@ return [
     'storefront_scheme' => env('STOREFRONT_SCHEME', 'https'),
 
     // Slugs a tenant can never take (they collide with platform hosts/routes).
-    'reserved_slugs' => ['www', 'api', 'admin', 'app', 'dashboard', 'panel', 'static', 'cdn', 'mail', 'help', 'support', 'status', 'marketplace'],
+    'reserved_slugs' => ['www', 'api', 'admin', 'app', 'dashboard', 'panel', 'static', 'cdn', 'mail', 'help', 'support', 'status', 'marketplace', 'explore', 'business', 'signup', 'login', 'platform', 'billing', 'blog', 'docs', 'cafeyar'],
+
+    // Cafés may sign themselves up at /signup (14-day trial). Turn off to create tenants only from the platform panel.
+    'self_signup' => (bool) env('SELF_SIGNUP', true),
 ];

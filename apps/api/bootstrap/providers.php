@@ -15,6 +15,7 @@ use App\Modules\Kitchen\Providers\KitchenServiceProvider;
 use App\Modules\Loyalty\Providers\LoyaltyServiceProvider;
 use App\Modules\Marketplace\Providers\MarketplaceServiceProvider;
 use App\Modules\Messaging\Providers\MessagingServiceProvider;
+use App\Modules\Notifications\Providers\NotificationsServiceProvider;
 use App\Modules\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Payments\Providers\PaymentsServiceProvider;
 use App\Modules\Storefront\Providers\StorefrontServiceProvider;
@@ -45,5 +46,6 @@ return [
     MarketplaceServiceProvider::class,
     AdvertisingServiceProvider::class,
     MessagingServiceProvider::class,
+    NotificationsServiceProvider::class,
     InsightsServiceProvider::class,
 ];

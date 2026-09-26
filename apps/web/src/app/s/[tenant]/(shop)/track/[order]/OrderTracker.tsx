@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatJalaliDateTime, formatMoney, formatNumber, formatTime } from '@cafe/locale';
 import { trackOrder } from '@/app/actions/tracking';
+import { FollowOrder } from '@/components/store/FollowOrder';
 import type { Order } from '@/lib/types';
 
 const POLL_MS = 5000;
@@ -78,6 +79,8 @@ export function OrderTracker({ tenant, orderId }: { tenant: string; orderId: str
         <h1 className="mt-1 text-4xl font-black">سفارش #{formatNumber(order.daily_number)}</h1>
         {error ? <p className="mt-2 text-xs text-warning">{error}</p> : null}
       </header>
+
+      {!cancelled && !['completed', 'cancelled', 'rejected'].includes(order.status) ? <FollowOrder tenant={tenant} orderId={orderId} /> : null}
 
       {order.scheduled_for && ['placed', 'accepted'].includes(order.status) ? (
         <p className="rounded-2xl bg-info-soft px-4 py-3 text-center text-sm text-info">

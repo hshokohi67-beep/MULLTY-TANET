@@ -45,7 +45,11 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: '12mb' }, // photos (≤ 10 MB, re-encoded server-side) and the 8 MB landing video
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // The service worker must update promptly and may control the whole site.
+      { source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }, { key: 'Service-Worker-Allowed', value: '/' }] },
+    ];
   },
 };
 

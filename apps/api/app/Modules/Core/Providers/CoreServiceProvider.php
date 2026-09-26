@@ -18,6 +18,7 @@ final class CoreServiceProvider extends ServiceProvider
         Route::model('branch', Branch::class);
 
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
+        RateLimiter::for('signup', fn (Request $request) => [Limit::perMinute(6)->by('signup:'.$request->ip()), Limit::perDay(30)->by('signup-day:'.$request->ip())]);
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
         Route::prefix('api/v1')->middleware('api')->name('api.')->group(__DIR__.'/../routes.php');

@@ -9,7 +9,8 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Tenant-scoped one-time passwords for customer login.
+ * One-time passwords: tenant-scoped for customer login, or with a named scope (e.g. "signup" for
+ * a new café's owner, sent from the platform line).
  *
  * Fixes the legacy weaknesses: CSPRNG code, stored as an HMAC (never plaintext),
  * limited verify attempts, resend cooldown, daily cap, and the code is never
@@ -27,8 +28,22 @@ final class OtpService
      */
     public function issue(Tenant $tenant, string $phoneE164): array
     {
-        $cooldownKey = $this->key('cooldown', $tenant, $phoneE164);
-        $dailyKey = $this->key('daily', $tenant, $phoneE164).':'.now()->toDateString();
+        return $this->issueFor((string) $tenant->getKey(), $phoneE164);
+    }
+
+    /** Consumes the code on success. Throws on any failure. */
+    public function verify(Tenant $tenant, string $phoneE164, string $code): void
+    {
+        $this->verifyFor((string) $tenant->getKey(), $phoneE164, $code);
+    }
+
+    /**
+     * @return array{expires_in: int, resend_after: int}
+     */
+    public function issueFor(string $scope, string $phoneE164): array
+    {
+        $cooldownKey = $this->key('cooldown', $scope, $phoneE164);
+        $dailyKey = $this->key('daily', $scope, $phoneE164).':'.now()->toDateString();
 
         $cooldownUntil = $this->cache->get($cooldownKey);
 
@@ -46,8 +61,8 @@ final class OtpService
         $ttl = (int) config('otp.ttl_seconds');
         $cooldown = (int) config('otp.resend_cooldown_seconds');
 
-        $this->cache->put($this->key('code', $tenant, $phoneE164), [
-            'hash' => $this->hash($tenant, $phoneE164, $code),
+        $this->cache->put($this->key('code', $scope, $phoneE164), [
+            'hash' => $this->hash($scope, $phoneE164, $code),
             'attempts' => 0,
             'expires_at' => time() + $ttl,
         ], $ttl);
@@ -55,8 +70,8 @@ final class OtpService
         $result = $this->sms->sendVerificationCode($phoneE164, $code);
 
         if (! $result->successful) {
-            $this->cache->forget($this->key('code', $tenant, $phoneE164));
-            Log::warning('[otp] delivery failed', ['tenant' => $tenant->getKey(), 'error' => $result->error]);
+            $this->cache->forget($this->key('code', $scope, $phoneE164));
+            Log::warning('[otp] delivery failed', ['scope' => $scope, 'error' => $result->error]);
 
             throw OtpException::deliveryFailed();
         }
@@ -67,12 +82,9 @@ final class OtpService
         return ['expires_in' => $ttl, 'resend_after' => $cooldown];
     }
 
-    /**
-     * Consumes the code on success. Throws on any failure.
-     */
-    public function verify(Tenant $tenant, string $phoneE164, string $code): void
+    public function verifyFor(string $scope, string $phoneE164, string $code): void
     {
-        $key = $this->key('code', $tenant, $phoneE164);
+        $key = $this->key('code', $scope, $phoneE164);
         $entry = $this->cache->get($key);
 
         if (! is_array($entry) || $entry['expires_at'] <= time()) {
@@ -87,7 +99,7 @@ final class OtpService
             throw OtpException::tooManyAttempts();
         }
 
-        if (! hash_equals($entry['hash'], $this->hash($tenant, $phoneE164, $code))) {
+        if (! hash_equals($entry['hash'], $this->hash($scope, $phoneE164, $code))) {
             $entry['attempts']++;
             $remaining = $entry['expires_at'] - time();
 
@@ -112,13 +124,13 @@ final class OtpService
         return str_pad((string) random_int(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
     }
 
-    private function hash(Tenant $tenant, string $phoneE164, string $code): string
+    private function hash(string $scope, string $phoneE164, string $code): string
     {
-        return hash_hmac('sha256', $tenant->getKey().'|'.$phoneE164.'|'.$code, (string) config('app.key'));
+        return hash_hmac('sha256', $scope.'|'.$phoneE164.'|'.$code, (string) config('app.key'));
     }
 
-    private function key(string $type, Tenant $tenant, string $phoneE164): string
+    private function key(string $type, string $scope, string $phoneE164): string
     {
-        return sprintf('otp:%s:%s:%s', $type, $tenant->getKey(), hash('sha256', $phoneE164));
+        return sprintf('otp:%s:%s:%s', $type, $scope, hash('sha256', $phoneE164));
     }
 }

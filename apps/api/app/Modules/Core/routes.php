@@ -6,6 +6,7 @@ use App\Modules\Core\Http\Controllers\BrandingController;
 use App\Modules\Core\Http\Controllers\Platform\PlatformTenantController;
 use App\Modules\Core\Http\Controllers\PublicTenantController;
 use App\Modules\Core\Http\Controllers\SettingsController;
+use App\Modules\Core\Http\Controllers\SignupController;
 use App\Modules\Core\Http\Controllers\TenantController;
 use App\Modules\Identity\Support\PermissionCatalog as P;
 use Illuminate\Support\Facades\Route;
@@ -41,4 +42,11 @@ Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->g
 Route::middleware(['auth:sanctum', 'actor:platform'])->prefix('platform')->name('platform.')->group(function () {
     Route::get('tenants', [PlatformTenantController::class, 'index'])->name('tenants.index');
     Route::post('tenants', [PlatformTenantController::class, 'store'])->name('tenants.store');
+});
+
+// Self-service signup for a new café (14-day trial). The code comes from the platform SMS line.
+Route::prefix('public/signup')->name('public.signup.')->group(function () {
+    Route::get('slug', [SignupController::class, 'slug'])->middleware('throttle:public')->name('slug');
+    Route::post('otp', [SignupController::class, 'otp'])->middleware('throttle:signup')->name('otp');
+    Route::post('/', [SignupController::class, 'store'])->middleware('throttle:signup')->name('store');
 });

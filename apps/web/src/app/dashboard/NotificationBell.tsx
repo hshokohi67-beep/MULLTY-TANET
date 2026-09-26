@@ -6,6 +6,7 @@ import { ArrowUpLeft, Bell, BellRing, CircleAlert, Info, TriangleAlert } from 'l
 import { cx } from '@cafe/ui';
 import { formatNumber } from '@cafe/locale';
 import { loadAlerts, type AlertItem } from '@/app/actions/palette';
+import { DevicePushToggle } from './DevicePushToggle';
 
 const REFRESH_MS = 60_000;
 
@@ -89,6 +90,7 @@ export function NotificationBell() {
               })}
             </ul>
           )}
+          <DevicePushToggle />
         </div>
       ) : null}
     </div>

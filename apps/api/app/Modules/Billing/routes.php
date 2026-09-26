@@ -2,8 +2,12 @@
 
 use App\Modules\Billing\Http\Controllers\BillingController;
 use App\Modules\Billing\Http\Controllers\PlatformBillingController;
+use App\Modules\Billing\Http\Controllers\PublicPlansController;
 use App\Modules\Identity\Support\PermissionCatalog as P;
 use Illuminate\Support\Facades\Route;
+
+// The plans on the public «کافه‌یار برای کسب‌وکارها» page.
+Route::get('public/plans', [PublicPlansController::class, 'index'])->middleware('throttle:public')->name('public.plans');
 
 Route::middleware(['tenant', 'auth:sanctum', 'actor:staff', 'tenant.member'])->prefix('billing')->name('billing.')->group(function () {
     Route::get('status', [BillingController::class, 'status'])->middleware('can:'.P::TENANT_VIEW)->name('status');
