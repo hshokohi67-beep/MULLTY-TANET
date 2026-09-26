@@ -40,6 +40,11 @@ final class TenantSettingsRegistry
             'kds.auto_complete_takeaway' => ['type' => 'bool', 'secret' => false, 'label' => 'تکمیل خودکار سفارش‌های بیرون‌بر پس از آماده شدن', 'rules' => ['boolean'], 'default' => false],
             'goals.daily_sales' => ['type' => 'int', 'secret' => false, 'label' => 'هدف فروش روزانه (ریال)', 'rules' => ['integer', 'min:0', 'max:100000000000000'], 'default' => 0],
             'goals.monthly_sales' => ['type' => 'int', 'secret' => false, 'label' => 'هدف فروش ماهانه (ریال)', 'rules' => ['integer', 'min:0', 'max:100000000000000'], 'default' => 0],
+            'storefront.menu_look' => ['type' => 'string', 'secret' => false, 'label' => 'ظاهر منوی آنلاین', 'rules' => ['string', 'in:bright,night,warm,minimal,landing'], 'default' => 'bright'],
+            'storefront.menu_layout' => ['type' => 'string', 'secret' => false, 'label' => 'چیدمان کارت‌های منو', 'rules' => ['string', 'in:list,grid,compact'], 'default' => 'list'],
+            'storefront.show_calories' => ['type' => 'bool', 'secret' => false, 'label' => 'نمایش کالری در منو', 'rules' => ['boolean'], 'default' => true],
+            'storefront.show_popular' => ['type' => 'bool', 'secret' => false, 'label' => 'برچسب «پرفروش» روی محصولات', 'rules' => ['boolean'], 'default' => true],
+            'storefront.suggestions' => ['type' => 'bool', 'secret' => false, 'label' => 'پیشنهاد محصولات کنار سفارش', 'rules' => ['boolean'], 'default' => true],
             'reports.daily_sms' => ['type' => 'bool', 'secret' => false, 'label' => 'پیامک گزارش پایان روز برای مالک', 'rules' => ['boolean'], 'default' => false],
             'reports.daily_sms_hour' => ['type' => 'int', 'secret' => false, 'label' => 'ساعت ارسال گزارش پایان روز', 'rules' => ['integer', 'between:0,23'], 'default' => 23],
         ];

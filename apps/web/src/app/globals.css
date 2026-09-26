@@ -371,16 +371,16 @@ body {
 .l-pill { border-radius: 9999px; }
 .landing[data-corners='sharp'] .l-pill { border-radius: var(--l-radius-sm); }
 
-.landing[data-template='night'] { --color-bg: #0e0e0d; --color-surface: #161614; --color-surface-muted: #1d1d1a; --color-border: #2a2a26; }
-.landing[data-template='warm'] {
+:is(.landing, .store-look)[data-template='night'] { --color-bg: #0e0e0d; --color-surface: #161614; --color-surface-muted: #1d1d1a; --color-border: #2a2a26; }
+:is(.landing, .store-look)[data-template='warm'] {
   --color-bg: #f4ede1; --color-surface: #fbf7f0; --color-surface-muted: #efe6d7; --color-border: #e3d6c1; --color-text-muted: #6b5e4c;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .landing[data-template='warm'] {
+  :root:not([data-theme='light']) :is(.landing, .store-look)[data-template='warm'] {
     --color-bg: #1b1713; --color-surface: #231e18; --color-surface-muted: #2b251e; --color-border: #3a3128; --color-text-muted: #c2b29b;
   }
 }
-:root[data-theme='dark'] .landing[data-template='warm'] {
+:root[data-theme='dark'] :is(.landing, .store-look)[data-template='warm'] {
   --color-bg: #1b1713; --color-surface: #231e18; --color-surface-muted: #2b251e; --color-border: #3a3128; --color-text-muted: #c2b29b;
 }
 
@@ -435,4 +435,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .landing.l-js [data-reveal] { opacity: 1 !important; transform: none !important; transition: none; }
   .landing .l-rise, .landing .l-drift, .l-marquee-track { animation: none !important; }
+}
+
+/* The shop pages in the café's menu look (ShopChrome). Minimal: flat cards, no decorative glow. */
+.store-look { background: var(--color-bg); color: var(--color-text); }
+.store-look[data-minimal] .mood-card { box-shadow: none; }
+.store-look[data-minimal] .mood-card:is(:hover, :focus-within) { transform: none; }
+.store-look[data-minimal] .photo-fallback { background: var(--color-surface-muted); }
+/* On wide screens the cart panel beside the menu replaces the floating cart bar. */
+@media (min-width: 1024px) {
+  .store-look:has([data-cart-panel]) .cart-float { display: none; }
 }

@@ -4,21 +4,28 @@ import { AtSign, Clock, MapPin, Navigation, Phone, UserRound } from 'lucide-reac
 import { cx, Ltr } from '@cafe/ui';
 import { formatClock } from '@cafe/locale';
 import { initialOf } from '@/components/explore/Art';
+import { CartBar } from '@/components/store/CartBar';
 import { TableBar } from '@/components/store/TableBar';
+import { resolveLook } from '@/lib/storefront';
 import type { Storefront } from '@/lib/storefront-types';
+import { darkBrandCss } from '@/lib/theme-css';
 
 /**
- * The shop frame around the menu, product, cart and account pages: a light header, table mode,
- * the page, and a footer with hours and contact. (The landing page has its own full-bleed frame.)
+ * The shop frame around the menu, product, cart and account pages, in the café's menu look
+ * (bright, night, warm, minimal, or its landing page's): a light header, table mode, the page,
+ * a footer with hours and contact, and the cart bar. (The landing page has its own frame.)
  */
-export function ShopChrome({ tenant, store, children }: { tenant: string; store: Storefront; children: ReactNode }) {
+export async function ShopChrome({ tenant, store, children }: { tenant: string; store: Storefront; children: ReactNode }) {
+  const look = await resolveLook(tenant, store);
+  const nightCss = look.template === 'night' ? darkBrandCss(store.branding?.primary_color, ".store-look[data-template='night']") : null;
   const branch = store.branches[0];
   const today = ({ Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 } as Record<string, number>)[new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: store.timezone }).format(new Date())];
 
   return (
-    <>
+    <div className="store-look flex min-h-dvh flex-1 flex-col" data-template={look.template} data-theme={look.template === 'night' ? 'dark' : undefined} data-minimal={look.minimal || undefined}>
+      {nightCss ? <style dangerouslySetInnerHTML={{ __html: nightCss }} /> : null}
       <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
           <Link href={`/s/${tenant}`} className="flex min-w-0 flex-1 items-center gap-3">
             {store.branding?.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
@@ -35,10 +42,10 @@ export function ShopChrome({ tenant, store, children }: { tenant: string; store:
       </header>
       <TableBar />
 
-      <main id="main" className="page-in mx-auto w-full max-w-5xl flex-1 px-4 pb-28">{children}</main>
+      <main id="main" className="page-in mx-auto w-full max-w-6xl flex-1 px-4 pb-28">{children}</main>
 
       <footer className="mt-10 border-t border-border bg-surface">
-        <div className="mx-auto grid max-w-5xl gap-6 px-4 py-8 pb-32 sm:grid-cols-[1.2fr_1fr]">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 pb-32 sm:grid-cols-[1.2fr_1fr]">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
               {store.branding?.logo_url ? (
@@ -77,6 +84,7 @@ export function ShopChrome({ tenant, store, children }: { tenant: string; store:
         </div>
         <p className="border-t border-border py-3 text-center text-xs text-text-subtle">ساخته‌شده با کافه‌یار</p>
       </footer>
-    </>
+      <CartBar />
+    </div>
   );
 }

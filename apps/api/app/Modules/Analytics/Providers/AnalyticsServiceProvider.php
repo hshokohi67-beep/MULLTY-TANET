@@ -5,6 +5,8 @@ namespace App\Modules\Analytics\Providers;
 use App\Modules\Analytics\Console\BackfillCommand;
 use App\Modules\Analytics\Console\RollupCommand;
 use App\Modules\Analytics\Support\DirtyDays;
+use App\Modules\Analytics\Support\ProductInsights;
+use App\Modules\Catalog\Contracts\MenuInsights;
 use App\Modules\Commerce\Models\Order;
 use App\Modules\Inventory\Enums\StockMovementType;
 use App\Modules\Inventory\Models\OrderItemCost;
@@ -25,6 +27,12 @@ use Illuminate\Support\ServiceProvider;
  */
 final class AnalyticsServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Best sellers and "bought together" for the storefront menu (Catalog's contract).
+        $this->app->bind(MenuInsights::class, ProductInsights::class);
+    }
+
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');

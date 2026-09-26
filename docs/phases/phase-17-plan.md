@@ -27,37 +27,80 @@ The owner's WordPress theme (`theme-front-page/`, "Cafe Luxury Minimal") is the 
 | Contact cards (address + route, hours + "open now", phone + Instagram) | Dark-only colours, English marquee copy, a new random set of products on every load (uncacheable) |
 | The "plate assembles on scroll" idea | Hard-coded "Healthy Chef" copy. Instead: a CSS-only layered parallax of the café's own product photos, off under `prefers-reduced-motion` |
 
-## Part A: menu redesign (`/s/[tenant]`)
+## Part A: menu redesign (`/s/[tenant]/menu`), revised 2026-09-26
 
-### Hero
-- Uses the café's cover photo; photo-less cafés get `StoreHeroArt`.
-- The logo overlaps the bottom edge of the cover. Status, hours, fulfilment and branch chips sit on a glass bar.
-- On scroll, the hero collapses into a compact sticky header with the logo and the café name.
+The owner asked for two things; the rest are proposals (research notes at the end). Items marked *(optional)* wait for the owner's yes.
 
-### Menu page
-- **Sticky category rail:** glass, scroll-spy, a horizontal pill row on mobile and a side list on desktop.
-- **Desktop layout:** three columns: categories, menu, and a sticky cart panel. The cart panel replaces the bottom bar on screens ≥ 1024 px.
-- **Product cards:**
-  - larger photo-led cards (2 per row on mobile, 3–4 on desktop);
-  - the price and the add button sit on a quiet footer;
-  - mood chip (hot/cold);
-  - «ویژه» ("special") and «ناموجود» ("sold out") states;
-  - a "compact list" view the café can choose instead.
-- **«پیشنهاد ما» ("our picks"):** a snap carousel with bigger cards and a subtle entrance animation.
-- **Product sheet:** full-bleed photo, sticky add bar, grouped options with clearer min/max hints.
-- **Footer:** hours, map link, phone and socials as cards (the theme's contact cards, in our tokens).
+### A1. Calories on the cards (owner)
+- Product cards show «۲۴۰ کالری» next to the name, beside the hot/cold and «ویژه» chips. Products with no calories entered show nothing.
+- A new café setting, `storefront.show_calories` (default on, in `TenantSettingsRegistry`), turns the calories off everywhere on the storefront: cards, product page and filters.
+- The data already exists (`nutrition.calories` in the product editor; imported from the legacy plugin), so this needs no new data entry.
 
-### Store look presets (`storefront.look`)
-- A preset sets typography scale, radius, surface style and card layout. The brand colour still flows through `brandCss()`, and every preset works in both themes.
-- Presets:
-  - «روشن» ("bright", the current look, refined);
-  - «شب» ("night", dark editorial, like the theme);
-  - «گرم» ("warm": paper tones, soft radii);
-  - «مینیمال» ("minimal": list layout, no art).
-- Headline font choice from bundled open-licence fonts:
-  - Vazirmatn (current);
-  - Samim (OFL).
-  - «Iranian Sans» from the theme is **not** bundled: its licence is commercial or unclear.
+### A2. Search and filter by calories (owner)
+- **Calorie filter:** a «فیلتر» button beside the search box opens a sheet. Calories are chosen by range: «تا ۲۰۰»، «۲۰۰ تا ۴۰۰»، «بیشتر از ۴۰۰»، or a custom maximum.
+- **Sorting:** «پیشنهادی»، «ارزان‌ترین»، «گران‌ترین»، «کم‌کالری‌ترین».
+- **Products with no calories** are left out while a calorie filter is on, with an honest note (e.g. «۵ محصول کالری ثبت‌شده ندارند»).
+- **Combined with search:** active filters show as removable chips under the search box, and search plus filters work together.
+- **Visibility:** the calorie parts of the sheet appear only when calories are switched on and enough products have them.
+
+### A3. More filters in the same sheet (proposal)
+- Hot/cold (the existing mood).
+- Dietary tags: the existing `dietary_tags` (vegetarian, gluten-free…).
+- Price range.
+- «فقط موجودها» ("available only").
+- All client-side on the cached public menu: instant, no new API.
+
+### A4. Menu look (proposal)
+- **Presets:** «روشن»، «شب»، «گرم»، «مینیمال», plus «مثل صفحه‌ی معرفی» ("same as the landing page"), which takes the landing template so the café's site and menu feel like one place.
+- **Card layout:**
+  - photo grid (2 per row on mobile, 3 on tablet, 4 on desktop, photo-led);
+  - list (the current one, refined);
+  - compact (text only, for long menus or cafés without photos).
+- **Tokens:** built on the same tokens as the landing page. Every preset works in light and dark.
+
+### A5. Page structure (proposal)
+- **Hero:** a smaller, collapsing hero. On scroll it shrinks into a sticky header with logo, name, open/closed status and search.
+- **Category rail:** glass (it floats over content), scroll-spy, with each category's photo or icon.
+- **Desktop:** three columns (category list, menu, and a sticky cart panel that replaces the bottom bar on wide screens).
+- **Quick add:**
+  - after the first tap, the "+" on a card becomes a − ۱ + stepper, so a second cup needs no page;
+  - the cart bar bumps softly;
+  - sold-out items are dimmed with «ناموجود».
+
+### A6. Product page (proposal)
+- Full-bleed photo with a sticky add bar; the price updates with the chosen options.
+- Nutrition chips in one row (calories, caffeine, protein), depending on A1.
+- Clearer option groups («حداقل ۱ مورد»، «هر تعداد»).
+- «کنارش می‌چسبد» ("goes well with it"): 3 items from a complementary category, e.g. a dessert beside a coffee.
+
+### A7. Data-driven badges *(optional)*
+- **«پرفروش» ("best seller"):** the café's top 5 products over the last 30 days, from the Analytics aggregates (`product_metrics`, never raw orders).
+- **Architecture:** Catalog must not depend on Analytics, so the badge comes through a contract (`Catalog\Contracts\PopularProducts`) that Analytics binds. The public menu gains `is_popular`.
+- **Setting:** a café setting can hide the badge.
+
+### A8. Cart suggestions *(optional)*
+- In the cart, «معمولاً با این سفارش می‌گیرند» ("usually ordered with this"): up to 3 products bought together with the cart's items, from order co-occurrence over the last 60 days.
+- **Data:** computed nightly into a small aggregate, never from raw orders at request time.
+- **Fallback:** without enough data, the complementary-category rule from A6.
+
+### Out of scope
+- Allergen matrix, per-item videos, AR dishes: not needed for cafés now.
+
+### Research notes (Sept 2026)
+- Photos and clear descriptions lift conversion.
+- Every extra tap is a conversion leak.
+- A 2-second delay raises bounce sharply.
+- Surfacing "most popular" items guides decisions.
+- Dietary and calorie filters ("under 500 calories") are now expected in web menus, and tags must be applied consistently or customers stop trusting them.
+
+These back A1–A8, the quick-add stepper and the performance budget. Sources: quickbuy.io, menucardstudio.com, supercode.com, usekodo.ai, foodchainmagazine.com.
+
+### Tests
+- **API:** the public menu carries the calorie setting (and `is_popular`, if A7 is chosen).
+- **Contract (A7):** a café without Analytics data gets no badges.
+- **Web:** visual checks at 390 px and 1280 px, light and dark, for each look and card layout.
+- **Filters:** combinations of search, filters and sorting, with the empty state.
+- **Motion:** reduced motion.
 
 ## Part B: café landing page (optional, per café)
 

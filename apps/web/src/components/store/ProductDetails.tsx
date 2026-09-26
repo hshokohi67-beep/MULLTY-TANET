@@ -4,14 +4,26 @@ import { Coffee, Dumbbell, Flame, Leaf } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
 import type { MenuProduct } from '@/lib/storefront-types';
+import { Suggestions } from './menu/Suggestions';
 import { ProductOptions } from './ProductOptions';
 import { MoodChip, ProductPhoto } from './ProductVisuals';
 
-/** Photo (edge to edge in the sheet), mood and dietary tags, nutrition tiles, then the option picker. */
-export function ProductDetails({ product, branchId, onAdded, inSheet = false }: { product: MenuProduct; branchId: string; onAdded?: () => void; inSheet?: boolean }) {
+/**
+ * Photo (edge to edge in the sheet), mood and dietary tags, nutrition tiles (calories only when the
+ * café shows them), what goes well with it, then the option picker.
+ */
+export function ProductDetails({ product, branchId, onAdded, inSheet = false, showCalories = true, suggestions = [], onOpenSuggestion }: {
+  product: MenuProduct;
+  branchId: string;
+  onAdded?: () => void;
+  inSheet?: boolean;
+  showCalories?: boolean;
+  suggestions?: MenuProduct[];
+  onOpenSuggestion?: (p: MenuProduct) => void;
+}) {
   const n = product.nutrition;
   const facts = [
-    n?.calories ? { icon: Flame, value: formatNumber(n.calories), label: 'کالری' } : null,
+    showCalories && n?.calories ? { icon: Flame, value: formatNumber(n.calories), label: 'کالری' } : null,
     n?.caffeine_mg ? { icon: Coffee, value: formatNumber(n.caffeine_mg), label: 'میلی‌گرم کافئین' } : null,
     n?.protein_g ? { icon: Dumbbell, value: formatNumber(n.protein_g), label: 'گرم پروتئین' } : null,
   ].filter((f) => f !== null);
@@ -41,6 +53,8 @@ export function ProductDetails({ product, branchId, onAdded, inSheet = false }: 
           ))}
         </ul>
       ) : null}
+
+      <Suggestions title="کنارش می‌چسبد" products={suggestions} branchId={branchId} onOpen={onOpenSuggestion} />
 
       <ProductOptions product={product} branchId={branchId} onAdded={onAdded} />
     </div>

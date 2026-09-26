@@ -6,6 +6,7 @@ use App\Modules\Analytics\Models\DailyMetric;
 use App\Modules\Analytics\Models\HourlyMetric;
 use App\Modules\Analytics\Models\MetricDirtyDay;
 use App\Modules\Analytics\Models\ProductMetric;
+use App\Modules\Analytics\Models\ProductPairMetric;
 use App\Modules\Analytics\Support\SalesRules;
 use App\Modules\Commerce\Models\Order;
 use App\Modules\Commerce\Models\OrderItem;
@@ -48,6 +49,7 @@ final class RollupDay
                 DailyMetric::query()->whereDate('business_date', $date)->delete();
                 HourlyMetric::query()->whereDate('business_date', $date)->delete();
                 ProductMetric::query()->whereDate('business_date', $date)->delete();
+                ProductPairMetric::query()->whereDate('business_date', $date)->delete();
 
                 $base = fn (array $row) => ['id' => (string) Str::ulid(), 'tenant_id' => $tenant->id, 'business_date' => $date] + $row;
                 foreach (array_chunk(array_map($base, $rows['daily']), 200) as $chunk) {
@@ -59,6 +61,9 @@ final class RollupDay
                 foreach (array_chunk(array_map($base, $rows['products']), 500) as $chunk) {
                     ProductMetric::query()->insert($chunk);
                 }
+                foreach (array_chunk(array_map($base, $rows['pairs']), 500) as $chunk) {
+                    ProductPairMetric::query()->insert($chunk);
+                }
             });
 
             return true;
@@ -66,7 +71,7 @@ final class RollupDay
     }
 
     /**
-     * @return array{daily: list<array<string, mixed>>, hourly: list<array<string, mixed>>, products: list<array<string, mixed>>}
+     * @return array{daily: list<array<string, mixed>>, hourly: list<array<string, mixed>>, products: list<array<string, mixed>>, pairs: list<array<string, mixed>>}
      */
     private function compute(string $date, string $timezone): array
     {
@@ -95,6 +100,7 @@ final class RollupDay
         $daily = [];
         $hourly = [];
         $products = [];
+        $pairs = [];
 
         foreach (Branch::query()->pluck('id') as $branchId) {
             $mine = $counted->where('branch_id', $branchId);
@@ -153,8 +159,36 @@ final class RollupDay
                     'costed_quantity' => (int) $group->filter(fn (OrderItem $i) => isset($costs[$i->id]))->sum('quantity'),
                 ];
             }
+
+            foreach ($this->pairs($myItems) as $key => $together) {
+                [$a, $b] = explode('|', $key);
+                $pairs[] = ['branch_id' => $branchId, 'product_a' => $a, 'product_b' => $b, 'orders' => $together];
+            }
         }
 
-        return ['daily' => $daily, 'hourly' => $hourly, 'products' => $products];
+        return ['daily' => $daily, 'hourly' => $hourly, 'products' => $products, 'pairs' => $pairs];
+    }
+
+    /**
+     * "a|b" => orders that held both products (a < b). A huge order counts only its first 12
+     * distinct products, so one party order can't blow up the table.
+     *
+     * @param  Collection<int, OrderItem>  $items
+     * @return array<string, int>
+     */
+    private function pairs(Collection $items): array
+    {
+        $counts = [];
+        foreach ($items->whereNotNull('product_id')->groupBy('order_id') as $lines) {
+            $ids = $lines->pluck('product_id')->unique()->sort()->take(12)->values()->all();
+            for ($i = 0; $i < count($ids); $i++) {
+                for ($j = $i + 1; $j < count($ids); $j++) {
+                    $key = $ids[$i].'|'.$ids[$j];
+                    $counts[$key] = ($counts[$key] ?? 0) + 1;
+                }
+            }
+        }
+
+        return $counts;
     }
 }

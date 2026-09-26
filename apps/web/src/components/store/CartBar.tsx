@@ -6,18 +6,23 @@ import { ShoppingBag } from 'lucide-react';
 import { formatMoney, formatNumber } from '@cafe/locale';
 import { useStore } from './StoreProvider';
 
-/** Floating "view cart" bar on the menu and product pages; hidden where it would be in the way. */
+/**
+ * Floating "view cart" bar on the home, menu and product pages; hidden where it would be in the way
+ * (and on wide screens beside the menu, where the cart panel shows instead).
+ */
 export function CartBar() {
   const { tenant, session, bump } = useStore();
   const pathname = usePathname();
   const cart = session?.cart;
   const count = cart?.quote.lines.reduce((n, l) => n + l.quantity, 0) ?? 0;
-  const onMenu = pathname === `/s/${tenant}` || pathname.startsWith(`/s/${tenant}/p/`);
+  // On the café's own subdomain the path has no /s/{tenant} prefix.
+  const path = pathname.startsWith(`/s/${tenant}`) ? pathname.slice(`/s/${tenant}`.length) : pathname;
+  const onMenu = path === '' || path === '/' || path === '/menu' || path.startsWith('/p/');
 
   if (!onMenu || !cart || count === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div className="cart-float pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
       <Link
         key={bump}
         href={`/s/${tenant}/cart`}

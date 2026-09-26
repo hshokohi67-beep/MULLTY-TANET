@@ -137,16 +137,10 @@ export async function updateBranding(_prev: FormState, formData: FormData): Prom
 }
 
 export async function updateSettings(_prev: FormState, formData: FormData): Promise<FormState> {
-  const settings: Record<string, string | boolean | null> = {
+  const settings: Record<string, string | null> = {
     'contact.phone': digits(formData, 'contact.phone'),
     'contact.instagram': text(formData, 'contact.instagram'),
   };
-
-  // Secrets are write-only: an empty field means "keep the current value".
-  const apiKey = text(formData, 'integrations.sms.kavenegar_api_key');
-  if (apiKey !== null) {
-    settings['integrations.sms.kavenegar_api_key'] = apiKey;
-  }
 
   try {
     await api('/tenant/settings', { method: 'PATCH', body: { settings } });
@@ -258,4 +252,31 @@ export async function updateMemberRoles(memberId: string, _prev: FormState, form
   revalidatePath('/dashboard/team');
 
   return { ok: true, message: 'نقش‌ها به‌روز شد.' };
+}
+
+const MENU_LOOKS = ['bright', 'night', 'warm', 'minimal', 'landing'];
+const MENU_LAYOUTS = ['list', 'grid', 'compact'];
+
+/** How the online menu looks and what it shows (look, card layout, calories, best sellers, suggestions). */
+export async function updateMenuSettings(_prev: FormState, formData: FormData): Promise<FormState> {
+  const look = String(formData.get('storefront.menu_look'));
+  const layout = String(formData.get('storefront.menu_layout'));
+  try {
+    await api('/tenant/settings', {
+      method: 'PATCH',
+      body: { settings: {
+        'storefront.menu_look': MENU_LOOKS.includes(look) ? look : 'bright',
+        'storefront.menu_layout': MENU_LAYOUTS.includes(layout) ? layout : 'list',
+        'storefront.show_calories': formData.get('storefront.show_calories') === 'on',
+        'storefront.show_popular': formData.get('storefront.show_popular') === 'on',
+        'storefront.suggestions': formData.get('storefront.suggestions') === 'on',
+      } },
+    });
+  } catch (error) {
+    return toFormState(error);
+  }
+
+  revalidatePath('/dashboard/settings');
+
+  return { ok: true, message: 'تنظیمات منو ذخیره شد؛ تا یک دقیقه‌ی دیگر روی منو دیده می‌شود.' };
 }

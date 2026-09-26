@@ -69,22 +69,25 @@ export async function MenuHome({ tenant, store, query }: { tenant: string; store
           <div className="mb-4"><Alert tone="warning" title="کد این میز معتبر نیست">کد QR روی میز را دوباره اسکن کنید یا از گارسون کمک بگیرید.</Alert></div>
         ) : null}
 
-        {/* Hero: the café's cover photo (or its colour with a quiet pattern) and the essentials. */}
-        <div className="relative isolate overflow-hidden rounded-[1.75rem] shadow-[var(--shadow-md)]">
+        {/* Hero: the café's cover photo (or its colour with a quiet pattern) and the essentials. Once it
+            scrolls away, the menu's sticky bar shows the name and status instead. */}
+        <div id="menu-hero" className="relative isolate overflow-hidden rounded-[1.75rem] shadow-[var(--shadow-md)]">
           {store.branding?.cover_url ? (
             // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
             <img src={store.branding.cover_url} alt="" fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover" />
           ) : <StoreHeroArt name={store.name} />}
           <div aria-hidden="true" className={cx('absolute inset-0 -z-10 bg-gradient-to-t', store.branding?.cover_url ? 'from-scrim via-scrim/40 to-scrim/5' : 'from-scrim/55 via-transparent to-transparent')} />
 
-          <div className="flex min-h-52 flex-col justify-end gap-3 p-5 pt-10 text-on-media sm:min-h-64 sm:p-7">
-            {store.branding?.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
-              <img src={store.branding.logo_url} alt="" className="size-16 rounded-2xl bg-surface object-contain p-1 shadow-[var(--shadow-lg)] ring-2 ring-on-media/40 sm:size-20" />
-            ) : (
-              <span aria-hidden="true" className="glass-light flex size-16 items-center justify-center rounded-2xl text-3xl font-black shadow-[var(--shadow-lg)] sm:size-20 sm:text-4xl">{initialOf(store.name)}</span>
-            )}
-            <h1 className="text-3xl font-black leading-tight [text-shadow:0_2px_12px_rgb(0_0_0/0.35)] sm:text-4xl">{store.name}</h1>
+          <div className="flex min-h-44 flex-col justify-end gap-3 p-5 pt-8 text-on-media sm:min-h-56 sm:p-7">
+            <div className="flex items-end gap-3.5">
+              {store.branding?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element -- tenant media from object storage
+                <img src={store.branding.logo_url} alt="" className="size-14 shrink-0 rounded-2xl bg-surface object-contain p-1 shadow-[var(--shadow-lg)] ring-2 ring-on-media/40 sm:size-20" />
+              ) : (
+                <span aria-hidden="true" className="glass-light flex size-14 shrink-0 items-center justify-center rounded-2xl text-2xl font-black shadow-[var(--shadow-lg)] sm:size-20 sm:text-4xl">{initialOf(store.name)}</span>
+              )}
+              <h1 className="min-w-0 pb-1 text-2xl font-black leading-tight [text-shadow:0_2px_12px_rgb(0_0_0/0.35)] sm:text-4xl">{store.name}</h1>
+            </div>
             {store.branding?.seo_description ? <p className="line-clamp-2 max-w-xl text-sm leading-6 text-on-media-muted">{store.branding.seo_description}</p> : null}
             {branch ? (
               <ul className="flex flex-wrap gap-2 text-xs font-medium">
@@ -129,7 +132,7 @@ export async function MenuHome({ tenant, store, query }: { tenant: string; store
         ) : null}
       </section>
 
-      {menu ? <MenuBrowser menu={menu} stories={stories} /> : (
+      {menu ? <MenuBrowser menu={menu} stories={stories} layout={store.features.menu?.layout ?? 'list'} showCalories={store.features.menu?.show_calories ?? true} /> : (
         <p className="py-16 text-center text-text-muted">منوی این کافه هنوز منتشر نشده است.</p>
       )}
     </>

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { ProductDetails } from '@/components/store/ProductDetails';
+import { suggestionsFor } from '@/lib/menu-logic';
 import { getMenu, getStorefront, storeUrl } from '@/lib/storefront';
 
 async function load(tenant: string, slug: string) {
@@ -58,7 +59,7 @@ export default async function ProductPage({ params }: PageProps<'/s/[tenant]/p/[
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: store.name, item: storeUrl(tenant) },
-        ...(category ? [{ '@type': 'ListItem', position: 2, name: category.name, item: storeUrl(tenant, `#cat-${category.id}`) }] : []),
+        ...(category ? [{ '@type': 'ListItem', position: 2, name: category.name, item: storeUrl(tenant, `/menu#cat-${category.id}`) }] : []),
         { '@type': 'ListItem', position: category ? 3 : 2, name: product.name },
       ],
     },
@@ -66,15 +67,15 @@ export default async function ProductPage({ params }: PageProps<'/s/[tenant]/p/[
 
   return (
     <div className="mx-auto max-w-xl pt-4">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <nav aria-label="مسیر" className="mb-3 text-sm text-text-muted">
-        <Link href={`/s/${tenant}${category ? `#cat-${category.id}` : ''}`} className="inline-flex items-center gap-1 hover:text-text">
+        <Link href={`/s/${tenant}/menu${category ? `#cat-${category.id}` : ''}`} className="inline-flex items-center gap-1 hover:text-text">
           <ChevronRight className="size-4" aria-hidden="true" />{category?.name ?? 'منو'}
         </Link>
       </nav>
       <article className="rounded-3xl border border-border bg-surface px-5 pt-5 pb-4 shadow-[var(--shadow-sm)]">
         <h1 className="mb-4 text-2xl font-bold">{product.name}</h1>
-        <ProductDetails product={product} branchId={menu.branch.id} />
+        <ProductDetails product={product} branchId={menu.branch.id} showCalories={store.features.menu.show_calories} suggestions={suggestionsFor(menu, [product.id])} />
       </article>
     </div>
   );

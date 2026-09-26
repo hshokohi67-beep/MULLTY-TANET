@@ -2,6 +2,7 @@
 
 namespace App\Modules\Catalog\Actions;
 
+use App\Modules\Catalog\Contracts\MenuInsights;
 use App\Modules\Catalog\Enums\AvailabilityStatus;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Modifier;
@@ -12,6 +13,7 @@ use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Catalog\Support\CatalogVersion;
 use App\Modules\Catalog\Support\PriceResolver;
 use App\Modules\Core\Models\Branch;
+use App\Modules\Core\Support\TenantSettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -102,7 +104,35 @@ final class BuildPublicMenu
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'slug' => $branch->slug],
             'categories' => $categories->all(),
             'products' => $products->all(),
+            'insights' => $this->insights($products->pluck('id')->all()),
             'generated_at' => now()->toIso8601String(),
         ];
+    }
+
+    /**
+     * Best sellers and "goes well with" pairs, limited to products on this menu and switched off
+     * when the café hides them.
+     *
+     * @param  list<string>  $onMenu
+     * @return array{popular: list<string>, pairs: array<string, list<string>>}
+     */
+    private function insights(array $onMenu): array
+    {
+        $insights = app(MenuInsights::class);
+        $on = array_flip($onMenu);
+        $popular = TenantSettings::get('storefront.show_popular')
+            ? array_values(array_filter($insights->popular(), fn (string $id) => isset($on[$id])))
+            : [];
+        $pairs = [];
+        if (TenantSettings::get('storefront.suggestions')) {
+            foreach ($insights->pairs() as $id => $with) {
+                $with = array_values(array_filter($with, fn (string $other) => isset($on[$other])));
+                if (isset($on[$id]) && $with !== []) {
+                    $pairs[$id] = array_slice($with, 0, 3);
+                }
+            }
+        }
+
+        return ['popular' => $popular, 'pairs' => $pairs];
     }
 }

@@ -76,6 +76,12 @@ final class PublicStorefrontController
                 'club' => (bool) TenantSettings::get('loyalty.enabled'),
                 'wallet_payments' => (bool) TenantSettings::get('wallet.payments_enabled'),
                 'preorder_when_closed' => (bool) TenantSettings::get('orders.allow_preorder_when_closed'),
+                // How the café's menu looks and what it shows ("landing" = follow the landing page's template).
+                'menu' => [
+                    'look' => (string) TenantSettings::get('storefront.menu_look'),
+                    'layout' => (string) TenantSettings::get('storefront.menu_layout'),
+                    'show_calories' => (bool) TenantSettings::get('storefront.show_calories'),
+                ],
             ],
         ]])->header('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
     }

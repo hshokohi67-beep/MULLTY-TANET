@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { api } from '@/lib/api';
 import { requireMembership } from '@/lib/auth';
 import type { Branding, SettingItem, SettingsMeta, Tenant } from '@/lib/types';
-import { BrandingForm, GeneralSettingsForm, PaymentSettingsForm, PreorderSettingsForm, ReportSettingsForm, TenantProfileForm } from './SettingsForms';
+import { BrandingForm, GeneralSettingsForm, MenuSettingsForm, PaymentSettingsForm, PreorderSettingsForm, ReportSettingsForm, TenantProfileForm } from './SettingsForms';
 
 export const metadata: Metadata = { title: 'تنظیمات' };
 
@@ -22,6 +22,7 @@ export default async function SettingsPage() {
       <TenantProfileForm tenant={tenant} readOnly={!can('tenant.update')} />
       <BrandingForm branding={branding} readOnly={!can('branding.update')} />
       {settings ? <GeneralSettingsForm settings={settings.data} readOnly={!can('settings.update')} /> : null}
+      {settings ? <MenuSettingsForm settings={settings.data} readOnly={!can('settings.update')} /> : null}
       {settings ? <PaymentSettingsForm settings={settings.data} meta={settings.meta} readOnly={!can('settings.update')} /> : null}
       {settings ? <PreorderSettingsForm settings={settings.data} readOnly={!can('settings.update')} /> : null}
       {settings ? <ReportSettingsForm settings={settings.data} readOnly={!can('settings.update')} /> : null}

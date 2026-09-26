@@ -32,6 +32,9 @@ export interface StoreBranch {
   delivery: boolean;
 }
 
+export type MenuLook = 'bright' | 'night' | 'warm' | 'minimal' | 'landing';
+export type MenuLayout = 'list' | 'grid' | 'compact';
+
 export interface Storefront {
   name: string;
   slug: string;
@@ -39,7 +42,14 @@ export interface Storefront {
   branding: Branding | null;
   contact: { phone: string | null; instagram: string | null };
   branches: StoreBranch[];
-  features: { online_payment: boolean; club: boolean; wallet_payments: boolean; preorder_when_closed: boolean };
+  features: {
+    online_payment: boolean;
+    club: boolean;
+    wallet_payments: boolean;
+    preorder_when_closed: boolean;
+    /** The café's menu look ("landing" follows its landing page), card layout and calorie display. */
+    menu: { look: MenuLook; layout: MenuLayout; show_calories: boolean };
+  };
 }
 
 export interface MenuModifier { id: string; name: string; price_delta: number; is_default: boolean }
@@ -68,6 +78,8 @@ export interface Menu {
   branch: { id: string; name: string; slug: string };
   categories: MenuCategory[];
   products: MenuProduct[];
+  /** Best sellers and "bought together" pairs (empty when the café hides them or has no data yet). */
+  insights: { popular: string[]; pairs: Record<string, string[]> };
   generated_at: string;
 }
 

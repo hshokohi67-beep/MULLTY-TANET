@@ -7,9 +7,10 @@ import {
 } from 'lucide-react';
 import { Alert, Button, cx, EmptyState, Skeleton } from '@cafe/ui';
 import { formatMoney, formatNumber } from '@cafe/locale';
-import { loadPreorderSlots, placeOrder, quoteCart, switchOrderType, updateCartLine, type PreorderSlots } from '@/app/actions/storefront';
+import { cartSuggestions, loadPreorderSlots, placeOrder, quoteCart, switchOrderType, updateCartLine, type PreorderSlots } from '@/app/actions/storefront';
+import { Suggestions } from './menu/Suggestions';
 import { useSubmissionKey } from '@/components/useSubmissionKey';
-import type { CustomerAddress, QuoteLine } from '@/lib/storefront-types';
+import type { CustomerAddress, MenuProduct, QuoteLine } from '@/lib/storefront-types';
 import { illustrationFor } from './ProductVisuals';
 import { useStore } from './StoreProvider';
 
@@ -99,6 +100,7 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
   const [note, setNote] = useState('');
   const [contactName, setContactName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [extras, setExtras] = useState<MenuProduct[]>([]);
   const [busy, startBusy] = useTransition();
   const [placing, startPlacing] = useTransition();
   const [key, renewKey] = useSubmissionKey();
@@ -110,6 +112,16 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
   const branch = store.branches.find((b) => b.id === branchId);
   const signedIn = Boolean(session?.customer);
   const scheduledFor = when === 'later' ? slot : '';
+
+  // What usually goes with these products (re-asked only when the set of products changes).
+  const productKey = [...new Set(cart?.quote.lines.map((l) => l.product_id) ?? [])].sort().join(',');
+  useEffect(() => {
+    if (!branchId || !productKey) return;
+    let live = true;
+    void cartSuggestions(tenant, branchId, productKey.split(',')).then((list) => { if (live) setExtras(list); });
+
+    return () => { live = false; };
+  }, [tenant, branchId, productKey]);
 
   // Slots for pickup/delivery orders; when the café is closed, pre-order is the only way.
   useEffect(() => {
@@ -232,6 +244,7 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
           <Link href={`/s/${tenant}/menu`} className="mt-3 flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border-strong text-sm font-medium text-brand hover:bg-brand-soft/40">
             <Plus className="size-4" aria-hidden="true" />افزودن آیتم دیگر
           </Link>
+          <Suggestions title="معمولاً با این سفارش می‌گیرند" products={extras} branchId={cart.branch.id} className="mt-4" />
         </Step>
 
         {!isTable ? (

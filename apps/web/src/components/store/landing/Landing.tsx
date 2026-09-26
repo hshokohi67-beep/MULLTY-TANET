@@ -1,8 +1,10 @@
 import type { ComponentType } from 'react';
 import { AtSign, UtensilsCrossed } from 'lucide-react';
-import { brandTokens, Ltr } from '@cafe/ui';
+import { Ltr } from '@cafe/ui';
+import { darkBrandCss } from '@/lib/theme-css';
 import type { PublicLanding, SectionKey } from '@/lib/landing-types';
 import type { Menu, Storefront } from '@/lib/storefront-types';
+import { CartBar } from '../CartBar';
 import { LandingFrame } from './LandingFrame';
 import { LandingHeader, LandingHero } from './LandingHero';
 import { FeaturedSection, GallerySection, HighlightsSection, MarqueeSection, StorySection, VisitSection, type SectionProps } from './LandingSections';
@@ -24,8 +26,7 @@ const SECTIONS: Record<SectionKey, ComponentType<SectionProps>> = {
  * café's brand colour is re-derived for dark there.
  */
 export function Landing({ tenant, store, landing, menu, preview = false }: { tenant: string; store: Storefront; landing: PublicLanding; menu: Menu | null; preview?: boolean }) {
-  const dark = landing.design.template === 'night' ? brandTokens(store.branding?.primary_color, 'dark') : null;
-  const css = dark ? `.landing[data-template='night']{--color-brand:${dark.brand};--color-brand-strong:${dark.brandStrong};--color-brand-soft:${dark.brandSoft};--color-on-brand:${dark.onBrand};}` : null;
+  const css = landing.design.template === 'night' ? darkBrandCss(store.branding?.primary_color, ".landing[data-template='night']") : null;
   const props = { tenant, store, landing, menu, preview };
 
   return (
@@ -54,6 +55,7 @@ export function Landing({ tenant, store, landing, menu, preview = false }: { ten
         </div>
         <p className="mt-8 text-xs text-text-subtle">ساخته‌شده با کافه‌یار</p>
       </footer>
+      {preview ? null : <CartBar />}
     </LandingFrame>
   );
 }

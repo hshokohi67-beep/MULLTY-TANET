@@ -158,6 +158,17 @@ export const getStories = cache(async (tenant: string, branchSlug?: string): Pro
   }
 });
 
+/** How the café's shop pages look: its chosen menu look, or its landing page's («مثل صفحه‌ی معرفی»). */
+export async function resolveLook(tenant: string, store: Storefront): Promise<{ template: 'bright' | 'night' | 'warm'; minimal: boolean }> {
+  const look = store.features.menu?.look ?? 'bright';
+  if (look === 'minimal') return { template: 'bright', minimal: true };
+  if (look !== 'landing') return { template: look, minimal: false };
+  const template = (await getLanding(tenant))?.design.template;
+
+  // «پررنگ» is a landing-page idea (brand-coloured sections); its menu stays bright.
+  return { template: template === 'night' || template === 'warm' ? template : 'bright', minimal: false };
+}
+
 export function storeUrl(tenant: string, path = ''): string {
   return storeLink(tenant, path);
 }

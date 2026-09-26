@@ -2,8 +2,9 @@
 
 import { toLatinDigits } from '@cafe/locale';
 import { ApiError, toFormState } from '@/lib/api';
-import { clearCookie, readCookie, sf, writeCookie } from '@/lib/storefront';
-import type { CartView, Club, Customer, CustomerAddress, QuoteLine } from '@/lib/storefront-types';
+import { suggestionsFor } from '@/lib/menu-logic';
+import { clearCookie, getMenu, getStorefront, readCookie, sf, writeCookie } from '@/lib/storefront';
+import type { CartView, Club, Customer, CustomerAddress, MenuProduct, QuoteLine } from '@/lib/storefront-types';
 import type { FormState, Order } from '@/lib/types';
 
 /**
@@ -68,6 +69,19 @@ async function currentCustomer(tenant: string): Promise<Customer | null> {
 }
 
 /** Everything personal the (statically rendered) menu needs, loaded once on the client. */
+/**
+ * What usually goes with the cart's products («معمولاً با این سفارش می‌گیرند»), from the branch's
+ * cached public menu: nothing personal is sent or returned.
+ */
+export async function cartSuggestions(tenant: string, branchId: string, productIds: string[]): Promise<MenuProduct[]> {
+  const store = await getStorefront(tenant);
+  const branch = store?.branches.find((b) => b.id === branchId);
+  if (!branch) return [];
+  const menu = await getMenu(tenant, branch.slug);
+
+  return menu ? suggestionsFor(menu, productIds.filter((id) => ULID.test(id)).slice(0, 30)) : [];
+}
+
 export async function loadSession(tenant: string): Promise<StoreSession> {
   const [cart, table, customer] = await Promise.all([currentCart(tenant), tableInfo(tenant), currentCustomer(tenant)]);
 

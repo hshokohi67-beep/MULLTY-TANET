@@ -2,11 +2,69 @@
 
 import { useActionState } from 'react';
 import { Alert, Button, Card, CardHeader, Checkbox, SelectField, TextAreaField, TextField } from '@cafe/ui';
-import { updateBranding, updatePaymentSettings, updatePreorderSettings, updateReportSettings, updateSettings, updateTenantProfile } from '@/app/actions/dashboard';
+import { updateBranding, updateMenuSettings, updatePaymentSettings, updatePreorderSettings, updateReportSettings, updateSettings, updateTenantProfile } from '@/app/actions/dashboard';
 import { FormStatus } from '@/components/FormStatus';
 import type { Branding, FormState, SettingItem, SettingsMeta, Tenant } from '@/lib/types';
 
 const initial: FormState = { ok: false };
+
+const LOOKS: [string, string, string][] = [
+  ['bright', 'روشن', 'تمیز و آشنا؛ مناسب بیشتر کافه‌ها'],
+  ['warm', 'گرم', 'زمینه‌ی کاغذی و کرم، حس خانگی'],
+  ['night', 'شب', 'همیشه تیره؛ برای کافه‌های شبانه و لوکس'],
+  ['minimal', 'مینیمال', 'کارت‌های تخت و ساده، بدون سایه'],
+  ['landing', 'مثل صفحه‌ی معرفی', 'همان حال‌وهوای صفحه‌ی معرفی کافه'],
+];
+const LAYOUTS: [string, string, string][] = [
+  ['list', 'فهرستی', 'متن کنار عکس کوچک'],
+  ['grid', 'شبکه‌ای', 'عکس بزرگ، دو یا سه ستون'],
+  ['compact', 'فشرده', 'فقط متن؛ برای منوهای طولانی'],
+];
+
+/** One radio card (look / layout). */
+function Pick({ name, value, label, hint, checked }: { name: string; value: string; label: string; hint: string; checked: boolean }) {
+  return (
+    <label className="flex cursor-pointer flex-col gap-0.5 rounded-xl border border-border px-3 py-2.5 transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand-soft has-[:focus-visible]:shadow-[var(--focus-ring)]">
+      <input type="radio" name={name} value={value} defaultChecked={checked} className="sr-only" />
+      <span className="text-sm font-semibold">{label}</span>
+      <span className="text-xs text-text-muted">{hint}</span>
+    </label>
+  );
+}
+
+/** The online menu: look, card layout, calories, «پرفروش» badges and suggestions. */
+export function MenuSettingsForm({ settings, readOnly }: { settings: SettingItem[]; readOnly: boolean }) {
+  const [state, action, pending] = useActionState(updateMenuSettings, initial);
+  const byKey = Object.fromEntries(settings.map((s) => [s.key, s]));
+  const look = String(byKey['storefront.menu_look']?.value ?? 'bright');
+  const layout = String(byKey['storefront.menu_layout']?.value ?? 'list');
+  const on = (key: string) => byKey[key]?.value !== false;
+
+  return (
+    <Card id="menu" className="scroll-mt-24">
+      <CardHeader title="منوی آنلاین" description="ظاهر منو و کارت محصولات، و اینکه کالری، برچسب «پرفروش» و پیشنهاد «کنارش می‌چسبد» نمایش داده شود یا نه." />
+      <form action={action} className="flex flex-col gap-5 p-5">
+        <FormStatus state={state} />
+        <fieldset disabled={readOnly || pending} className="flex flex-col gap-5">
+          <div>
+            <p className="mb-2 text-sm font-semibold">ظاهر منو</p>
+            <div className="grid gap-2 sm:grid-cols-3">{LOOKS.map(([v, l, h]) => <Pick key={v} name="storefront.menu_look" value={v} label={l} hint={h} checked={look === v} />)}</div>
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-semibold">چیدمان کارت‌ها</p>
+            <div className="grid gap-2 sm:grid-cols-3">{LAYOUTS.map(([v, l, h]) => <Pick key={v} name="storefront.menu_layout" value={v} label={l} hint={h} checked={layout === v} />)}</div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Checkbox label="نمایش کالری" name="storefront.show_calories" defaultChecked={on('storefront.show_calories')} hint="روی کارت‌ها، صفحه‌ی محصول و فیلتر کالری. کالری هر محصول را در ویرایش محصول وارد کنید." />
+            <Checkbox label="برچسب «پرفروش»" name="storefront.show_popular" defaultChecked={on('storefront.show_popular')} hint="روی ۵ محصول پرفروش ۳۰ روز اخیر، از روی فروش واقعی." />
+            <Checkbox label="پیشنهاد «کنارش می‌چسبد»" name="storefront.suggestions" defaultChecked={on('storefront.suggestions')} hint="در صفحه‌ی محصول و سبد خرید، از روی چیزهایی که معمولاً با هم سفارش داده می‌شوند." />
+          </div>
+        </fieldset>
+        {!readOnly ? <div><Button type="submit" loading={pending}>ذخیره</Button></div> : null}
+      </form>
+    </Card>
+  );
+}
 
 export function TenantProfileForm({ tenant, readOnly }: { tenant: Tenant; readOnly: boolean }) {
   const [state, action, pending] = useActionState(updateTenantProfile, initial);
