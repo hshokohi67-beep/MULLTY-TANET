@@ -357,3 +357,82 @@ body {
   50% { translate: 0 -10px; }
 }
 .float-y { animation: float-y 7s ease-in-out infinite; }
+
+/* ---------------------------------------------------------------------------------------------
+ * Café landing pages (components/store/landing). Look options arrive as data attributes on
+ * `.landing`: template, corners, type, texture, motion. Colours stay tokens: the templates only
+ * re-point them (night forces the dark palette, warm uses paper tones in both themes).
+ * ------------------------------------------------------------------------------------------- */
+.landing { --l-radius: 1.5rem; --l-radius-sm: 1rem; background: var(--color-bg); color: var(--color-text); }
+.landing[data-corners='sharp'] { --l-radius: 0.375rem; --l-radius-sm: 0.25rem; }
+.landing[data-corners='round'] { --l-radius: 2.5rem; --l-radius-sm: 1.5rem; }
+.l-card { border-radius: var(--l-radius); }
+.l-card-sm { border-radius: var(--l-radius-sm); }
+.l-pill { border-radius: 9999px; }
+.landing[data-corners='sharp'] .l-pill { border-radius: var(--l-radius-sm); }
+
+.landing[data-template='night'] { --color-bg: #0e0e0d; --color-surface: #161614; --color-surface-muted: #1d1d1a; --color-border: #2a2a26; }
+.landing[data-template='warm'] {
+  --color-bg: #f4ede1; --color-surface: #fbf7f0; --color-surface-muted: #efe6d7; --color-border: #e3d6c1; --color-text-muted: #6b5e4c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .landing[data-template='warm'] {
+    --color-bg: #1b1713; --color-surface: #231e18; --color-surface-muted: #2b251e; --color-border: #3a3128; --color-text-muted: #c2b29b;
+  }
+}
+:root[data-theme='dark'] .landing[data-template='warm'] {
+  --color-bg: #1b1713; --color-surface: #231e18; --color-surface-muted: #2b251e; --color-border: #3a3128; --color-text-muted: #c2b29b;
+}
+
+.l-display { font-family: var(--l-font, var(--font-sans)); font-weight: 850; letter-spacing: -0.02em; line-height: 1.15; text-wrap: balance; }
+.landing[data-type='light'] .l-display { font-weight: 300; letter-spacing: -0.01em; }
+.landing[data-font='samim'] { --l-font: var(--font-samim), var(--font-sans); }
+/* Colour comes from utilities (text-text-subtle, text-on-media-muted…): unlayered colour here would beat them. */
+.l-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.18em; }
+/* Faint type for decorative words (a hollow outline shows seams where Persian letters join). */
+.l-stroke { color: color-mix(in srgb, var(--color-text) 13%, transparent); }
+
+/* Textures: behind a section's content, never over text. */
+.l-texture { position: relative; isolation: isolate; }
+.l-texture::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.landing[data-texture='glow'] .l-texture::before {
+  background: radial-gradient(55% 45% at 85% 35%, color-mix(in srgb, var(--color-brand) 20%, transparent), transparent 70%),
+    radial-gradient(40% 35% at 12% 70%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%);
+  /* Fade out at the section's edges, so neighbouring sections never meet at a hard line. */
+  mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
+}
+.landing[data-texture='dots'] .l-texture::before {
+  background-image: radial-gradient(color-mix(in srgb, var(--color-text) 14%, transparent) 1px, transparent 1.5px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+.landing[data-texture='grain'] .l-texture::before {
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Reveal on scroll: only once the client has switched motion on (so no-JS visitors see all). */
+.landing.l-js[data-motion='subtle'] [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(18px); }
+.landing.l-js[data-motion='lively'] [data-reveal]:not(.is-in) { opacity: 0; transform: translateY(40px) scale(0.97); }
+.landing.l-js [data-reveal] {
+  transition: opacity 0.9s var(--ease-out), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+@keyframes l-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.landing:not([data-motion='none']) .l-rise { animation: l-rise 1s cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: calc(var(--i, 0) * 120ms); }
+
+/* Slow drift on the hero photo (lively only; scroll-driven where supported, no JS). */
+@supports (animation-timeline: scroll()) {
+  @keyframes l-drift { to { transform: translateY(12%) scale(1.08); } }
+  .landing[data-motion='lively'] .l-drift { animation: l-drift linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
+}
+
+@keyframes l-marquee { to { transform: translateX(50%); } }
+.l-marquee-track { animation: l-marquee 38s linear infinite; }
+.landing[data-motion='lively'] .l-marquee-track { animation-duration: 24s; }
+.landing[data-motion='none'] .l-marquee-track { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing.l-js [data-reveal] { opacity: 1 !important; transform: none !important; transition: none; }
+  .landing .l-rise, .landing .l-drift, .l-marquee-track { animation: none !important; }
+}

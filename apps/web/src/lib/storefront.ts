@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { cookies, headers } from 'next/headers';
 import { api, ApiError } from './api';
 import { slugFromHost, storeLink } from './store-links';
+import type { PublicLanding } from './landing-types';
 import type { Menu, PublicStory, Storefront } from './storefront-types';
 
 /**
@@ -40,12 +41,16 @@ export function assertTenant(tenant: string): string {
  * they stay scoped to /s/{tenant}. Either way no other café ever receives them.
  */
 async function cookiePath(tenant: string): Promise<string> {
-  assertTenant(tenant);
-
-  // Read the Host itself: server actions on rewritten routes don't always carry proxy-set headers.
   const h = await headers();
 
-  return slugFromHost(h.get('x-forwarded-host') ?? h.get('host')) === tenant ? '/' : `/s/${tenant}`;
+  return cookiePathFor(tenant, h.get('x-forwarded-host') ?? h.get('host'));
+}
+
+/** Read the Host itself: server actions on rewritten routes don't always carry proxy-set headers. */
+export function cookiePathFor(tenant: string, host: string | null): string {
+  assertTenant(tenant);
+
+  return slugFromHost(host) === tenant ? '/' : `/s/${tenant}`;
 }
 
 export async function readCookie(tenant: string, kind: CookieKind): Promise<string | undefined> {
@@ -126,6 +131,16 @@ export const getMenu = cache(async (tenant: string, branchSlug?: string): Promis
     const query = branchSlug ? `?branch=${encodeURIComponent(branchSlug)}` : '';
 
     return (await api<{ data: Menu }>(`/public/menu${query}`, { auth: false, tenant, revalidate: 60 })).data;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+});
+
+/** The café's published landing page, or null while the menu is its home page (cached a minute). */
+export const getLanding = cache(async (tenant: string): Promise<PublicLanding | null> => {
+  try {
+    return (await api<{ data: PublicLanding }>('/public/landing', { auth: false, tenant, revalidate: 60 })).data;
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;

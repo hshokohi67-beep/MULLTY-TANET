@@ -156,7 +156,7 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
     return (
       <div className="pt-10">
         <EmptyState icon={<ShoppingBag />} title="سبد خرید خالی است" description="از منو چیزی انتخاب کنید؛ اینجا منتظرش هستیم."
-          action={<Link href={`/s/${tenant}`} className="inline-flex h-11 items-center rounded-xl bg-brand px-5 text-sm font-semibold text-on-brand hover:bg-brand-strong">رفتن به منو</Link>} />
+          action={<Link href={`/s/${tenant}/menu`} className="inline-flex h-11 items-center rounded-xl bg-brand px-5 text-sm font-semibold text-on-brand hover:bg-brand-strong">رفتن به منو</Link>} />
       </div>
     );
   }
@@ -217,7 +217,7 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
       <div className="flex flex-col gap-4">
         <header className="flex items-end justify-between gap-3">
           <div>
-            <Link href={`/s/${tenant}`} className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text"><ChevronRight className="size-4" aria-hidden="true" />ادامه‌ی خرید</Link>
+            <Link href={`/s/${tenant}/menu`} className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text"><ChevronRight className="size-4" aria-hidden="true" />ادامه‌ی خرید</Link>
             <h1 className="mt-1 text-2xl font-black">تکمیل سفارش</h1>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs text-text-muted ring-1 ring-border">
@@ -229,7 +229,7 @@ export function Checkout({ addresses, walletBalance }: { addresses: CustomerAddr
           <ul className="divide-y divide-border">
             {q.lines.map((line) => <Line key={line.ref} line={line} busy={busy} onChange={(qty) => change(line.ref, qty)} />)}
           </ul>
-          <Link href={`/s/${tenant}`} className="mt-3 flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border-strong text-sm font-medium text-brand hover:bg-brand-soft/40">
+          <Link href={`/s/${tenant}/menu`} className="mt-3 flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border-strong text-sm font-medium text-brand hover:bg-brand-soft/40">
             <Plus className="size-4" aria-hidden="true" />افزودن آیتم دیگر
           </Link>
         </Step>

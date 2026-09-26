@@ -1,0 +1,11 @@
+Samim font, version 2.0.1 (https://github.com/rastikerdar/samim-font)
+Copyright (c) 2015 by Saber Rastikerdar.
+
+Licences, as embedded in the font file:
+- Changes to Arabic glyphs: SIL Open Font License 1.1 (http://scripts.sil.org/OFL).
+- Based on DejaVu fonts: Bitstream Vera licence; DejaVu changes are in the public domain
+  (http://dejavu.sourceforge.net/wiki/index.php/License).
+- Non-Arabic (Latin) glyphs and data from Open Sans: Apache License, Version 2.0
+  (http://www.apache.org/licenses/LICENSE-2.0).
+
+Used unmodified as a headline font option for café landing pages.

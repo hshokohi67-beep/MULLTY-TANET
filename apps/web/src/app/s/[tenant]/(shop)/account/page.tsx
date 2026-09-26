@@ -104,7 +104,7 @@ export default async function AccountPage({ params }: PageProps<'/s/[tenant]/acc
       <Card className="p-5">
         <CardHeader icon={<Receipt />} title="سفارش‌های من" />
         {orders.length === 0 ? (
-          <EmptyState title="هنوز سفارشی ندارید" description="اولین سفارش‌تان اینجا می‌آید." action={<Link href={`/s/${tenant}`} className="text-sm font-semibold text-brand hover:underline">دیدن منو</Link>} />
+          <EmptyState title="هنوز سفارشی ندارید" description="اولین سفارش‌تان اینجا می‌آید." action={<Link href={`/s/${tenant}/menu`} className="text-sm font-semibold text-brand hover:underline">دیدن منو</Link>} />
         ) : (
           <ul className="mt-3 divide-y divide-border">
             {orders.map((o) => (

@@ -55,6 +55,7 @@ use App\Modules\Operations\Models\Shift;
 use App\Modules\Payments\Enums\PaymentAttemptStatus;
 use App\Modules\Payments\Enums\PaymentMethod;
 use App\Modules\Payments\Models\Payment;
+use App\Modules\Storefront\Models\StorefrontMedia;
 use App\Modules\Storefront\Models\Story;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -156,6 +157,7 @@ final class TenantIsolationTest extends TestCase
                 'ref' => 'bbbbbbbbbbbbbbbb',
             ]);
             $smsCampaign = SmsCampaign::query()->create(['name' => 'کمپین ب', 'body' => 'پیام ب', 'audience' => [], 'status' => 'draft']);
+            $landingMedia = StorefrontMedia::query()->create(['kind' => 'gallery', 'path' => 't/b/landing/g.webp', 'bytes' => 100, 'caption' => 'عکس ب']);
             $adInvoice = BillingInvoice::query()->create([
                 'number' => '1405-900002', 'kind' => 'ad', 'subject_id' => $adCampaign->id, 'status' => 'open',
                 'addons' => [], 'lines' => [], 'subtotal' => 2_700_000, 'credit' => 0, 'vat_rate' => 10, 'vat' => 270_000, 'total' => 2_970_000,
@@ -170,7 +172,7 @@ final class TenantIsolationTest extends TestCase
                 'customer' => $customer->id, 'tier' => $tier->id, 'rule' => $rule->id,
                 'station' => $station->id, 'kitchen_item' => (string) $kitchenItem, 'device' => $device->id, 'device_token' => $deviceToken, 'note' => $note->id, 'story' => $story->id,
                 'ingredient' => $ingredient->id, 'supplier' => $supplier->id, 'purchase' => $purchase->id,
-                'invoice' => $invoice->id, 'ad_campaign' => $adCampaign->id, 'ad_invoice' => $adInvoice->id, 'sms_campaign' => $smsCampaign->id, 'employee' => $employee->id, 'shift' => $shift->id, 'attendance' => $attendance->id, 'expense_category' => $expenseCategory->id, 'expense' => $expense->id,
+                'invoice' => $invoice->id, 'ad_campaign' => $adCampaign->id, 'ad_invoice' => $adInvoice->id, 'sms_campaign' => $smsCampaign->id, 'landing_media' => $landingMedia->id, 'employee' => $employee->id, 'shift' => $shift->id, 'attendance' => $attendance->id, 'expense_category' => $expenseCategory->id, 'expense' => $expense->id,
             ];
         });
     }
@@ -219,6 +221,10 @@ final class TenantIsolationTest extends TestCase
             'billing cancel' => ['POST', '/api/v1/billing/cancel'],
             'billing resume' => ['POST', '/api/v1/billing/resume'],
             'ads' => ['GET', '/api/v1/ads'],
+            'landing' => ['GET', '/api/v1/storefront/landing'],
+            'save landing' => ['PUT', '/api/v1/storefront/landing'],
+            'upload landing media' => ['POST', '/api/v1/storefront/landing/media'],
+            'reorder landing media' => ['PUT', '/api/v1/storefront/landing/media/order'],
             'sms centre' => ['GET', '/api/v1/sms'],
             'sms account' => ['PUT', '/api/v1/sms/account'],
             'sms test' => ['POST', '/api/v1/sms/account/test'],
@@ -401,6 +407,8 @@ final class TenantIsolationTest extends TestCase
             'update sms campaign' => ['PUT', '/api/v1/sms/campaigns/{smsCampaign}'],
             'schedule sms campaign' => ['POST', '/api/v1/sms/campaigns/{smsCampaign}/schedule'],
             'cancel sms campaign' => ['POST', '/api/v1/sms/campaigns/{smsCampaign}/cancel'],
+            'caption landing media' => ['PATCH', '/api/v1/storefront/landing/media/{landingMedia}'],
+            'delete landing media' => ['DELETE', '/api/v1/storefront/landing/media/{landingMedia}'],
         ];
     }
 
@@ -408,9 +416,9 @@ final class TenantIsolationTest extends TestCase
     public function test_foreign_record_ids_do_not_exist_inside_own_tenant(string $method, string $uri): void
     {
         $uri = str_replace(
-            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}', '{invoice}', '{employee}', '{shift}', '{attendance}', '{expenseCategory}', '{expense}', '{adCampaign}', '{adInvoice}', '{smsCampaign}'],
+            ['{branch}', '{member}', '{category}', '{product}', '{group}', '{image}', '{table}', '{request}', '{zone}', '{order}', '{discount}', '{payment}', '{customer}', '{tier}', '{rule}', '{station}', '{kitchenItem}', '{device}', '{note}', '{story}', '{ingredient}', '{supplier}', '{purchase}', '{invoice}', '{employee}', '{shift}', '{attendance}', '{expenseCategory}', '{expense}', '{adCampaign}', '{adInvoice}', '{smsCampaign}', '{landingMedia}'],
             [$this->branchB->id, $this->memberB->id, $this->catalogB['category'], $this->catalogB['product'], $this->catalogB['group'], $this->catalogB['image'],
-                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase'], $this->commerceB['invoice'], $this->commerceB['employee'], $this->commerceB['shift'], $this->commerceB['attendance'], $this->commerceB['expense_category'], $this->commerceB['expense'], $this->commerceB['ad_campaign'], $this->commerceB['ad_invoice'], $this->commerceB['sms_campaign']],
+                $this->commerceB['table'], $this->commerceB['request'], $this->commerceB['zone'], $this->commerceB['order'], $this->commerceB['discount'], $this->commerceB['payment'], $this->commerceB['customer'], $this->commerceB['tier'], $this->commerceB['rule'], $this->commerceB['station'], $this->commerceB['kitchen_item'], $this->commerceB['device'], $this->commerceB['note'], $this->commerceB['story'], $this->commerceB['ingredient'], $this->commerceB['supplier'], $this->commerceB['purchase'], $this->commerceB['invoice'], $this->commerceB['employee'], $this->commerceB['shift'], $this->commerceB['attendance'], $this->commerceB['expense_category'], $this->commerceB['expense'], $this->commerceB['ad_campaign'], $this->commerceB['ad_invoice'], $this->commerceB['sms_campaign'], $this->commerceB['landing_media']],
             $uri,
         );
 
@@ -452,6 +460,7 @@ final class TenantIsolationTest extends TestCase
             $this->assertSame('approved', AdCampaign::query()->findOrFail($this->commerceB['ad_campaign'])->status);
             $this->assertSame('open', BillingInvoice::query()->findOrFail($this->commerceB['ad_invoice'])->status);
             $this->assertSame('draft', SmsCampaign::query()->findOrFail($this->commerceB['sms_campaign'])->status);
+            $this->assertSame('عکس ب', StorefrontMedia::query()->findOrFail($this->commerceB['landing_media'])->caption);
         });
     }
 

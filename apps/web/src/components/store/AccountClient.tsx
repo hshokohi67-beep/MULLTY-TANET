@@ -158,7 +158,7 @@ export function LogoutButton() {
     <Button variant="ghost" icon={<LogOut />} loading={pending} onClick={() => start(async () => {
       await logoutCustomer(tenant);
       await reload();
-      router.push(`/s/${tenant}`);
+      router.push(`/s/${tenant}/menu`);
     })}>
       خروج
     </Button>

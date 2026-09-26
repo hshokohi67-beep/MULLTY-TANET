@@ -42,6 +42,7 @@ const PAGE_KEYWORDS: Record<string, string> = {
   '/dashboard/club': 'باشگاه امتیاز کش بک سطح',
   '/dashboard/discounts': 'تخفیف کوپن کد',
   '/dashboard/stories': 'استوری story',
+  '/dashboard/landing': 'صفحه معرفی لندینگ سایت صفحه اول ویدیو گالری درباره ما landing',
   '/dashboard/payments': 'پرداخت تراکنش',
   '/dashboard/delivery': 'پیک ارسال محدوده',
   '/dashboard/team': 'کارمند همکار نقش دسترسی',

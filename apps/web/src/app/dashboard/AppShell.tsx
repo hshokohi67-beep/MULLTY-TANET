@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   Aperture, Armchair, BarChart3, Boxes, Compass, CreditCard, Lock, ShieldCheck, ChefHat, CalendarClock, Receipt, ChevronDown, Crown, LayoutDashboard, LogOut, Menu, PanelRightClose, PanelRightOpen, ReceiptText,
-  LifeBuoy, Megaphone, MessageSquareText, Search, Settings, ShoppingCart, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
+  LifeBuoy, Megaphone, MessageSquareText, Search, Settings, ShoppingCart, Store, Tags, Truck, UserCog, Users, UtensilsCrossed, PanelsTopLeft, Wallet, X, type LucideIcon,
 } from 'lucide-react';
 import { cx } from '@cafe/ui';
 import { logout } from '@/app/actions/auth';
@@ -15,7 +15,7 @@ import { NotificationBell } from './NotificationBell';
 
 const ICONS: Record<string, LucideIcon> = {
   overview: LayoutDashboard, reports: BarChart3, marketplace: Compass, ads: Megaphone, help: LifeBuoy, sms: MessageSquareText, orders: ReceiptText, kitchen: ChefHat, tables: Armchair, menu: UtensilsCrossed,
-  billing: CreditCard, discounts: Tags, stories: Aperture, inventory: Boxes, purchases: ShoppingCart, staff: CalendarClock, expenses: Receipt, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
+  billing: CreditCard, discounts: Tags, stories: Aperture, landing: PanelsTopLeft, inventory: Boxes, purchases: ShoppingCart, staff: CalendarClock, expenses: Receipt, delivery: Truck, customers: Users, club: Crown, payments: Wallet, branches: Store, team: UserCog, settings: Settings,
 };
 
 export interface NavLink { href: string; label: string; icon: keyof typeof ICONS | string; external?: boolean; locked?: boolean }

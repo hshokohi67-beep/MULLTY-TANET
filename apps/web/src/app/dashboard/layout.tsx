@@ -30,7 +30,7 @@ export default async function DashboardLayout({ children }: LayoutProps<'/dashbo
       items: [
         ...(can('catalog.view') ? [{ href: '/dashboard/menu', label: 'منو', icon: 'menu' }] : []),
         ...(can('discounts.manage') ? [{ href: '/dashboard/discounts', label: 'تخفیف‌ها', icon: 'discounts' }] : []),
-        ...(can('storefront.manage') ? [{ href: '/dashboard/stories', label: 'استوری‌ها', icon: 'stories' }] : []),
+        ...(can('storefront.manage') ? [{ href: '/dashboard/landing', label: 'صفحه‌ی معرفی', icon: 'landing' }, { href: '/dashboard/stories', label: 'استوری‌ها', icon: 'stories' }] : []),
         ...(can('delivery.manage') ? [{ href: '/dashboard/delivery', label: 'محدوده‌های ارسال', icon: 'delivery' }] : []),
         ...(can('marketplace.manage') ? [{ href: '/dashboard/marketplace', label: 'بازارگاه', icon: 'marketplace' }] : []),
         ...(can('ads.manage') ? [{ href: '/dashboard/ads', label: 'تبلیغات', icon: 'ads' }] : []),

@@ -84,6 +84,11 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     );
   }
 
+  // A 200 that isn't JSON (a proxy error page, a misconfigured server) is an outage, not "no data".
+  if (data === null) {
+    throw new ApiError(502, 'api_bad_response', 'ارتباط با سرور برقرار نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.');
+  }
+
   return data as T;
 }
 

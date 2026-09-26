@@ -15,7 +15,7 @@ Every café gets its own address automatically, `{slug}.{your-domain}`. That nee
 | Need | Why |
 |---|---|
 | cPanel **"Setup Node.js App"** (CloudLinux Node.js Selector / Passenger), Node 22+, ≥ 1 GB RAM for the app | the web app is a Node process (≈150 MB idle, ≈300–500 MB busy) |
-| PHP **8.4** with `gd`, `intl`, `sodium`, `pdo_mysql`, `mbstring`, `fileinfo` | the API |
+| PHP **8.4** with `gd`, `intl`, `sodium`, `pdo_mysql`, `mbstring`, `fileinfo`; `upload_max_filesize` ≥ 12M and `post_max_size` ≥ 16M (MultiPHP INI Editor) | the API; landing-page videos are up to 8 MB, photos up to 10 MB |
 | MySQL **8** | the database |
 | **SSH/Terminal**, `composer` | install and migrate |
 | **Cron every minute** | scheduler and queue |

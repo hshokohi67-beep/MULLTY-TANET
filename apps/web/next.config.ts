@@ -18,6 +18,8 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   ['img-src', "'self'", 'data:', 'blob:', 'https:', ...mediaOrigins].join(' '),
+  // Landing-page hero videos come from the same media disk as photos.
+  ['media-src', "'self'", 'blob:', 'https:', ...mediaOrigins].join(' '),
   "font-src 'self'",
   "connect-src 'self'",
   "object-src 'none'",
@@ -40,7 +42,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     // Logo uploads go through a Server Action (API limit is 1 MB).
-    serverActions: { bodySizeLimit: '10mb' }, // story and cover photos (re-encoded server-side)
+    serverActions: { bodySizeLimit: '12mb' }, // photos (≤ 10 MB, re-encoded server-side) and the 8 MB landing video
   },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];

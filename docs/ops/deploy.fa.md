@@ -15,7 +15,7 @@
 | نیاز | چرا |
 |---|---|
 | بخش **«Setup Node.js App»** در سی‌پنل، Node نسخه‌ی ۲۲ به بالا، حداقل ۱ گیگ رم برای برنامه | بخش وب یک برنامه‌ی Node است (بیکار حدود ۱۵۰ مگ، زیر بار ۳۰۰ تا ۵۰۰ مگ) |
-| PHP **8.4** با افزونه‌های `gd`، `intl`، `sodium`، `pdo_mysql`، `mbstring` و `fileinfo` | بخش API |
+| PHP **8.4** با افزونه‌های `gd`، `intl`، `sodium`، `pdo_mysql`، `mbstring` و `fileinfo`؛ و `upload_max_filesize` حداقل 12M و `post_max_size` حداقل 16M (در MultiPHP INI Editor) | بخش API؛ ویدیوی صفحه‌ی معرفی تا ۸ و عکس‌ها تا ۱۰ مگابایت‌اند |
 | MySQL **8** | دیتابیس |
 | دسترسی **SSH/Terminal** و `composer` | نصب و ساخت جدول‌ها |
 | **Cron هر یک دقیقه** | زمان‌بندی و صف (پیامک، کمپین، گزارش‌ها) |
