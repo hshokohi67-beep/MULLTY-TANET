@@ -16,7 +16,7 @@ import {
 import { FormStatus } from '@/components/FormStatus';
 import { MoneyField } from '@/components/MoneyField';
 import { rialToTomanInput } from '@/lib/money';
-import type { Branch, Category, FormState, MenuTags, ModifierGroup, Product } from '@/lib/types';
+import { ALLERGENS, CAFFEINE_SOURCES, type Branch, type Category, type FormState, type MenuTags, type ModifierGroup, type Product } from '@/lib/types';
 import { MenuTagsField } from './MenuTagsField';
 
 const initial: FormState = { ok: false };
@@ -34,10 +34,27 @@ export function ProductDetailsForm({ product, categories, tags: tagLists, readOn
         <FormStatus state={state} />
         <fieldset disabled={readOnly || pending} className="grid gap-4 sm:grid-cols-2">
           <TextField label="نام" name="name" defaultValue={product.name} required error={e.name} />
+          <TextField label="نام انگلیسی (اختیاری)" name="name_en" defaultValue={product.name_en ?? ''} ltr error={e.name_en} hint="برای مهمان‌های خارجی، زیر نام فارسی نمایش داده می‌شود." />
           <TextField label="ترتیب نمایش" name="sort" defaultValue={String(product.sort)} inputMode="numeric" ltr error={e.sort} hint="عدد کوچک‌تر بالاتر نمایش داده می‌شود." />
           <div className="sm:col-span-2">
             <TextAreaField label="توضیحات" name="description" defaultValue={product.description ?? ''} error={e.description} hint="مواد اصلی و ویژگی‌ها؛ در منوی آنلاین و جستجو استفاده می‌شود." />
           </div>
+          <div className="sm:col-span-2">
+            <TextField label="مواد تشکیل‌دهنده (اختیاری)" name="ingredients" defaultValue={product.ingredients ?? ''} error={e.ingredients} hint="مثلاً «اسپرسو، شیر گرم، سیروپ وانیل»؛ جدا از توضیح، در صفحه‌ی محصول." />
+          </div>
+
+          <fieldset className="sm:col-span-2">
+            <legend className="mb-1 text-sm font-medium">حساسیت‌زاها</legend>
+            <p className="mb-2 text-xs text-text-muted">با علامت هشدار در صفحه‌ی محصول نمایش داده می‌شود.</p>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(ALLERGENS).map(([key, label]) => (
+                <label key={key} className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm has-[:checked]:border-warning has-[:checked]:bg-warning-soft">
+                  <input type="checkbox" name="allergens" value={key} defaultChecked={product.allergens?.includes(key)} className="accent-[var(--color-warning)]" />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <fieldset className="sm:col-span-2">
             <legend className="mb-2 text-sm font-medium">دسته‌بندی‌ها</legend>
@@ -73,6 +90,11 @@ export function ProductDetailsForm({ product, categories, tags: tagLists, readOn
 
           <TextField label="کالری" name="nutrition.calories" defaultValue={product.nutrition?.calories != null ? String(product.nutrition.calories) : ''} inputMode="numeric" ltr error={e['nutrition.calories']} />
           <TextField label="کافئین (میلی‌گرم)" name="nutrition.caffeine_mg" defaultValue={product.nutrition?.caffeine_mg != null ? String(product.nutrition.caffeine_mg) : ''} inputMode="numeric" ltr error={e['nutrition.caffeine_mg']} />
+          <SelectField label="منبع کافئین" name="caffeine_source" defaultValue={product.caffeine_source ?? ''}>
+            <option value="">—</option>
+            {Object.entries(CAFFEINE_SOURCES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+          </SelectField>
+          <TextField label="مقدار (اختیاری)" name="caffeine_dose" defaultValue={product.caffeine_dose ?? ''} maxLength={40} placeholder="مثلاً ۲ شات" error={e.caffeine_dose} />
 
           <SelectField label="حس دما در منو" name="temperature" defaultValue={product.temperature ?? ''} hint="خالی = مثل دسته‌بندی محصول">
             <option value="">مثل دسته‌بندی</option>
@@ -82,6 +104,7 @@ export function ProductDetailsForm({ product, categories, tags: tagLists, readOn
 
           <Checkbox label="فعال (در منوی آنلاین نمایش داده شود)" name="is_active" defaultChecked={product.is_active} />
           <Checkbox label="ویژه (بالای منو برجسته شود)" name="is_featured" defaultChecked={product.is_featured} />
+          <Checkbox label="برچسب «جدید»" name="is_new" defaultChecked={product.is_new ?? false} hint="محصولاتی که تازه اضافه می‌کنید تا ۳ هفته خودکار «جدید» دارند." />
         </fieldset>
         {!readOnly ? <div><Button type="submit" loading={pending}>ذخیره‌ی مشخصات</Button></div> : null}
       </form>

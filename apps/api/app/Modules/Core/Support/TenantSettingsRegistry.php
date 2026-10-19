@@ -47,6 +47,9 @@ final class TenantSettingsRegistry
             'storefront.show_popular' => ['type' => 'bool', 'secret' => false, 'label' => 'برچسب «پرفروش» روی محصولات', 'rules' => ['boolean'], 'default' => true],
             'storefront.show_deals' => ['type' => 'bool', 'secret' => false, 'label' => 'اسلایدر «پیشنهاد امروز و تخفیف‌ها» در منو', 'rules' => ['boolean'], 'default' => true],
             'storefront.suggestions' => ['type' => 'bool', 'secret' => false, 'label' => 'پیشنهاد محصولات کنار سفارش', 'rules' => ['boolean'], 'default' => true],
+            // Occasions calendar: which kinds the café wants to hear about (comma list), and whether to be notified.
+            'occasions.kinds' => ['type' => 'string', 'secret' => false, 'label' => 'مناسبت‌هایی که می‌خواهید', 'rules' => ['string', 'max:200', 'regex:/^(?:(?:national|religious_joy|mourning|ramadan|global|drink_day|season)(?:,(?!$)|$))*$/'], 'default' => 'national,religious_joy,mourning,ramadan,global,drink_day,season'],
+            'occasions.notify' => ['type' => 'bool', 'secret' => false, 'label' => 'یادآوری مناسبت‌ها (زنگوله و اعلان مرورگر)', 'rules' => ['boolean'], 'default' => true],
             'reports.daily_sms' => ['type' => 'bool', 'secret' => false, 'label' => 'پیامک گزارش پایان روز برای مالک', 'rules' => ['boolean'], 'default' => false],
             'reports.daily_sms_hour' => ['type' => 'int', 'secret' => false, 'label' => 'ساعت ارسال گزارش پایان روز', 'rules' => ['integer', 'between:0,23'], 'default' => 23],
         ];

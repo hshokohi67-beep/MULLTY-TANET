@@ -108,3 +108,8 @@ export function dealEndsAt(d: ProductDeal): number | null {
 export function itemsTotal(quote: { subtotal: number; offers?: { amount: number }[] }): number {
   return quote.subtotal - (quote.offers ?? []).reduce((s, o) => s + o.amount, 0);
 }
+
+/** The menu collections on now (their window contains `t`), in order. */
+export function activeCollections(menu: Menu, t: number) {
+  return (menu.collections ?? []).filter((c) => windowAt([c.window], t) !== null);
+}

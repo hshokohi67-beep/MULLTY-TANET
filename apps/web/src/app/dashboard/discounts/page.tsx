@@ -10,7 +10,7 @@ import { DiscountEditor } from './DiscountEditor';
 
 export const metadata: Metadata = { title: 'تخفیف‌ها' };
 
-export default async function DiscountsPage() {
+export default async function DiscountsPage({ searchParams }: PageProps<'/dashboard/discounts'>) {
   const { can } = await requireMembership();
 
   if (!can('discounts.manage')) {
@@ -24,6 +24,10 @@ export default async function DiscountsPage() {
     api<{ data: Category[] }>('/catalog/categories'),
     api<{ data: Tenant }>('/tenant'),
   ]);
+  // «ساخت تخفیف» from the occasions calendar: a new discount named and dated for the occasion.
+  const q = await searchParams;
+  const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const prefill = typeof q.name === 'string' && isDay(q.from) && isDay(q.to) ? { name: q.name.slice(0, 120), from: q.from, to: q.to } : undefined;
   const catalog = {
     products: products.map((p) => ({ id: p.id, name: p.name })),
     categories: categories.map((c) => ({ id: c.id, name: c.name })),
@@ -36,7 +40,7 @@ export default async function DiscountsPage() {
         title="تخفیف‌ها"
         description="تخفیف بدون کد خودکار روی سفارش‌های واجد شرایط اعمال می‌شود؛ تخفیف کددار را مشتری هنگام پرداخت وارد می‌کند. در هر سفارش یک تخفیف (بیشترین) اعمال می‌شود؛ تخفیف‌های «نمایش روی منو» جدا، روی قیمت خود محصول حساب می‌شوند."
       />
-      <DiscountEditor tiers={tiers} catalog={catalog} />
+      <DiscountEditor tiers={tiers} catalog={catalog} prefill={prefill} />
       {discounts.length === 0 ? (
         <Card><EmptyState title="هنوز تخفیفی ندارید" description="مثلاً «ساعت خوش» عصرها یا کد «یلدا» برای شب یلدا." /></Card>
       ) : (

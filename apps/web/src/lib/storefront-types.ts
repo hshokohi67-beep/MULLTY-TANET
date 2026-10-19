@@ -61,6 +61,12 @@ export interface MenuProduct {
   name: string;
   description: string | null;
   is_featured: boolean;
+  name_en?: string | null;
+  ingredients?: string | null;
+  /** «جدید»: set by the café, or automatic for a few weeks after it was added. */
+  is_new?: boolean;
+  allergens?: { key: string; label: string }[];
+  caffeine?: { source: string | null; dose: string | null } | null;
   /** ISO weekdays on which it is «پیشنهاد امروز» (whether it is today comes from `deals.specials`). */
   special_days?: number[];
   temperature: Mood | null;
@@ -84,7 +90,18 @@ export interface Menu {
   insights: { popular: string[]; pairs: Record<string, string[]> };
   /** Menu offers and today's specials; windows are UTC instants (null = open-ended). See lib/deals. */
   deals?: MenuDeals;
+  /** «منوی مناسبتی» highlights with their window (UTC, null = open) and seasonal theme. */
+  collections?: MenuCollectionView[];
   generated_at: string;
+}
+
+export interface MenuCollectionView {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  theme: 'nowruz' | 'yalda' | 'autumn' | 'winter' | 'summer' | 'ramadan' | null;
+  product_ids: string[];
+  window: DealWindow;
 }
 
 export interface DealWindow { from: string | null; to: string | null }
@@ -200,3 +217,17 @@ export interface Club {
 }
 
 export interface LedgerRow { id: string; type: string; type_label: string; amount: number; balance_after: number; description: string | null; order_id: string | null; created_at: string }
+
+/** The public club page (GET /public/club): only how the program works. Amounts in rial. */
+export interface PublicClub {
+  points_per_100k: number;
+  point_value: number;
+  min_redeem_points: number;
+  birthday_wallet_gift: number;
+  birthday_points: number;
+  referral_referrer_reward: number;
+  referral_referee_reward: number;
+  wallet_payments: boolean;
+  tiers: { name: string; color: string; min_spend: number; points_multiplier: number; perks: string | null }[];
+  cashback: { name: string; kind: 'fixed' | 'percent'; value: number; min_spend: number; max_reward: number | null; category: string | null }[];
+}

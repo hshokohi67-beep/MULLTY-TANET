@@ -16,6 +16,7 @@ use App\Modules\Loyalty\Providers\LoyaltyServiceProvider;
 use App\Modules\Marketplace\Providers\MarketplaceServiceProvider;
 use App\Modules\Messaging\Providers\MessagingServiceProvider;
 use App\Modules\Notifications\Providers\NotificationsServiceProvider;
+use App\Modules\Occasions\Providers\OccasionsServiceProvider;
 use App\Modules\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Payments\Providers\PaymentsServiceProvider;
 use App\Modules\Storefront\Providers\StorefrontServiceProvider;
@@ -47,5 +48,6 @@ return [
     AdvertisingServiceProvider::class,
     MessagingServiceProvider::class,
     NotificationsServiceProvider::class,
+    OccasionsServiceProvider::class,
     InsightsServiceProvider::class,
 ];

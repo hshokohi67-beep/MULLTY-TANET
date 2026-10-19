@@ -21,13 +21,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property ?string $description
  * @property bool $is_active
  * @property bool $is_featured
+ * @property ?string $name_en
+ * @property ?string $ingredients
+ * @property ?list<string> $allergens keys of ALLERGENS
+ * @property ?string $caffeine_source coffee|tea|chocolate|energy
+ * @property ?string $caffeine_dose
+ * @property bool $is_new
  * @property ?list<int> $special_days ISO weekdays on which it is «پیشنهاد امروز»
  * @property int $sort
  * @property ?array{calories?: int, caffeine_mg?: int, protein_g?: int} $nutrition
  * @property ?list<string> $dietary_tags
  * @property ?string $temperature hot|cold|null (null = inherit from the category)
  */
-#[Fillable(['name', 'slug', 'description', 'is_active', 'is_featured', 'special_days', 'sort', 'nutrition', 'dietary_tags', 'temperature'])]
+#[Fillable(['name', 'name_en', 'slug', 'description', 'ingredients', 'allergens', 'caffeine_source', 'caffeine_dose', 'is_new', 'is_active', 'is_featured', 'special_days', 'sort', 'nutrition', 'dietary_tags', 'temperature'])]
 class Product extends Model
 {
     use BelongsToTenant, HasUlids, SoftDeletes;
@@ -45,6 +51,24 @@ class Product extends Model
         'contains_nuts' => 'حاوی مغزها',
     ];
 
+    /** Allergens shown with a warning on the product (the platform's fixed list). */
+    public const ALLERGENS = [
+        'gluten' => 'گلوتن',
+        'dairy' => 'لبنیات و لاکتوز',
+        'egg' => 'تخم‌مرغ',
+        'nuts' => 'مغزها',
+        'peanut' => 'بادام‌زمینی',
+        'soy' => 'سویا',
+        'sesame' => 'کنجد',
+        'fish' => 'ماهی و آبزیان',
+        'caffeine' => 'کافئین',
+    ];
+
+    public const CAFFEINE_SOURCES = ['coffee' => 'قهوه', 'tea' => 'چای', 'chocolate' => 'شکلات', 'energy' => 'نوشیدنی انرژی‌زا'];
+
+    /** Days a new product keeps its «جدید» chip automatically. */
+    public const NEW_FOR_DAYS = 21;
+
     protected function casts(): array
     {
         return [
@@ -54,6 +78,8 @@ class Product extends Model
             'nutrition' => 'array',
             'dietary_tags' => 'array',
             'special_days' => 'array',
+            'allergens' => 'array',
+            'is_new' => 'boolean',
         ];
     }
 

@@ -72,6 +72,7 @@ export default async function DashboardHome({ searchParams }: PageProps<'/dashbo
     at_risk: (d) => <W.AtRiskWidget data={d} />,
     club_liability: (d) => <W.ClubLiabilityWidget data={d} ctx={ctx} />,
     discounts: (d) => <W.DiscountsWidget data={d} ctx={ctx} />,
+    occasions: (d) => <W.OccasionsWidget data={d} />,
     shift_notes: (d) => <W.ShiftNotesWidget data={d} ctx={ctx} />,
     stories: (d) => <W.StoriesWidget data={d} />,
     ads: (d) => <W.AdsWidget data={d} />,

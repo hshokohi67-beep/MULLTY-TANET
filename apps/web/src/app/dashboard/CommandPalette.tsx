@@ -41,6 +41,7 @@ const PAGE_KEYWORDS: Record<string, string> = {
   '/dashboard/customers': 'مشتری کاربر',
   '/dashboard/club': 'باشگاه امتیاز کش بک سطح',
   '/dashboard/discounts': 'تخفیف کوپن کد',
+  '/dashboard/occasions': 'مناسبت تقویم یلدا نوروز رمضان عید',
   '/dashboard/stories': 'استوری story',
   '/dashboard/landing': 'صفحه معرفی لندینگ سایت صفحه اول ویدیو گالری درباره ما landing',
   '/dashboard/payments': 'پرداخت تراکنش',

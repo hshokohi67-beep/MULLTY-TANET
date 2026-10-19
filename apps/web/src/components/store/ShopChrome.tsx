@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { AtSign, Clock, MapPin, Navigation, Phone, UserRound } from 'lucide-react';
+import { AtSign, Clock, Crown, MapPin, Navigation, Phone, UserRound } from 'lucide-react';
 import { cx, Ltr } from '@cafe/ui';
 import { formatClock } from '@cafe/locale';
 import { initialOf } from '@/components/explore/Art';
 import { CartBar } from '@/components/store/CartBar';
 import { TableBar } from '@/components/store/TableBar';
-import { resolveLook } from '@/lib/storefront';
+import { SeasonDecor } from '@/components/store/SeasonDecor';
+import { activeCollections } from '@/lib/deals';
+import { getMenu, resolveLook } from '@/lib/storefront';
 import type { Storefront } from '@/lib/storefront-types';
 import { darkBrandCss } from '@/lib/theme-css';
 
@@ -19,11 +21,16 @@ export async function ShopChrome({ tenant, store, children }: { tenant: string; 
   const look = await resolveLook(tenant, store);
   const nightCss = look.template === 'night' ? darkBrandCss(store.branding?.primary_color, ".store-look[data-template='night']") : null;
   const branch = store.branches[0];
+  // The seasonal decoration of the menu collection on now (cached menu; checked at render time).
+  const menu = branch ? await getMenu(tenant, branch.slug) : null;
+  // eslint-disable-next-line react-hooks/purity -- a server component renders once per request
+  const season = menu ? activeCollections(menu, Date.now()).find((c) => c.theme)?.theme ?? null : null;
   const today = ({ Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 } as Record<string, number>)[new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: store.timezone }).format(new Date())];
 
   return (
-    <div className="store-look flex min-h-dvh flex-1 flex-col" data-template={look.template} data-theme={look.template === 'night' ? 'dark' : undefined} data-minimal={look.minimal || undefined}>
+    <div className="store-look relative isolate flex min-h-dvh flex-1 flex-col" data-template={look.template} data-theme={look.template === 'night' ? 'dark' : undefined} data-minimal={look.minimal || undefined}>
       {nightCss ? <style dangerouslySetInnerHTML={{ __html: nightCss }} /> : null}
+      {season ? <SeasonDecor theme={season} /> : null}
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
           <Link href={`/s/${tenant}`} className="flex min-w-0 flex-1 items-center gap-3">
@@ -35,6 +42,11 @@ export async function ShopChrome({ tenant, store, children }: { tenant: string; 
             )}
             <span className="truncate text-lg font-bold">{store.name}</span>
           </Link>
+          {store.features.club ? (
+            <Link href={`/s/${tenant}/club`} className="hidden h-10 items-center gap-1.5 rounded-full bg-surface-muted px-3 text-sm font-semibold text-text-muted hover:text-text sm:inline-flex">
+              <Crown className="size-4 text-brand" aria-hidden="true" />باشگاه
+            </Link>
+          ) : null}
           <Link href={`/s/${tenant}/account`} aria-label="حساب کاربری" className="flex size-10 items-center justify-center rounded-full bg-surface-muted text-text-muted hover:text-text">
             <UserRound className="size-5" />
           </Link>

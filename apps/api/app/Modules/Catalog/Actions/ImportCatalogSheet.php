@@ -57,7 +57,15 @@ final class ImportCatalogSheet
             $calories = CatalogSheet::amount($cell('calories'));
             $description = mb_substr($cell('description'), 0, 500);
             $type = mb_strtolower($cell('type'));
-            $item = ['line' => $line, 'name' => $name, 'category' => $path, 'price' => $price, 'description' => $description !== '' ? $description : null, 'calories' => $calories && $calories < 5000 ? $calories : null, 'problems' => []];
+            $nameEn = mb_substr($cell('name_en'), 0, 160);
+            $ingredients = mb_substr($cell('ingredients'), 0, 500);
+            $item = [
+                'line' => $line, 'name' => $name, 'category' => $path, 'price' => $price, 'description' => $description !== '' ? $description : null,
+                'calories' => $calories && $calories < 5000 ? $calories : null,
+                'name_en' => $nameEn !== '' ? $nameEn : null, 'ingredients' => $ingredients !== '' ? $ingredients : null,
+                'allergens' => isset($columns['allergens']) ? CatalogSheet::allergens($cell('allergens')) : null,
+                'problems' => [],
+            ];
 
             if ($name === '') {
                 continue; // an empty line in the middle of the sheet
@@ -106,6 +114,14 @@ final class ImportCatalogSheet
             }
             if ($item['calories'] !== null && $item['calories'] !== $current['calories']) {
                 $changes['calories'] = true;
+            }
+            foreach (['name_en', 'ingredients'] as $field) {
+                if ($item[$field] !== null && $item[$field] !== $current[$field]) {
+                    $changes[$field] = true;
+                }
+            }
+            if ($item['allergens'] !== null && $item['allergens'] !== [] && $item['allergens'] !== $current['allergens']) {
+                $changes['allergens'] = true;
             }
             $out[] = [...$item, 'status' => $changes === [] ? 'same' : 'update', 'changes' => $changes, 'product_id' => $current['id']];
         }
@@ -165,7 +181,8 @@ final class ImportCatalogSheet
                         continue;
                     }
                     $this->saveProduct->handle(
-                        new ProductData(name: $row['name'], description: $row['description'], categoryIds: $categoryFor($row['category']), nutrition: $row['calories'] ? ['calories' => $row['calories']] : null),
+                        new ProductData(name: $row['name'], description: $row['description'], categoryIds: $categoryFor($row['category']), nutrition: $row['calories'] ? ['calories' => $row['calories']] : null,
+                            nameEn: $row['name_en'], ingredients: $row['ingredients'], allergens: $row['allergens'] ?: null),
                         null,
                         [new VariantData(null, null, (int) $row['price'])],
                         $actorId,
@@ -186,6 +203,11 @@ final class ImportCatalogSheet
                     if (isset($row['changes']['calories'])) {
                         $product->nutrition = [...($product->nutrition ?? []), 'calories' => $row['calories']];
                     }
+                    foreach (['name_en', 'ingredients', 'allergens'] as $field) {
+                        if (isset($row['changes'][$field])) {
+                            $product->{$field} = $row[$field];
+                        }
+                    }
                     $product->save();
                     if ($row['category'] !== []) {
                         $tenantId = $this->context->require()->getKey();
@@ -201,7 +223,7 @@ final class ImportCatalogSheet
         return $result;
     }
 
-    /** @return array<string, array{id: string, price: ?int, variants: int, description: ?string, calories: ?int}> */
+    /** @return array<string, array{id: string, price: ?int, variants: int, description: ?string, calories: ?int, name_en: ?string, ingredients: ?string, allergens: list<string>}> */
     private function existingProducts(): array
     {
         $out = [];
@@ -213,6 +235,9 @@ final class ImportCatalogSheet
                 'variants' => $p->variants->count(),
                 'description' => $p->description,
                 'calories' => isset($p->nutrition['calories']) ? (int) $p->nutrition['calories'] : null,
+                'name_en' => $p->name_en,
+                'ingredients' => $p->ingredients,
+                'allergens' => $p->allergens ?? [],
             ];
         }
 

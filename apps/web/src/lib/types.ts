@@ -172,6 +172,12 @@ export interface Product {
   dietary_tags: string[];
   /** ISO weekdays on which it is «پیشنهاد امروز» on the menu. */
   special_days?: number[];
+  name_en?: string | null;
+  ingredients?: string | null;
+  allergens?: string[];
+  caffeine_source?: 'coffee' | 'tea' | 'chocolate' | 'energy' | null;
+  caffeine_dose?: string | null;
+  is_new?: boolean;
   categories?: { id: string; name: string }[];
   variants?: Variant[];
   price_from?: number | null;
@@ -214,6 +220,13 @@ export interface BulkPriceResult {
   changed_count: number;
   rows: BulkPriceRow[];
 }
+
+/** Allergens shown with a warning on the product (the platform's fixed list, same keys as the API). */
+export const ALLERGENS: Record<string, string> = {
+  gluten: 'گلوتن', dairy: 'لبنیات و لاکتوز', egg: 'تخم‌مرغ', nuts: 'مغزها', peanut: 'بادام‌زمینی', soy: 'سویا', sesame: 'کنجد', fish: 'ماهی و آبزیان', caffeine: 'کافئین',
+};
+
+export const CAFFEINE_SOURCES: Record<string, string> = { coffee: 'قهوه', tea: 'چای', chocolate: 'شکلات', energy: 'نوشیدنی انرژی‌زا' };
 
 /** The editor's tag lists: the platform's fixed tags and the café's own («c:{id}»). */
 export interface MenuTags {

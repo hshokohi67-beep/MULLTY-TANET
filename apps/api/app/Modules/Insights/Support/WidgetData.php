@@ -23,6 +23,7 @@ use App\Modules\Loyalty\Enums\WalletTransactionType;
 use App\Modules\Loyalty\Models\LoyaltyAccount;
 use App\Modules\Loyalty\Models\Wallet;
 use App\Modules\Loyalty\Models\WalletTransaction;
+use App\Modules\Occasions\Support\UpcomingOccasions;
 use App\Modules\Operations\Models\AttendanceRecord;
 use App\Modules\Operations\Support\ExpenseSummary;
 use App\Modules\Operations\Support\Payroll;
@@ -65,6 +66,7 @@ final class WidgetData
             'club_liability' => $this->clubLiability($range),
             'discounts' => $this->discounts($range),
             'shift_notes' => $this->shiftNotes(),
+            'occasions' => ['items' => array_slice(UpcomingOccasions::forCurrentTenant(), 0, 6)],
             'stories' => $this->stories(),
             'food_cost' => $this->foodCost($range),
             'profit' => $this->profit($range),

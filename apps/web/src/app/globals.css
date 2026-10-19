@@ -447,3 +447,34 @@ body {
 @media (min-width: 1024px) {
   .store-look:has([data-cart-panel]) .cart-float { display: none; }
 }
+
+/* Seasonal decoration (SeasonDecor): faint pieces drifting down behind the shop pages. */
+.season-decor { color: var(--color-accent); }
+.season-decor[data-season='winter'] { color: var(--color-mood-cold); }
+.season-decor[data-season='yalda'] { color: var(--color-danger); }
+.season-decor[data-season='nowruz'] { color: var(--color-success); }
+.season-decor[data-season='summer'] { color: var(--color-warning); }
+.season-piece {
+  opacity: 0.16;
+  transform: translateY(-3rem) rotate(var(--r, 0deg));
+  animation: season-fall linear infinite;
+}
+@keyframes season-fall {
+  from { transform: translateY(-3rem) rotate(var(--r, 0deg)); }
+  to { transform: translateY(110vh) rotate(calc(var(--r, 0deg) + 160deg)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .season-piece { animation: none; transform: translateY(var(--rest, 30vh)) rotate(var(--r, 0deg)); }
+}
+/* The collection strip gets a faint corner mark in its season's colour. */
+.season-strip::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -2.5rem;
+  top: -2.5rem;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-brand) 22%, transparent), transparent 70%);
+  pointer-events: none;
+}

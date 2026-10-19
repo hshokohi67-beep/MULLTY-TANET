@@ -77,6 +77,12 @@ export async function saveProductDetails(productId: string, _prev: FormState, fo
         nutrition: Object.keys(nutrition).length ? nutrition : null,
         dietary_tags: formData.getAll('dietary_tags').map(String),
         special_days: formData.getAll('special_days').map(Number),
+        name_en: text(formData, 'name_en'),
+        ingredients: text(formData, 'ingredients'),
+        allergens: formData.getAll('allergens').map(String),
+        caffeine_source: text(formData, 'caffeine_source'),
+        caffeine_dose: text(formData, 'caffeine_dose'),
+        is_new: formData.get('is_new') === 'on',
       },
     });
   } catch (error) {

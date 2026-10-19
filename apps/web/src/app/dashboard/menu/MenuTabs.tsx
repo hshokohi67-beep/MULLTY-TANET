@@ -12,7 +12,7 @@ export function MenuTabs({ tabs }: { tabs: { href: string; label: string }[] }) 
       <ul className="-mb-px flex gap-1 overflow-x-auto">
         {tabs.map((tab) => {
           const active = tab.href === '/dashboard/menu'
-            ? pathname === tab.href || /^\/dashboard\/menu\/(?!categories|modifiers|prices)[^/]+$/.test(pathname)
+            ? pathname === tab.href || /^\/dashboard\/menu\/(?!categories|modifiers|prices|collections|import)[^/]+$/.test(pathname)
             : pathname.startsWith(tab.href);
 
           return (

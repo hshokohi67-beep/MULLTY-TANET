@@ -46,6 +46,13 @@ final class ProductRequest extends FormRequest
                     $fail(__('validation.in', ['attribute' => $attribute]));
                 }
             }],
+            'name_en' => ['nullable', 'string', 'max:160'],
+            'ingredients' => ['nullable', 'string', 'max:500'],
+            'allergens' => ['nullable', 'array', 'max:9'],
+            'allergens.*' => ['string', 'distinct', Rule::in(array_keys(Product::ALLERGENS))],
+            'caffeine_source' => ['nullable', Rule::in(array_keys(Product::CAFFEINE_SOURCES))],
+            'caffeine_dose' => ['nullable', 'string', 'max:40'],
+            'is_new' => ['sometimes', 'boolean'],
             // «پیشنهاد امروز» on these ISO weekdays (1 = Monday … 7 = Sunday); [] = never.
             'special_days' => ['sometimes', 'nullable', 'array', 'max:7'],
             'special_days.*' => ['integer', 'between:1,7', 'distinct'],
@@ -105,6 +112,12 @@ final class ProductRequest extends FormRequest
             dietaryTags: isset($v['dietary_tags']) ? array_values($v['dietary_tags']) : null,
             temperature: $v['temperature'] ?? null,
             specialDays: array_key_exists('special_days', $v) ? array_values(array_map('intval', $v['special_days'] ?? [])) : null,
+            nameEn: $v['name_en'] ?? null,
+            ingredients: $v['ingredients'] ?? null,
+            allergens: isset($v['allergens']) ? array_values($v['allergens']) : null,
+            caffeineSource: $v['caffeine_source'] ?? null,
+            caffeineDose: $v['caffeine_dose'] ?? null,
+            isNew: (bool) ($v['is_new'] ?? false),
         );
     }
 

@@ -47,6 +47,37 @@ final class PushNotifier
         }
     }
 
+    /**
+     * A notice to every staff device whose owner holds `$permission` here (e.g. an upcoming
+     * occasion). Returns how many devices were queued.
+     */
+    public function staffNotice(string $permission, string $title, string $body, string $url, string $tag): int
+    {
+        if (! WebPushSender::enabled()) {
+            return 0;
+        }
+        $subs = PushSubscription::query()->where('audience', 'staff')->whereNotNull('user_id')->get(['id', 'user_id']);
+        if ($subs->isEmpty()) {
+            return 0;
+        }
+        $tenant = app(TenantContext::class)->require();
+        $resolver = app(PermissionResolver::class);
+        $sent = 0;
+
+        foreach ($subs->groupBy('user_id') as $userId => $devices) {
+            $user = User::query()->find($userId);
+            if ($user === null || ! $resolver->allows($user, $tenant, $permission)) {
+                continue;
+            }
+            foreach ($devices as $device) {
+                SendPush::dispatch((string) $tenant->getKey(), (string) $device->id, ['title' => $title, 'body' => $body, 'tag' => $tag, 'url' => $url]);
+                $sent++;
+            }
+        }
+
+        return $sent;
+    }
+
     /** «سفارش تازه» to every staff device whose owner can still see orders here. */
     public function newOrder(Order $order): void
     {

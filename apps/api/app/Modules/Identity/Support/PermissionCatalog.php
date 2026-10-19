@@ -33,6 +33,8 @@ final class PermissionCatalog
 
     public const CATALOG_MANAGE = 'catalog.manage';
 
+    public const OCCASIONS_VIEW = 'occasions.view';
+
     public const PRICES_MANAGE = 'prices.manage';
 
     public const AVAILABILITY_MANAGE = 'availability.manage';
@@ -113,6 +115,7 @@ final class PermissionCatalog
             self::AUDIT_VIEW => ['group' => 'audit', 'label' => 'مشاهده گزارش رویدادها'],
             self::CATALOG_VIEW => ['group' => 'catalog', 'label' => 'مشاهده منو'],
             self::CATALOG_MANAGE => ['group' => 'catalog', 'label' => 'مدیریت منو، دسته‌بندی‌ها و افزودنی‌ها'],
+            self::OCCASIONS_VIEW => ['group' => 'catalog', 'label' => 'تقویم مناسبت‌ها و برنامه‌ریزی منوی مناسبتی'],
             self::PRICES_MANAGE => ['group' => 'catalog', 'label' => 'تغییر قیمت‌ها (تکی و گروهی)'],
             self::AVAILABILITY_MANAGE => ['group' => 'catalog', 'label' => 'اعلام «تمام شد» برای آیتم‌ها'],
             self::ORDERS_VIEW => ['group' => 'orders', 'label' => 'مشاهده سفارش‌ها'],

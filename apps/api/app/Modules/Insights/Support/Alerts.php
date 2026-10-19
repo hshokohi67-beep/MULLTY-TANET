@@ -10,6 +10,7 @@ use App\Modules\Commerce\Models\TableSessionRequest;
 use App\Modules\Inventory\Models\IngredientStock;
 use App\Modules\Kitchen\Models\KitchenDevice;
 use App\Modules\Loyalty\Models\Wallet;
+use App\Modules\Occasions\Support\UpcomingOccasions;
 use App\Modules\Operations\Models\AttendanceRecord;
 use App\Support\Entitlements\EntitlementGate;
 use App\Support\Localization\PersianNumber;
@@ -120,6 +121,19 @@ final class Alerts
 
         if ($can('billing.manage') && ($billing = app(SubscriptionAlert::class)->current()) !== null) {
             $alerts[] = $billing;
+        }
+
+        if ($can('occasions.view')) {
+            // Occasions in their lead time that the café has not answered yet (planned or dismissed).
+            $open = array_values(array_filter(UpcomingOccasions::forCurrentTenant(), fn (array $o) => $o['in_lead'] && $o['status'] === null));
+            if ($open !== []) {
+                $first = $open[0];
+                $when = $first['days_left'] === 0 ? 'امروز' : $n($first['days_left']).' روز دیگر';
+                $title = count($open) === 1
+                    ? "{$first['title']} {$when} است؛ برنامه‌ای برایش دارید؟"
+                    : "{$n(count($open))} مناسبت نزدیک بدون برنامه (اولی: {$first['title']}، {$when})";
+                $alerts[] = ['type' => 'occasions', 'severity' => 'info', 'title' => $title, 'count' => count($open), 'href' => '/dashboard/occasions'];
+            }
         }
 
         $rank = ['danger' => 0, 'warning' => 1, 'info' => 2];

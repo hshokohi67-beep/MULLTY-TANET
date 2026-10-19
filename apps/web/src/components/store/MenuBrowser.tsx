@@ -14,6 +14,7 @@ import { ProductCard } from './menu/ProductCard';
 import { DealPrice } from './deals/DealPrice';
 import { DealsProvider, useDeal } from './deals/DealsProvider';
 import { DealsSlider } from './deals/DealsSlider';
+import { activeCollections } from '@/lib/deals';
 import { QuickAdd } from './menu/QuickAdd';
 import { ScrollRow } from './ScrollRow';
 import { ProductDetails } from './ProductDetails';
@@ -41,6 +42,25 @@ function CategoryIcon({ s, className }: { s: Section; className?: string }) {
     <span aria-hidden="true" data-v={variantOf(s.id, 3)} className={cx('photo-fallback flex size-full items-center justify-center', className)}>
       {createElement(illustrationFor(s.name, s.mood), { className: 'size-5', strokeWidth: 1.75 })}
     </span>
+  );
+}
+
+/** A «منوی مناسبتی» strip: the café's seasonal highlight in its brand colour. */
+function CollectionStrip({ collection, products, onOpen }: { collection: NonNullable<Menu['collections']>[number]; products: MenuProduct[]; onOpen: (p: MenuProduct) => void }) {
+  if (products.length === 0) return null;
+
+  return (
+    <section aria-labelledby={`col-${collection.id}`} data-season={collection.theme ?? undefined} className="season-strip relative mt-5 overflow-hidden rounded-3xl bg-brand-soft p-4 lg:p-5">
+      <h2 id={`col-${collection.id}`} className="text-lg font-black">{collection.title}</h2>
+      {collection.subtitle ? <p className="mt-0.5 text-sm text-text-muted">{collection.subtitle}</p> : null}
+      <ScrollRow as="ul" label={collection.title} className="-mx-1 mt-3 flex snap-x gap-3 px-1 pb-1">
+        {products.map((p) => (
+          <li key={p.id} data-mood={p.temperature ?? undefined} className="w-40 shrink-0 snap-start">
+            <FeaturedTile product={p} onOpen={onOpen} />
+          </li>
+        ))}
+      </ScrollRow>
+    </section>
   );
 }
 
@@ -157,6 +177,19 @@ function MenuContent({ menu, stories, layout, showCalories, showDeals = true, ca
     const target = document.getElementById(`cat-${id}`) ?? (child ? document.getElementById(`cat-${child.id}`) : null);
     setTimeout(() => target?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }, [menu.categories]);
+
+  // Prev / next in the sheet: the products around it in what the visitor is looking at.
+  const neighbours = useMemo(() => {
+    if (!open) return { prev: null, next: null };
+    const list = results?.items ?? sections.find((s) => s.products.some((p) => p.id === open.id))?.products ?? [];
+    const i = list.findIndex((p) => p.id === open.id);
+
+    return { prev: i > 0 ? list[i - 1] : null, next: i >= 0 && i < list.length - 1 ? list[i + 1] : null };
+  }, [open, results, sections]);
+
+  // Read the clock once per visit: a collection that ends mid-visit can stay until the next load.
+  const [loadedAt] = useState(() => Date.now());
+  const collections = useMemo(() => activeCollections(menu, loadedAt), [menu, loadedAt]);
 
   const card = (p: MenuProduct) => (
     <ProductCard key={p.id} product={p} layout={layout} tenant={tenant} branchId={menu.branch.id} popular={popular.has(p.id)} showCalories={showCalories} onOpen={setOpen} />
@@ -301,6 +334,10 @@ function MenuContent({ menu, stories, layout, showCalories, showDeals = true, ca
                 action={(p) => <QuickAdd product={p} branchId={menu.branch.id} onOptions={() => setOpen(p)} />} />
             ) : null}
 
+            {collections.map((c) => (
+              <CollectionStrip key={c.id} collection={c} products={c.product_ids.map((id) => menu.products.find((p) => p.id === id)).filter((p): p is MenuProduct => p !== undefined)} onOpen={setOpen} />
+            ))}
+
             {featured.length > 0 ? (
               <section aria-labelledby="featured-title" className="mt-5">
                 <h2 id="featured-title" className="mb-3 flex items-center gap-2 text-lg font-bold">
@@ -347,7 +384,8 @@ function MenuContent({ menu, stories, layout, showCalories, showDeals = true, ca
       <Dialog open={open !== null} onClose={() => setOpen(null)} title={open?.name ?? ''} variant="sheet">
         {open ? (
           <ProductDetails product={open} branchId={menu.branch.id} onAdded={() => setOpen(null)} inSheet showCalories={showCalories}
-            suggestions={suggestionsFor(menu, [open.id])} onOpenSuggestion={setOpen} />
+            suggestions={suggestionsFor(menu, [open.id])} onOpenSuggestion={setOpen}
+            onPrev={neighbours.prev ? () => setOpen(neighbours.prev) : undefined} onNext={neighbours.next ? () => setOpen(neighbours.next) : undefined} />
         ) : null}
       </Dialog>
     </div>

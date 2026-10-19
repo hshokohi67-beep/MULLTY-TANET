@@ -11,14 +11,17 @@ use App\Support\Localization\PersianTextNormalizer;
  */
 final class CatalogSheet
 {
-    public const FIELDS = ['name', 'category', 'price', 'description', 'calories', 'type'];
+    public const FIELDS = ['name', 'category', 'price', 'description', 'calories', 'type', 'name_en', 'ingredients', 'allergens'];
 
     /** Column titles we recognise, normalised (lower-case, letters and digits only). */
     private const ALIASES = [
         'name' => ['name', 'productname', 'title', 'نام', 'ناممحصول', 'محصول', 'عنوان', 'نامکالا', 'کالا'],
         'category' => ['categories', 'category', 'دسته', 'دستهبندی', 'دستهبندیها', 'گروه', 'دستهها', 'منو'],
         'price' => ['regularprice', 'price', 'قیمت', 'قیمتتومان', 'قیمتبهتومان', 'قیمتریال', 'بها', 'مبلغ'],
-        'description' => ['shortdescription', 'description', 'توضیح', 'توضیحات', 'شرح', 'مواد', 'ترکیبات'],
+        'description' => ['shortdescription', 'description', 'توضیح', 'توضیحات', 'شرح'],
+        'name_en' => ['nameen', 'englishname', 'نامانگلیسی', 'انگلیسی'],
+        'ingredients' => ['ingredients', 'مواد', 'موادتشکیلدهنده', 'ترکیبات', 'مواداولیه'],
+        'allergens' => ['allergens', 'allergen', 'حساسیتزا', 'حساسیتزاها', 'آلرژن'],
         'calories' => ['calories', 'calorie', 'calory', 'کالری', 'انرژی'],
         'type' => ['type', 'نوع'],
     ];
@@ -70,6 +73,38 @@ final class CatalogSheet
         $parts = array_values(array_filter(array_map(fn (string $p) => mb_substr(trim($p), 0, 80), preg_split('/\s*>\s*/u', $first) ?: []), fn (string $p) => $p !== ''));
 
         return array_slice($parts, 0, 3);
+    }
+
+    /**
+     * «گلوتن، شیر / گردو» → ['gluten', 'dairy', 'nuts']: platform allergen keys from Persian or English
+     * words (unknown words are ignored).
+     *
+     * @return list<string>
+     */
+    public static function allergens(string $cell): array
+    {
+        $synonyms = [
+            'gluten' => ['گلوتن', 'گندم', 'gluten', 'wheat'],
+            'dairy' => ['لبنیات', 'لاکتوز', 'شیر', 'dairy', 'lactose', 'milk'],
+            'egg' => ['تخممرغ', 'تخم', 'egg', 'eggs'],
+            'nuts' => ['مغز', 'مغزها', 'گردو', 'بادام', 'فندق', 'پسته', 'nuts', 'nut'],
+            'peanut' => ['بادامزمینی', 'peanut', 'peanuts'],
+            'soy' => ['سویا', 'soy', 'soya'],
+            'sesame' => ['کنجد', 'sesame'],
+            'fish' => ['ماهی', 'آبزیان', 'میگو', 'fish', 'seafood'],
+            'caffeine' => ['کافئین', 'caffeine'],
+        ];
+        $found = [];
+        foreach (preg_split('/[,،\/|؛;]+/u', $cell) ?: [] as $word) {
+            $word = self::normalise($word);
+            foreach ($synonyms as $key => $words) {
+                if ($word !== '' && in_array($word, array_map(fn (string $w) => self::normalise($w), $words), true)) {
+                    $found[$key] = true;
+                }
+            }
+        }
+
+        return array_keys($found);
     }
 
     /** Name key for matching existing products and categories (spacing, ی/ک and digits don't matter). */

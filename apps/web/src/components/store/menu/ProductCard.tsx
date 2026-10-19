@@ -22,6 +22,7 @@ export function ProductChips({ product, popular, showCalories }: { product: Menu
     <>
       <DealChips product={product} deal={deal} />
       <MoodChip mood={product.temperature} />
+      {product.is_new ? <span className="rounded-full bg-success-soft px-1.5 py-0.5 text-[11px] font-bold leading-4 text-success">جدید</span> : null}
       {product.is_featured ? <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-accent">ویژه</span> : null}
       {popular ? (
         <span className="inline-flex items-center gap-0.5 rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-on-brand">

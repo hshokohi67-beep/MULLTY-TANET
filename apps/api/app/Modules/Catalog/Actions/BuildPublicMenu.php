@@ -6,6 +6,7 @@ use App\Modules\Catalog\Contracts\MenuInsights;
 use App\Modules\Catalog\Contracts\MenuOfferFeed;
 use App\Modules\Catalog\Enums\AvailabilityStatus;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\MenuCollection;
 use App\Modules\Catalog\Models\MenuTag;
 use App\Modules\Catalog\Models\Modifier;
 use App\Modules\Catalog\Models\ModifierGroup;
@@ -105,6 +106,9 @@ final class BuildPublicMenu
     private function build(Branch $branch): array
     {
         $disk = Storage::disk(config('filesystems.media_disk'));
+        // A product counts as «جدید» for a few weeks, but not the whole menu a café set up (or imported) in its first week.
+        $setupUntil = CarbonImmutable::parse((string) app(TenantContext::class)->require()->created_at)->addDays(7);
+        $newSince = now()->subDays(Product::NEW_FOR_DAYS);
         $tagLabels = [...Product::DIETARY_TAGS, ...MenuTag::query()->get()->mapWithKeys(fn (MenuTag $t) => [$t->key() => $t->label])->all()];
 
         $products = Product::query()
@@ -118,7 +122,7 @@ final class BuildPublicMenu
             ])
             ->orderBy('sort')->orderBy('name')
             ->get()
-            ->map(function (Product $product) use ($branch, $disk, $tagLabels): ?array {
+            ->map(function (Product $product) use ($branch, $disk, $tagLabels, $setupUntil, $newSince): ?array {
                 $availability = $product->availability->first();
                 $status = $availability?->effectiveStatus() ?? AvailabilityStatus::Available;
 
@@ -139,8 +143,11 @@ final class BuildPublicMenu
                     'id' => $product->id,
                     'slug' => $product->slug,
                     'name' => $product->name,
+                    'name_en' => $product->name_en,
                     'description' => $product->description,
+                    'ingredients' => $product->ingredients,
                     'is_featured' => $product->is_featured,
+                    'is_new' => $product->is_new || ($product->created_at !== null && $product->created_at->greaterThan($newSince) && $product->created_at->greaterThan($setupUntil)),
                     'special_days' => $product->special_days ?? [],
                     // Menu mood: the product's own value, else its first category's.
                     'temperature' => $product->temperature ?? $product->categories->pluck('temperature')->filter()->first(),
@@ -150,6 +157,8 @@ final class BuildPublicMenu
                     'variants' => $variants->all(),
                     'images' => $product->images->map(fn (ProductImage $i) => ['url' => $disk->url($i->path), 'alt' => $i->alt, 'width' => $i->width, 'height' => $i->height])->all(),
                     'nutrition' => $product->nutrition,
+                    'allergens' => collect($product->allergens ?? [])->filter(fn (string $a) => isset(Product::ALLERGENS[$a]))->map(fn (string $a) => ['key' => $a, 'label' => Product::ALLERGENS[$a]])->values()->all(),
+                    'caffeine' => $product->caffeine_source || $product->caffeine_dose ? ['source' => Product::CAFFEINE_SOURCES[$product->caffeine_source] ?? null, 'dose' => $product->caffeine_dose] : null,
                     'dietary_tags' => collect($product->dietary_tags ?? [])->filter(fn (string $t) => isset($tagLabels[$t]))->map(fn (string $t) => ['key' => $t, 'label' => $tagLabels[$t]])->values()->all(),
                     'modifier_groups' => $product->modifierGroups->map(fn (ModifierGroup $g) => [
                         'id' => $g->id,
@@ -176,8 +185,34 @@ final class BuildPublicMenu
             'categories' => $categories->all(),
             'products' => $products->all(),
             'insights' => $this->insights($products->pluck('id')->all()),
+            'collections' => $this->collections($products->pluck('id')->all()),
             'generated_at' => now()->toIso8601String(),
         ];
+    }
+
+    /**
+     * Active «مجموعه‌ی منو» highlights with their time window (the web shows those on now) and theme.
+     *
+     * @param  list<string>  $onMenu
+     * @return list<array{id: string, title: string, subtitle: ?string, theme: ?string, product_ids: list<string>, window: array{from: ?string, to: ?string}}>
+     */
+    private function collections(array $onMenu): array
+    {
+        $on = array_flip($onMenu);
+
+        return MenuCollection::query()->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
+            ->with('products:id')->orderBy('starts_at')->get()
+            ->map(fn (MenuCollection $c) => [
+                'id' => $c->id,
+                'title' => $c->title,
+                'subtitle' => $c->subtitle,
+                'theme' => $c->theme,
+                'product_ids' => array_values(array_filter($c->products->modelKeys(), fn (string $id) => isset($on[$id]))),
+                'window' => ['from' => $c->starts_at?->utc()->toIso8601String(), 'to' => $c->ends_at?->utc()->toIso8601String()],
+            ])
+            ->filter(fn (array $c) => $c['product_ids'] !== [])
+            ->values()->all();
     }
 
     /**

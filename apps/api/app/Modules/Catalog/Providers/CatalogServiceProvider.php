@@ -6,6 +6,7 @@ use App\Modules\Catalog\Console\ImportWooCommerceCatalogCommand;
 use App\Modules\Catalog\Contracts\MenuInsights;
 use App\Modules\Catalog\Contracts\MenuOfferFeed;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\MenuCollection;
 use App\Modules\Catalog\Models\MenuTag;
 use App\Modules\Catalog\Models\ModifierGroup;
 use App\Modules\Catalog\Models\Product;
@@ -34,6 +35,7 @@ final class CatalogServiceProvider extends ServiceProvider
         Route::model('product', Product::class);
         Route::model('modifierGroup', ModifierGroup::class);
         Route::model('menuTag', MenuTag::class);
+        Route::model('menuCollection', MenuCollection::class);
 
         Route::prefix('api/v1')->middleware('api')->name('api.')->group(__DIR__.'/../routes.php');
     }

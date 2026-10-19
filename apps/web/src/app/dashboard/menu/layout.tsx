@@ -13,6 +13,7 @@ export default async function MenuLayout({ children }: LayoutProps<'/dashboard/m
     { href: '/dashboard/menu', label: 'آیتم‌های منو' },
     { href: '/dashboard/menu/categories', label: 'دسته‌بندی‌ها' },
     { href: '/dashboard/menu/modifiers', label: 'افزودنی‌ها و انتخاب‌ها' },
+    { href: '/dashboard/menu/collections', label: 'منوی مناسبتی' },
     ...(can('prices.manage') ? [{ href: '/dashboard/menu/prices', label: 'تغییر گروهی قیمت' }] : []),
   ];
 

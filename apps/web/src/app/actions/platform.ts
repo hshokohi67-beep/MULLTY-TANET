@@ -68,3 +68,36 @@ export async function updateAdPlacement(key: string, dailyPrice: number, capacit
 
   return run(`/platform/ads/placements/${key}`, 'PUT', { daily_price: dailyPrice, capacity, is_active: isActive });
 }
+
+/** Confirms (and optionally moves) an occasion's date, e.g. a Hijri date after moon sighting. */
+export async function confirmOccasionDate(dateId: string, startsOn: string): Promise<Result> {
+  if (!ULID.test(dateId) || !/^\d{4}-\d{2}-\d{2}$/.test(startsOn)) return { ok: false, message: 'نامعتبر' };
+
+  return run(`/platform/occasion-dates/${dateId}`, 'PUT', { starts_on: startsOn });
+}
+
+export interface OccasionInput {
+  title: string;
+  description: string | null;
+  kind: string;
+  tone: string;
+  calendar: string;
+  month: number | null;
+  day: number | null;
+  duration_days: number;
+  lead_days: number;
+  is_holiday: boolean;
+  ideas: string[];
+  campaign_text: string | null;
+  theme: string | null;
+  is_active: boolean;
+  is_one_off?: boolean;
+  date?: string | null;
+}
+
+/** Creates a one-off occasion (with its date) or updates an occasion of the calendar. */
+export async function saveOccasion(id: string | null, input: OccasionInput): Promise<Result> {
+  if (id !== null && !ULID.test(id)) return { ok: false, message: 'نامعتبر' };
+
+  return run(id ? `/platform/occasions/${id}` : '/platform/occasions', id ? 'PUT' : 'POST', { ...input });
+}

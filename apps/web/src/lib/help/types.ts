@@ -4,6 +4,7 @@
  */
 
 export type HelpIcon =
+  | 'occasions'
   | 'overview' | 'orders' | 'kds' | 'kitchen' | 'tables' | 'menu' | 'discounts' | 'stories' | 'landing' | 'delivery' | 'marketplace' | 'ads'
   | 'inventory' | 'purchases' | 'staff' | 'clock' | 'expenses' | 'customers' | 'club' | 'payments' | 'reports' | 'branches' | 'team'
   | 'settings' | 'billing' | 'storefront' | 'search' | 'role' | 'platform' | 'start';

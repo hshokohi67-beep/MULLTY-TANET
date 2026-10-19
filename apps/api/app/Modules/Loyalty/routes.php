@@ -3,9 +3,13 @@
 use App\Modules\Identity\Support\PermissionCatalog as P;
 use App\Modules\Loyalty\Http\Controllers\CustomerClubController;
 use App\Modules\Loyalty\Http\Controllers\LoyaltyProgramController;
+use App\Modules\Loyalty\Http\Controllers\PublicClubController;
 use App\Modules\Loyalty\Http\Controllers\StaffCustomerController;
 use App\Modules\Loyalty\Http\Controllers\StaffWalletPaymentController;
 use Illuminate\Support\Facades\Route;
+
+// The public club page: how the program works (no customer data).
+Route::middleware(['tenant', 'throttle:public'])->get('public/club', [PublicClubController::class, 'show'])->name('public.club');
 
 // The signed-in customer's club.
 Route::middleware(['tenant', 'auth:sanctum', 'actor:customer', 'throttle:storefront'])->prefix('customer')->name('customer.')->group(function () {

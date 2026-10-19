@@ -38,6 +38,12 @@ final class ProductResource extends JsonResource
             'nutrition' => $this->nutrition,
             'dietary_tags' => $this->dietary_tags ?? [],
             'special_days' => $this->special_days ?? [],
+            'name_en' => $this->name_en,
+            'ingredients' => $this->ingredients,
+            'allergens' => $this->allergens ?? [],
+            'caffeine_source' => $this->caffeine_source,
+            'caffeine_dose' => $this->caffeine_dose,
+            'is_new' => $this->is_new,
             'categories' => $this->whenLoaded('categories', fn () => $this->categories->map(fn (Category $c) => ['id' => $c->id, 'name' => $c->name])->values()),
             'variants' => $this->whenLoaded('variants', fn () => $this->variants->map(fn (ProductVariant $v) => [
                 'id' => $v->id,

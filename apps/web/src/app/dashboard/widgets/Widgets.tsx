@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
-  Aperture, Armchair, Bell, Megaphone, Boxes, Receipt, Scale, UserCheck, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
+  Aperture, Armchair, Bell, CalendarHeart, Megaphone, Boxes, Receipt, Scale, UserCheck, Cake, ChefHat, CookingPot, Clock, CreditCard, Crown, Flame, GitBranch, Grid3x3, NotebookPen, ReceiptText, ShoppingBag, Store, Tags, Target, Timer, UserX, Users, Wallet, XCircle,
 } from 'lucide-react';
 import { Badge, Card, CardHeader, EmptyState, StatTile } from '@cafe/ui';
 import { formatMoney, formatMoneyCompact, formatNumber, formatPercent, formatTime, JALALI_MONTHS, toPersianDigits } from '@cafe/locale';
 import { MoneyColumnChart, MoneyHeatmap, MoneyShareBar } from '@/components/MoneyCharts';
+import { occasionWhen, type UpcomingOccasion } from '@/lib/occasion-types';
 import { GoalEditor, ShiftNotes, type Note } from './WidgetClients';
 
 /* ------------------------------- data shapes (from the API) ------------------------------- */
@@ -393,6 +394,29 @@ export function ClubLiabilityWidget({ data, ctx }: { data: { wallet_owed: number
           <div className="rounded-lg bg-surface-muted px-3 py-2"><dt className="text-xs text-text-muted">خرج‌شده از کیف پول</dt><dd className="font-semibold">{formatMoneyCompact(data.spent_from_wallet)}</dd></div>
         </dl>
       </div>
+    </Shell>
+  );
+}
+
+/** «مناسبت‌های پیش رو»: the next occasions the café follows, with how soon and whether it has a plan. */
+export function OccasionsWidget({ data }: { data: { items: UpcomingOccasion[] } }) {
+  return (
+    <Shell icon={<CalendarHeart />} title="مناسبت‌های پیش رو" description="۴۵ روز آینده" actions={link('/dashboard/occasions', 'تقویم کامل')}>
+      {data.items.length === 0 ? <Empty text="در ۴۵ روز آینده مناسبتی ندارید." /> : (
+        <ul className="divide-y divide-border">
+          {data.items.map((o) => (
+            <li key={o.id}>
+              <Link href={`/dashboard/occasions#o-${o.id}`} className="flex items-center gap-3 px-5 py-2.5 text-sm hover:bg-surface-muted">
+                <span aria-hidden="true" className={o.tone === 'mourning' ? 'size-2 rounded-full bg-text-subtle' : o.tone === 'festive' ? 'size-2 rounded-full bg-accent' : 'size-2 rounded-full bg-info'} />
+                <span className="min-w-0 flex-1 truncate font-medium">{o.title}</span>
+                {o.approximate ? <Badge tone="warning">تقریبی</Badge> : null}
+                {o.status === 'planned' || o.status === 'done' ? <Badge tone="success">برنامه دارد</Badge> : o.in_lead && o.tone !== 'mourning' ? <Badge tone="info">وقت برنامه‌ریزی</Badge> : null}
+                <span className="tabular shrink-0 text-xs text-text-muted">{occasionWhen(o, (n) => toPersianDigits(n))}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </Shell>
   );
 }

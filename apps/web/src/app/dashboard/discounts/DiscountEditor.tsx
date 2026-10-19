@@ -89,9 +89,12 @@ function Targets({ catalog, products, categories, onProducts, onCategories, erro
   );
 }
 
-export function DiscountEditor({ discount, tiers = [], catalog }: { discount?: Discount; tiers?: { id: string; name: string }[]; catalog: DiscountCatalog }) {
+/** A new discount started from the occasions calendar: its name and days (café-local YYYY-MM-DD). */
+export interface DiscountPrefill { name: string; from: string; to: string }
+
+export function DiscountEditor({ discount, tiers = [], catalog, prefill }: { discount?: Discount; tiers?: { id: string; name: string }[]; catalog: DiscountCatalog; prefill?: DiscountPrefill }) {
   const [open, setOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(prefill !== undefined);
   const [state, action, pending] = useActionState<FormState, FormData>(saveDiscount.bind(null, discount?.id ?? null), { ok: false });
   const [kind, setKind] = useState<'percent' | 'fixed'>(discount?.kind ?? 'percent');
   const [timed, setTimed] = useState(Boolean(discount?.schedule?.from));
@@ -103,8 +106,8 @@ export function DiscountEditor({ discount, tiers = [], catalog }: { discount?: D
   const [productIds, setProductIds] = useState(() => targetsOf(discount, 'product'));
   const [categoryIds, setCategoryIds] = useState(() => targetsOf(discount, 'category'));
   const endLocal = discount?.ends_at ? isoToLocal(discount.ends_at, catalog.timezone) : null;
-  const [hasEnd, setHasEnd] = useState(endLocal !== null);
-  const [endDate, setEndDate] = useState(endLocal?.date ?? todayIn(catalog.timezone));
+  const [hasEnd, setHasEnd] = useState(endLocal !== null || prefill !== undefined);
+  const [endDate, setEndDate] = useState(endLocal?.date ?? prefill?.to ?? todayIn(catalog.timezone));
   const [endTime, setEndTime] = useState(endLocal?.time ?? '23:45');
   const e = state.errors ?? {};
   const items = onMenu || appliesTo === 'items';
@@ -157,7 +160,7 @@ export function DiscountEditor({ discount, tiers = [], catalog }: { discount?: D
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <TextField label="نام" name="name" defaultValue={discount?.name} required placeholder={onMenu ? 'مثلاً جشنواره‌ی پاییز' : 'مثلاً ساعت خوش'} hint={onMenu ? 'روی کارت و در سبد خرید دیده می‌شود.' : undefined} error={e.name} />
+          <TextField label="نام" name="name" defaultValue={discount?.name ?? prefill?.name} required placeholder={onMenu ? 'مثلاً جشنواره‌ی پاییز' : 'مثلاً ساعت خوش'} hint={onMenu ? 'روی کارت و در سبد خرید دیده می‌شود.' : undefined} error={e.name} />
           {onMenu ? null : <TextField label="کد تخفیف" name="code" defaultValue={discount?.code ?? ''} ltr placeholder="خالی = خودکار" hint="فقط حروف انگلیسی و عدد، مثل YALDA" error={e.code} />}
           <SelectField label="نوع" name="kind" value={kind} onChange={(ev) => setKind(ev.target.value as 'percent' | 'fixed')} error={e.kind}>
             <option value="percent">درصدی</option>
@@ -207,6 +210,7 @@ export function DiscountEditor({ discount, tiers = [], catalog }: { discount?: D
             </div>
           ) : null}
           <input type="hidden" name="ends_at" value={hasEnd ? localToIso(endDate, endTime, catalog.timezone) : ''} />
+          {prefill ? <input type="hidden" name="starts_at" value={localToIso(prefill.from, '00:00', catalog.timezone)} /> : null}
           {e.ends_at ? <p role="alert" className="w-full text-xs text-danger">{e.ends_at}</p> : null}
         </div>
 

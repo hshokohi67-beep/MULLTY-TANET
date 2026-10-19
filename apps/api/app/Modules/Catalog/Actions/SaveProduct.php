@@ -40,6 +40,12 @@ final class SaveProduct
                 'nutrition' => $data->nutrition,
                 'dietary_tags' => $data->dietaryTags,
                 'temperature' => $data->temperature,
+                'name_en' => $data->nameEn,
+                'ingredients' => $data->ingredients,
+                'allergens' => $data->allergens ?: null,
+                'caffeine_source' => $data->caffeineSource,
+                'caffeine_dose' => $data->caffeineDose,
+                'is_new' => $data->isNew,
             ]);
             if ($data->specialDays !== null) {
                 $days = array_values(array_unique($data->specialDays));

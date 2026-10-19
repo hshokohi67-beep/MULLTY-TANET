@@ -4,7 +4,7 @@ import { cookies, headers } from 'next/headers';
 import { api, ApiError } from './api';
 import { slugFromHost, storeLink } from './store-links';
 import type { PublicLanding } from './landing-types';
-import type { Menu, PublicStory, Storefront } from './storefront-types';
+import type { Menu, PublicStory, Storefront, PublicClub } from './storefront-types';
 import { COOKIE_SECURE } from './cookie-secure';
 
 /**
@@ -145,6 +145,15 @@ export const getLanding = cache(async (tenant: string): Promise<PublicLanding | 
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
+  }
+});
+
+/** How the café's club works, for its public page (null when the club is off). */
+export const getClub = cache(async (tenant: string): Promise<PublicClub | null> => {
+  try {
+    return (await api<{ data: PublicClub }>('/public/club', { auth: false, tenant, revalidate: 60 })).data;
+  } catch {
+    return null;
   }
 });
 

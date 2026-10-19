@@ -90,6 +90,17 @@ final class CatalogImportTest extends CommerceTestCase
         $this->assertSame(2, $data['summary']['create']);
     }
 
+    public function test_english_names_ingredients_and_allergens_import(): void
+    {
+        $csv = "نام,قیمت,نام انگلیسی,مواد تشکیل دهنده,حساسیت زا\nکیک گردو,120000,Walnut Cake,آرد، گردو، تخم مرغ,\"گلوتن، گردو / تخم مرغ، plutonium\"";
+        $this->send('', $this->csv($csv))->assertOk()->assertJsonPath('data.created', 1);
+
+        $cake = $this->inTenant($this->tenant, fn () => Product::query()->where('name', 'کیک گردو')->sole());
+        $this->assertSame('Walnut Cake', $cake->name_en);
+        $this->assertSame('آرد، گردو، تخم مرغ', $cake->ingredients);
+        $this->assertSame(['gluten', 'nuts', 'egg'], $cake->allergens);
+    }
+
     public function test_bad_files_and_permissions(): void
     {
         $this->send('/preview', UploadedFile::fake()->create('menu.pdf', 10, 'application/pdf'))->assertUnprocessable()->assertJsonValidationErrors('file');

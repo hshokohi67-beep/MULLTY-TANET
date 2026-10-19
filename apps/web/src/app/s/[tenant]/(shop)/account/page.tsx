@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Coins, Crown, Gift, MapPin, Pencil, Plus, Receipt, Wallet } from 'lucide-react';
-import { Badge, Card, CardHeader, EmptyState, type Tone } from '@cafe/ui';
+import { Badge, brandTokens, Card, CardHeader, EmptyState, type Tone } from '@cafe/ui';
 import { formatJalaliDateTime, formatMoney, formatNumber } from '@cafe/locale';
 import { DeleteAddress, LogoutButton, ProfileForm, RedeemPoints, ReferralBox, ReorderButton } from '@/components/store/AccountClient';
 import { ApiError } from '@/lib/api';
@@ -43,6 +43,7 @@ export default async function AccountPage({ params }: PageProps<'/s/[tenant]/acc
   }
 
   const clubOn = club?.program.enabled ?? false;
+  const tierColor = club?.tier ? brandTokens(club.tier.color) : null;
   const progress = club?.next_tier ? Math.min(1, club.lifetime_spend / Math.max(1, club.next_tier.min_spend)) : 1;
 
   return (
@@ -61,8 +62,13 @@ export default async function AccountPage({ params }: PageProps<'/s/[tenant]/acc
           <div aria-hidden="true" className="absolute -bottom-16 end-16 size-40 rounded-full bg-on-brand/5" />
           <div className="relative flex flex-col gap-5">
             <div className="flex items-center justify-between">
-              <p className="flex items-center gap-2 font-semibold"><Crown className="size-5" aria-hidden="true" />{club.tier?.name ?? 'عضو باشگاه'}</p>
-              <p className="text-sm opacity-80">باشگاه {store.name}</p>
+              {tierColor ? (
+                // The tier's own colour (contrast-safe fill and text), ringed so it reads on the brand card.
+                <p className="flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ring-2 ring-on-brand/40" style={{ background: tierColor.brand, color: tierColor.onBrand }}>
+                  <Crown className="size-4" aria-hidden="true" />{club.tier?.name}
+                </p>
+              ) : <p className="flex items-center gap-2 font-semibold"><Crown className="size-5" aria-hidden="true" />{club.tier?.name ?? 'عضو باشگاه'}</p>}
+              <Link href={`/s/${tenant}/club`} className="text-sm underline-offset-4 opacity-80 hover:underline">باشگاه {store.name}</Link>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
